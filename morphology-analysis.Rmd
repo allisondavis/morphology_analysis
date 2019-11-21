@@ -11,19 +11,79 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Data collection
 
-  * raw data: occurance number and preference score for each individual fish (left, right, NA)
-  * pref data: preference scores for tank A, B, combo of A and B, and average of A and B
-      - combo score determined as left/(left+right) for total left and right occurances
-      - average score determined by averaging tank A pref score and tank B pref score
-  * separated all data by species
+
 
 ```{r}
 library(curl)
 
-rawRE <- curl("https://raw.githubusercontent.com/allisondavis/mirror-exp_wild-pop/master/adavis_mirror-exp_wild-pop_rescored-raw.csv")
+raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_all.csv")
 
-rawRE <- read.csv(rawRE, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
-prefRE <- curl("https://raw.githubusercontent.com/allisondavis/mirror-exp_wild-pop/master/adavis_mirror-exp_wild-pop_rescored-prefs.csv")
+head(raw)
 
-prefRE <- read.csv(prefRE, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+form <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_formosa.csv")
+
+form <- read.csv(form, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+head(form)
+
+lat <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_latipinna.csv")
+
+lat <- read.csv(lat, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+head(lat)
+
+```
+
+```{r echo=FALSE}
+
+library(ggplot2)
+
+ggplot(raw, aes(x=SPP, y=D)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Dorsal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=P1)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Left pectoral ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=P2)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) #need to do an average or separate out pelvic right and pelvic left
+
+ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=LLSC)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Lateral line scale comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=SALL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales above Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=SBLL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales below Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=SBDF)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales before dorsal fin comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=TL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Total length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=SL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Standard length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=BD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Body depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=CPD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=CPL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=PreDL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Pre-dorsal length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=DbL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Dorsal base length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=HL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=HD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=HW)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head width comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=SnL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Snout length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Orbital length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+
+
+```
+
+
