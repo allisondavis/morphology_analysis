@@ -36,6 +36,8 @@ head(lat)
 
 ```
 
+#### BOX PLOTS
+
 ```{r echo=FALSE}
 
 library(ggplot2)
@@ -85,5 +87,145 @@ ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (m
 
 
 ```
+
+
+
+#### T.TESTS
+
+```{r}
+#doral ray counts
+t.test(lat$D, form$D, alternative = "two.sided")
+
+#left pectoral ray counts
+t.test(lat$P1, form$P1, alternative = "two.sided")
+
+#won't do pelvic, since it's currently in weird format
+
+#anal ray counts
+t.test(lat$A, form$A, alternative = "two.sided")
+
+#right pectoral ray counts
+t.test(lat$P1.R, form$P1.R, alternative = "two.sided")
+
+#lateral line scale count
+t.test(lat$LLSC, form$LLSC, alternative = "two.sided")
+
+#scales above lateral line
+t.test(lat$SALL, form$SALL, alternative = "two.sided")
+
+#scales below lateral line
+t.test(lat$SBLL, form$SBLL, alternative = "two.sided")
+
+#scales before dorsal fin
+t.test(lat$SBDF, form$SBDF, alternative = "two.sided")
+
+#total length
+t.test(lat$TL, form$TL, alternative = "two.sided")
+
+#standard length
+t.test(lat$SL, form$SL, alternative = "two.sided")
+
+#body depth
+t.test(lat$BD, form$BD, alternative = "two.sided")
+
+#caudal peduncle depth
+t.test(lat$CPD, form$CPD, alternative = "two.sided")
+
+#caudal peduncle length
+t.test(lat$CPL, form$CPL, alternative = "two.sided")
+
+#pre dorsal length
+t.test(lat$PreDL, form$PreDL, alternative = "two.sided")
+
+#dorsal base length
+t.test(lat$DbL, form$DbL, alternative = "two.sided")
+
+#head length
+t.test(lat$HL, form$HL, alternative = "two.sided")
+
+#head depth
+t.test(lat$HD, form$HD, alternative = "two.sided")
+
+#head width
+t.test(lat$HW, form$HW, alternative = "two.sided")
+
+#snout length
+t.test(lat$SnL, form$SnL, alternative = "two.sided")
+
+#oribital length
+t.test(lat$OL, form$OL, alternative = "two.sided")
+
+```
+
+#### VARIANCE TESTS
+
+```{r}
+#doral ray counts
+var.test(lat$D, form$D, alternative = "two.sided")
+
+#left pectoral ray counts
+var.test(lat$P1, form$P1, alternative = "two.sided")
+
+#won't do pelvic, since it's currently in weird format
+
+#anal ray counts
+var.test(lat$A, form$A, alternative = "two.sided")
+
+#right pectoral ray counts
+var.test(lat$P1.R, form$P1.R, alternative = "two.sided")
+
+#lateral line scale count
+var.test(lat$LLSC, form$LLSC, alternative = "two.sided")
+
+#scales above lateral line
+var.test(lat$SALL, form$SALL, alternative = "two.sided")
+
+#scales below lateral line
+var.test(lat$SBLL, form$SBLL, alternative = "two.sided")
+
+#scales before dorsal fin
+var.test(lat$SBDF, form$SBDF, alternative = "two.sided")
+
+#total length
+var.test(lat$TL, form$TL, alternative = "two.sided")
+
+#standard length
+var.test(lat$SL, form$SL, alternative = "two.sided")
+
+#body depth
+var.test(lat$BD, form$BD, alternative = "two.sided")
+
+#caudal peduncle depth
+var.test(lat$CPD, form$CPD, alternative = "two.sided")
+
+#caudal peduncle length
+var.test(lat$CPL, form$CPL, alternative = "two.sided")
+
+#pre dorsal length
+var.test(lat$PreDL, form$PreDL, alternative = "two.sided")
+
+#dorsal base length
+var.test(lat$DbL, form$DbL, alternative = "two.sided")
+
+#head length
+var.test(lat$HL, form$HL, alternative = "two.sided")
+
+#head depth
+var.test(lat$HD, form$HD, alternative = "two.sided")
+
+#head width
+var.test(lat$HW, form$HW, alternative = "two.sided")
+
+#snout length
+var.test(lat$SnL, form$SnL, alternative = "two.sided")
+
+#oribital length
+var.test(lat$OL, form$OL, alternative = "two.sided")
+
+```
+
+
+
+
 
 
