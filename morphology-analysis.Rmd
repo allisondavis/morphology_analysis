@@ -1,0 +1,29 @@
+---
+title: "morphology_analysis"
+author: "Allison Davis"
+date: "November 21, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data collection
+
+  * raw data: occurance number and preference score for each individual fish (left, right, NA)
+  * pref data: preference scores for tank A, B, combo of A and B, and average of A and B
+      - combo score determined as left/(left+right) for total left and right occurances
+      - average score determined by averaging tank A pref score and tank B pref score
+  * separated all data by species
+
+```{r}
+library(curl)
+
+rawRE <- curl("https://raw.githubusercontent.com/allisondavis/mirror-exp_wild-pop/master/adavis_mirror-exp_wild-pop_rescored-raw.csv")
+
+rawRE <- read.csv(rawRE, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+prefRE <- curl("https://raw.githubusercontent.com/allisondavis/mirror-exp_wild-pop/master/adavis_mirror-exp_wild-pop_rescored-prefs.csv")
+
+prefRE <- read.csv(prefRE, header = TRUE, sep = ",", stringsAsFactors = TRUE)
