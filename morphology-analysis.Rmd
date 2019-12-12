@@ -42,9 +42,11 @@ head(lat)
 
 library(ggplot2)
 
-ggplot(raw, aes(x=SPP, y=D)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Dorsal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=D, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Dorsal ray comparison\n") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=P1)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Left pectoral ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+
+ggplot(raw, aes(x=SPP, y=P1, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Left pectoral ray comparison\n") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
 
 ggplot(raw, aes(x=SPP, y=P2)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) #need to do an average or separate out pelvic right and pelvic left
 
@@ -157,6 +159,66 @@ t.test(lat$OL, form$OL, alternative = "two.sided")
 
 ```
 
+
+#### TYPE III ANOVA - CORRECTING FOR SL
+
+```{r}
+library(car)
+
+#lateral line scale count
+Anova(lm(data = raw, LLSC ~ SPP * SL), type = "III")
+
+#scales above lateral line
+Anova(lm(data = raw, SALL ~ SPP * SL), type = "III")
+
+#scales below lateral line
+Anova(lm(data = raw, SBLL ~ SPP * SL), type = "III")
+
+#scales before dorsal fin
+Anova(lm(data = raw, SBDF ~ SPP * SL), type = "III")
+
+#total length
+Anova(lm(data = raw, TL ~ SPP * SL), type = "III")
+
+#body depth
+Anova(lm(data = raw, BD ~ SPP * SL), type = "III")
+
+#caudal peduncle depth
+Anova(lm(data = raw, CPD ~ SPP * SL), type = "III")
+
+#caudal peduncle length
+Anova(lm(data = raw, CPL ~ SPP * SL), type = "III")
+
+#pre dorsal length
+Anova(lm(data = raw, PreDL ~ SPP * SL), type = "III")
+
+#dorsal base length
+Anova(lm(data = raw, DbL ~ SPP * SL), type = "III")
+
+#head length
+Anova(lm(data = raw, HL ~ SPP * SL), type = "III")
+
+#head depth
+Anova(lm(data = raw, HD ~ SPP * SL), type = "III")
+
+#head width
+Anova(lm(data = raw, HW ~ SPP * SL), type = "III")
+
+#snout length
+Anova(lm(data = raw, SnL ~ SPP * SL), type = "III")
+
+#oribital length
+Anova(lm(data = raw, OL ~ SPP * SL), type = "III")
+
+
+
+
+
+```
+
+
+
+
 #### VARIANCE TESTS
 
 ```{r}
@@ -224,6 +286,36 @@ var.test(lat$OL, form$OL, alternative = "two.sided")
 
 ```
 
+
+
+library(car)
+m <- lm(data = raw, formula = LLSC ~ SL * SPP)
+summary(m)
+a <- lm(data=raw, LLSC~ SPP * SL)
+a <- Anova(a, type="III")
+a
+
+
+options(contrasts = c("contr.sum", "contr.poly"))
+
+z <- Anova(lm(data = raw, D~SPP*SL, contrasts = list(topic="contr.sum", sys="contr.sum")), type="III")
+
+summary(z)
+
+hist(residuals(m))
+qqnorm(residuals(m))
+ qqline(residuals(m))
+ 
+library(nlme)
+
+model1 <- gls(D~SPP, data = raw)
+summary(model1)
+
+model2<- update(model1, weights= varIdent(form = ~1 | SPP))
+summary(model2)
+ 
+ 
+ 
 
 
 
