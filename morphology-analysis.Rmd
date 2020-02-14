@@ -33,8 +33,40 @@ lat <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/
 lat <- read.csv(lat, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
 head(lat)
+lat
 
 ```
+
+#### <font color="deepskyblue">Correction for Body Size</font>
+
+Certain size characteristics are influenced by overall body length, and therefore need to be corrected based on the individual's length prior to comparisons. 
+
+Additionally, size characteristics and characteristics such as ray count are in differing units. To compare variation between *all* characteristics, I will get z scores for all characteristics.
+
+```{r echo=FALSE}
+
+latRM <- lat[,-c(10)]
+
+normFunc <- function(x){(x-mean(x, na.rm = T))/sd(x, na.rm = T)}
+
+z_lat <- apply(latRM[8:27], 2, normFunc)
+
+latRM <- cbind(latRM, z_lat)
+colnames(latRM)[28:47] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
+latRM
+
+
+formRM <- form[,-c(10)]
+
+z_form <- apply(formRM[8:27], 2, normFunc)
+
+formRM <- cbind(formRM, z_form)
+colnames(formRM)[28:47] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
+formRM
+
+```
+
+
 
 #### BOX PLOTS
 
