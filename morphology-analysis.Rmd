@@ -25,7 +25,7 @@ head(raw)
 form <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_formosa.csv")
 
 form <- read.csv(form, header = TRUE, sep = ",", stringsAsFactors = TRUE)
-
+form <- cbind(form, spp="form")
 head(form)
 
 lat <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_latipinna.csv")
@@ -33,7 +33,7 @@ lat <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/
 lat <- read.csv(lat, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
 head(lat)
-lat
+lat <- cbind(lat, spp="lat")
 
 ```
 
@@ -47,12 +47,13 @@ Additionally, size characteristics and characteristics such as ray count are in 
 
 latRM <- lat[,-c(10)]
 
+latRM
 normFunc <- function(x){(x-mean(x, na.rm = T))/sd(x, na.rm = T)}
 
 z_lat <- apply(latRM[8:27], 2, normFunc)
 
 latRM <- cbind(latRM, z_lat)
-colnames(latRM)[28:47] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
+colnames(latRM)[29:48] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
 latRM
 
 
@@ -61,7 +62,7 @@ formRM <- form[,-c(10)]
 z_form <- apply(formRM[8:27], 2, normFunc)
 
 formRM <- cbind(formRM, z_form)
-colnames(formRM)[28:47] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
+colnames(formRM)[29:48] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
 formRM
 
 ```
@@ -197,6 +198,9 @@ t.test(lat$OL, form$OL, alternative = "two.sided")
 ```{r}
 library(car)
 
+raw2 <- rbind(latRM, formRM)
+raw2
+
 #lateral line scale count
 Anova(lm(data = raw, LLSC ~ SPP * SL), type = "III")
 
@@ -210,7 +214,7 @@ Anova(lm(data = raw, SBLL ~ SPP * SL), type = "III")
 Anova(lm(data = raw, SBDF ~ SPP * SL), type = "III")
 
 #total length
-Anova(lm(data = raw, TL ~ SPP * SL), type = "III")
+Anova(lm(data = raw2, ZTL ~ spp * SL), type = "III")
 
 #body depth
 Anova(lm(data = raw, BD ~ SPP * SL), type = "III")
@@ -241,8 +245,6 @@ Anova(lm(data = raw, SnL ~ SPP * SL), type = "III")
 
 #oribital length
 Anova(lm(data = raw, OL ~ SPP * SL), type = "III")
-
-
 
 
 
@@ -315,6 +317,54 @@ var.test(lat$SnL, form$SnL, alternative = "two.sided")
 
 #oribital length
 var.test(lat$OL, form$OL, alternative = "two.sided")
+
+```
+
+
+### **Testing this correction for size biz**
+
+* STEP ONE: plot trait vs body size
+
+```{r}
+reg.lat.LLSC <- lm(lat$LLSC ~ lat$SL)
+reg.lat.LLSC
+
+reg.for.LLSC <- lm(form$LLSC ~ form$SL)
+reg.for.LLSC
+
+```
+
+* STEP TWO: get residuals for each individual for that trait
+
+```{r}
+res.lat.LLSC <- resid(reg.lat.LLSC)
+res.lat.LLSC
+
+res.for.LLSC <- resid(reg.for.LLSC)
+res.for.LLSC
+
+```
+
+
+* STEP THREE: convert residuals to absolute value ***MIKE SAID TO RUN FIRST W/RES AND THEN W/ABS AND NOTE WHEN THE SIG LEVELS ARE DIFFERENT***
+
+```{r}
+abs.lat.LLSC <- abs(res.lat.LLSC)
+abs.lat.LLSC
+
+abs.for.LLSC <- abs(res.for.LLSC)
+abs.for.LLSC
+
+```
+
+* STEP 4a: perform F tests to compare species
+
+```{r}
+var.res.LLSC <- var.test(abs.lat.LLSC, abs.for.LLSC, alternative = "greater")
+var.res.LLSC
+
+check <- var.test(res.lat.LLSC, abs.for.LLSC, alternative = "greater")
+check
 
 ```
 
