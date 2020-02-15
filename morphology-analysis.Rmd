@@ -632,9 +632,13 @@ abs.form.OL <- abs(res.form.OL)
 ```
 
 * STEP 4a: perform F tests to compare species (raw)
-  + just looked at greater (where lat is more variable than form)
+    + just looked at greater (where lat is more variable than form)
 
+    + first, lat>form, then form>lat
+    
 ```{r echo=FALSE}
+#lat>form
+
 var.res.D <- var.test(res.lat.D, res.form.D, alternative = "greater")
 var.res.D
 
@@ -698,12 +702,85 @@ var.res.SnL
 var.res.OL <- var.test(res.lat.OL, res.form.OL, alternative = "greater")
 var.res.OL
 
+
+
+#form>lat
+
+var.res.D <- var.test(res.lat.D, res.form.D, alternative = "less")
+var.res.D
+
+var.res.P1 <- var.test(res.lat.P1, res.form.P1, alternative = "less")
+var.res.P1
+
+var.res.P2.L <- var.test(res.lat.P2.L, res.form.P2.L, alternative = "less")
+var.res.P2.L
+
+var.res.P2.R <- var.test(res.lat.P2.R, res.form.P2.R, alternative = "less")
+var.res.P2.R
+
+var.res.A <- var.test(res.lat.A, res.form.A, alternative = "less")
+var.res.A
+
+var.res.P1.R <- var.test(res.lat.P1.R, res.form.P1.R, alternative = "less")
+var.res.P1.R
+
+var.res.LLSC <- var.test(res.lat.LLSC, res.form.LLSC, alternative = "less")
+var.res.LLSC
+
+var.res.SALL <- var.test(res.lat.SALL, res.form.SALL, alternative = "less")
+var.res.SALL
+
+var.res.SBLL <- var.test(res.lat.SBLL, res.form.SBLL, alternative = "less")
+var.res.SBLL
+
+var.res.SBDF <- var.test(res.lat.SBDF, res.form.SBDF, alternative = "less")
+var.res.SBDF
+
+var.res.TL <- var.test(res.lat.TL, res.form.TL, alternative = "less")
+var.res.TL
+
+var.res.BD <- var.test(res.lat.BD, res.form.BD, alternative = "less")
+var.res.BD
+
+var.res.CPD <- var.test(res.lat.CPD, res.form.CPD, alternative = "less")
+var.res.CPD
+
+var.res.CPL <- var.test(res.lat.CPL, res.form.CPL, alternative = "less")
+var.res.CPL
+
+var.res.PreDL <- var.test(res.lat.PreDL, res.form.PreDL, alternative = "less")
+var.res.PreDL
+
+var.res.DbL <- var.test(res.lat.DbL, res.form.DbL, alternative = "less")
+var.res.DbL
+
+var.res.HL <- var.test(res.lat.HL, res.form.HL, alternative = "less")
+var.res.HL
+
+var.res.HD <- var.test(res.lat.HD, res.form.HD, alternative = "less")
+var.res.HD
+
+var.res.HW <- var.test(res.lat.HW, res.form.HW, alternative = "less")
+var.res.HW
+
+var.res.SnL <- var.test(res.lat.SnL, res.form.SnL, alternative = "less")
+var.res.SnL
+
+var.res.OL <- var.test(res.lat.OL, res.form.OL, alternative = "less")
+var.res.OL
+
+
 ```
 
 
 * STEP 4b: will compare variances with absolute value of residuals and mark which ones produce an alternative p-value
+    + first lat>form, then form>lat
 
 ```{r echo=FALSE}
+
+#lat>form
+
+
 var.abs.D <- var.test(abs.lat.D, abs.form.D, alternative = "greater")
 var.abs.D
 
@@ -766,6 +843,75 @@ var.abs.SnL
 
 var.abs.OL <- var.test(abs.lat.OL, abs.form.OL, alternative = "greater")
 var.abs.OL
+
+
+
+#form>lat
+
+var.abs.D <- var.test(abs.lat.D, abs.form.D, alternative = "less")
+var.abs.D
+
+var.abs.P1 <- var.test(abs.lat.P1, abs.form.P1, alternative = "less")
+var.abs.P1
+
+var.abs.P2.L <- var.test(abs.lat.P2.L, abs.form.P2.L, alternative = "less")
+var.abs.P2.L
+
+var.abs.P2.R <- var.test(abs.lat.P2.R, abs.form.P2.R, alternative = "less")
+var.abs.P2.R
+
+var.abs.A <- var.test(abs.lat.A, abs.form.A, alternative = "less")
+var.abs.A
+
+var.abs.P1.R <- var.test(abs.lat.P1.R, abs.form.P1.R, alternative = "less")
+var.abs.P1.R
+
+var.abs.LLSC <- var.test(abs.lat.LLSC, abs.form.LLSC, alternative = "less")
+var.abs.LLSC
+
+var.abs.SALL <- var.test(abs.lat.SALL, abs.form.SALL, alternative = "less")
+var.abs.SALL
+
+var.abs.SBLL <- var.test(abs.lat.SBLL, abs.form.SBLL, alternative = "less")
+var.abs.SBLL
+
+var.abs.SBDF <- var.test(abs.lat.SBDF, abs.form.SBDF, alternative = "less")
+var.abs.SBDF
+
+var.abs.TL <- var.test(abs.lat.TL, abs.form.TL, alternative = "less")
+var.abs.TL
+
+var.abs.BD <- var.test(abs.lat.BD, abs.form.BD, alternative = "less")
+var.abs.BD
+
+var.abs.CPD <- var.test(abs.lat.CPD, abs.form.CPD, alternative = "less")
+var.abs.CPD
+
+var.abs.CPL <- var.test(abs.lat.CPL, abs.form.CPL, alternative = "less")
+var.abs.CPL
+
+var.abs.PreDL <- var.test(abs.lat.PreDL, abs.form.PreDL, alternative = "less")
+var.abs.PreDL
+
+var.abs.DbL <- var.test(abs.lat.DbL, abs.form.DbL, alternative = "less")
+var.abs.DbL
+
+var.abs.HL <- var.test(abs.lat.HL, abs.form.HL, alternative = "less")
+var.abs.HL
+
+var.abs.HD <- var.test(abs.lat.HD, abs.form.HD, alternative = "less")
+var.abs.HD
+
+var.abs.HW <- var.test(abs.lat.HW, abs.form.HW, alternative = "less")
+var.abs.HW
+
+var.abs.SnL <- var.test(abs.lat.SnL, abs.form.SnL, alternative = "less")
+var.abs.SnL
+
+var.abs.OL <- var.test(abs.lat.OL, abs.form.OL, alternative = "less")
+var.abs.OL
+
+
 
 ```
 
