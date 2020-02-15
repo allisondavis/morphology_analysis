@@ -166,7 +166,16 @@ t.test(lat$OL, form$OL, alternative = "two.sided")
 
 ```
 
+#### <font color="deepskyblue"> VARIANCE </font>
 
+```{r}
+lat.var <- apply(lat[8:29], 2, var)
+lat.var
+
+form.var <- apply(form[8:29], 2, var)
+form.var
+
+```
 
 #### <font color="deepskyblue"> VARIANCE TESTS </font>
 
@@ -759,6 +768,9 @@ var.abs.OL <- var.test(abs.lat.OL, abs.form.OL, alternative = "greater")
 var.abs.OL
 
 ```
+
+* <font color="darkorchid4"> The only p-value that changes direction after the absolute value transformation is anal ray count (A)</font>
+
 
 
  
