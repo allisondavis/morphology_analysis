@@ -16,60 +16,27 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(curl)
 
-raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_all.csv")
+raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morphology_raw-data.csv")
 
 raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
 head(raw)
+raw
 
-form <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_formosa.csv")
+lat <- raw[raw$SPP == "p.latipinna",]
+head(lat)
 
-form <- read.csv(form, header = TRUE, sep = ",", stringsAsFactors = TRUE)
-form <- cbind(form, spp="form")
+form <- raw[raw$SPP == "p.formosa",]
 head(form)
 
-lat <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morph-raw_latipinna.csv")
-
-lat <- read.csv(lat, header = TRUE, sep = ",", stringsAsFactors = TRUE)
-
-head(lat)
-lat <- cbind(lat, spp="lat")
-
 ```
 
-#### <font color="deepskyblue">Correction for Body Size</font>
+## Preliminary data inspection
 
-Certain size characteristics are influenced by overall body length, and therefore need to be corrected based on the individual's length prior to comparisons. 
-
-Additionally, size characteristics and characteristics such as ray count are in differing units. To compare variation between *all* characteristics, I will get z scores for all characteristics.
-
-```{r echo=FALSE}
-
-latRM <- lat[,-c(10)]
-
-latRM
-normFunc <- function(x){(x-mean(x, na.rm = T))/sd(x, na.rm = T)}
-
-z_lat <- apply(latRM[8:27], 2, normFunc)
-
-latRM <- cbind(latRM, z_lat)
-colnames(latRM)[29:48] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
-latRM
+I will first examine the data using box plots to visually assess any major differences. Then I will run t-tests and F-tests between the species for each characteristic to see what differences in means and variences exist *prior to any correction for body size.* At the end of this section, I will present a table with all characteristics, the mean for each species, the variance for each species, and the *p* results for the t- and F-tests.
 
 
-formRM <- form[,-c(10)]
-
-z_form <- apply(formRM[8:27], 2, normFunc)
-
-formRM <- cbind(formRM, z_form)
-colnames(formRM)[29:48] <- c("ZD", "ZP1", "ZA", "ZP1.R", "ZLLSC", "ZSALL", "ZSBLL", "ZSBDF", "ZTL", "ZSL", "ZBD", "ZCPD", "ZCPL", "ZPreDL", "ZDbL", "ZHL", "ZHD", "ZHW", "ZSnL", "ZOL")
-formRM
-
-```
-
-
-
-#### BOX PLOTS
+#### <font color = "deepskyblue"> BOX PLOTS</font>
 
 ```{r echo=FALSE}
 
@@ -81,43 +48,46 @@ ggplot(raw, aes(x=SPP, y=D, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab
 ggplot(raw, aes(x=SPP, y=P1, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Left pectoral ray comparison\n") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 
-ggplot(raw, aes(x=SPP, y=P2)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) #need to do an average or separate out pelvic right and pelvic left
+ggplot(raw, aes(x=SPP, y=P2.L)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=P2.L)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
 
-ggplot(raw, aes(x=SPP, y=LLSC)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Lateral line scale comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SALL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales above Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SBLL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales below Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=LLSC)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Lateral line scale comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SBDF)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales before dorsal fin comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=SALL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales above Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=TL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Total length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=SBLL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales below Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Standard length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=SBDF)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales before dorsal fin comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=BD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Body depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=TL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Total length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=CPD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=SL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Standard length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=CPL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=BD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Body depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=PreDL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Pre-dorsal length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=CPD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=DbL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Dorsal base length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=CPL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=HL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=PreDL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Pre-dorsal length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=HD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=DbL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Dorsal base length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=HW)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head width comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=HL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SnL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Snout length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=HD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Orbital length comparison") + geom_jitter(shape=16, position=position_jitter(0.2))
+ggplot(raw, aes(x=SPP, y=HW)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head width comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
+ggplot(raw, aes(x=SPP, y=SnL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Snout length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
+ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Orbital length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 
 
@@ -125,7 +95,7 @@ ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (m
 
 
 
-#### T.TESTS
+#### <font color ="deepskyblue"> T.TESTS</font>
 
 ```{r}
 #doral ray counts
@@ -134,7 +104,11 @@ t.test(lat$D, form$D, alternative = "two.sided")
 #left pectoral ray counts
 t.test(lat$P1, form$P1, alternative = "two.sided")
 
-#won't do pelvic, since it's currently in weird format
+#left pelvic
+t.test(lat$P2.L, form$P2.L, alternative = "two.sided")
+
+#right pelvic
+t.test(lat$P2.R, form$P2.R, alternative = "two.sided")
 
 #anal ray counts
 t.test(lat$A, form$A, alternative = "two.sided")
@@ -193,67 +167,8 @@ t.test(lat$OL, form$OL, alternative = "two.sided")
 ```
 
 
-#### TYPE III ANOVA - CORRECTING FOR SL
 
-```{r}
-library(car)
-
-raw2 <- rbind(latRM, formRM)
-raw2
-
-#lateral line scale count
-Anova(lm(data = raw, LLSC ~ SPP * SL), type = "III")
-
-#scales above lateral line
-Anova(lm(data = raw, SALL ~ SPP * SL), type = "III")
-
-#scales below lateral line
-Anova(lm(data = raw, SBLL ~ SPP * SL), type = "III")
-
-#scales before dorsal fin
-Anova(lm(data = raw, SBDF ~ SPP * SL), type = "III")
-
-#total length
-Anova(lm(data = raw2, ZTL ~ spp * SL), type = "III")
-
-#body depth
-Anova(lm(data = raw, BD ~ SPP * SL), type = "III")
-
-#caudal peduncle depth
-Anova(lm(data = raw, CPD ~ SPP * SL), type = "III")
-
-#caudal peduncle length
-Anova(lm(data = raw, CPL ~ SPP * SL), type = "III")
-
-#pre dorsal length
-Anova(lm(data = raw, PreDL ~ SPP * SL), type = "III")
-
-#dorsal base length
-Anova(lm(data = raw, DbL ~ SPP * SL), type = "III")
-
-#head length
-Anova(lm(data = raw, HL ~ SPP * SL), type = "III")
-
-#head depth
-Anova(lm(data = raw, HD ~ SPP * SL), type = "III")
-
-#head width
-Anova(lm(data = raw, HW ~ SPP * SL), type = "III")
-
-#snout length
-Anova(lm(data = raw, SnL ~ SPP * SL), type = "III")
-
-#oribital length
-Anova(lm(data = raw, OL ~ SPP * SL), type = "III")
-
-
-
-```
-
-
-
-
-#### VARIANCE TESTS
+#### <font color="deepskyblue"> VARIANCE TESTS </font>
 
 ```{r}
 #doral ray counts
@@ -262,7 +177,11 @@ var.test(lat$D, form$D, alternative = "two.sided")
 #left pectoral ray counts
 var.test(lat$P1, form$P1, alternative = "two.sided")
 
-#won't do pelvic, since it's currently in weird format
+#left pelvic
+var.test(lat$P2.L, form$P2.L, alternative = "two.sided")
+
+#right pelvic
+var.test(lat$P2.R, form$P2.R, alternative = "two.sided")
 
 #anal ray counts
 var.test(lat$A, form$A, alternative = "two.sided")
@@ -321,82 +240,527 @@ var.test(lat$OL, form$OL, alternative = "two.sided")
 ```
 
 
-### **Testing this correction for size biz**
+
+## Corrections for body size
+
+The amazon mollies are on averages larger than the sailfin mollies, as shown in the t-test above. To ensure body size is not affecting our comparison of these characteristics, I will correct for body size in two main ways:
+    1) I will run an ANCOVA for each characteristic using standard length (SL) as a covariate. Each model will resemble: trait ~ species * size. This will tell us if the mean differences of the traits are driven by the species or by the body length.
+    2) To correct for body size with variance, I will regress each trait against SL and use the residuals in the F-test. The original residuals should express both negative and positive values. Additionally, I will run F-tests with the absolute value of the residuals and note any differences in levels of significance (i.e. if it was sig in one but not the other). *need to figure out why doing this was logical again.*
+    
+
+#### <font color="deepskyblue"> ANCOVA </font>
+
+* first I will visualize the regression of each trait against SL for each species to check linearity assumption.
+
+```{r echo=FALSE}
+
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+library(broom)
+
+ggscatter(raw, x="SL", y="D", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="P1", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="P2.L", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="P2.R", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="A", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="P1.R", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="LLSC", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="SALL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="SBLL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="SBDF", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="TL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="BD", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="CPD", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="CPL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="PreDL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="DbL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="HL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="HD", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="HW", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="SnL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+ggscatter(raw, x="SL", y="OL", color="SPP", add = "reg.line")+ stat_regline_equation(aes(label=paste(..eq.label.., ..rr.label.., sep = "~~~"), color=SPP))
+
+
+```
+
+* all the scatter plots were linear, although as predicted, only the size measurements (such as body depth or snout length) were affected by SL. 
+  + there was a slight correlation between LLSC and SL but as this metric (along with other scale counts and ray counts) was on a discrete rather than continuous scale, this correlation is difficult to interpret.
+
+* I will now run anova tests to check for homogeneity of regression slopes for the size metrics (assumption 2 of ANCOVA)
+  + looking to see that the interaction term is not significant
+
+```{r}
+
+Anova(lm(data = raw, TL~SPP*SL))
+
+Anova(lm(data = raw, BD ~ SPP * SL))
+
+Anova(lm(data = raw, CPD ~ SPP * SL))
+
+Anova(lm(data = raw, CPL ~ SPP * SL))
+
+Anova(lm(data = raw, PreDL ~ SPP * SL))
+
+Anova(lm(data = raw, DbL ~ SPP * SL))
+
+Anova(lm(data = raw, HL ~ SPP * SL))
+
+Anova(lm(data = raw, HD ~ SPP * SL))
+
+Anova(lm(data = raw, HW ~ SPP * SL))
+
+Anova(lm(data = raw, SnL ~ SPP * SL))
+
+Anova(lm(data = raw, OL ~ SPP * SL))
+
+
+```
+
+* the only interactions that come out significant are PreDL and DbL
+  + this makes sense that there's an interaction between SPP and SL, since this is a diagnostic characteristic for the species
+  + ***DO I REMOVE THIS FROM FURTHER ANALYSES?***
+  
+### <font color = "darkorchid4"> ***Unable to perform ANCOVA using the method from https://www.datanovia.com/en/lessons/ancova-in-r/. Not sure what's going on with the data.***</font>
+
+#### <font color = "deepskyblue"> Regression analysis</font>
+
+I will now use residuals to account for body size in each trait, and compare the variance for each species. Again, the first round will take the raw residuals, and the second round with use the absolute value of the raw residuals. 
+
 
 * STEP ONE: plot trait vs body size
 
-```{r}
-reg.lat.LLSC <- lm(lat$LLSC ~ lat$SL)
-reg.lat.LLSC
+```{r echo=FALSE}
+reg.lat.D <- lm(lat$D ~ lat$SL)
 
-reg.for.LLSC <- lm(form$LLSC ~ form$SL)
-reg.for.LLSC
+reg.lat.P1 <- lm(lat$P1 ~ lat$SL)
+
+reg.lat.P2.L <- lm(lat$P2.L ~ lat$SL)
+
+reg.lat.P2.R <- lm(lat$P2.R ~ lat$SL)
+
+reg.lat.A <- lm(lat$A ~ lat$SL)
+
+reg.lat.P1.R <- lm(lat$P1.R ~ lat$SL)
+
+reg.lat.LLSC <- lm(lat$LLSC ~ lat$SL)
+
+reg.lat.SALL <- lm(lat$SALL ~ lat$SL)
+
+reg.lat.SBLL <- lm(lat$SBLL ~ lat$SL)
+
+reg.lat.SBDF <- lm(lat$SBDF ~ lat$SL)
+
+reg.lat.TL <- lm(lat$TL ~ lat$SL)
+
+reg.lat.BD <- lm(lat$BD ~ lat$SL)
+
+reg.lat.CPD <- lm(lat$CPD ~ lat$SL)
+
+reg.lat.CPL <- lm(lat$CPL ~ lat$SL)
+
+reg.lat.PreDL <- lm(lat$PreDL ~ lat$SL)
+
+reg.lat.DbL <- lm(lat$DbL ~ lat$SL)
+
+reg.lat.HL <- lm(lat$HL ~ lat$SL)
+
+reg.lat.HD <- lm(lat$HD ~ lat$SL)
+
+reg.lat.HW <- lm(lat$HW ~ lat$SL)
+
+reg.lat.SnL <- lm(lat$SnL ~ lat$SL)
+
+reg.lat.OL <- lm(lat$OL ~ lat$SL)
+
+
+
+reg.form.D <- lm(form$D ~ form$SL)
+
+reg.form.P1 <- lm(form$P1 ~ form$SL)
+
+reg.form.P2.L <- lm(form$P2.L ~ form$SL)
+
+reg.form.P2.R <- lm(form$P2.R ~ form$SL)
+
+reg.form.A <- lm(form$A ~ form$SL)
+
+reg.form.P1.R <- lm(form$P1.R ~ form$SL)
+
+reg.form.LLSC <- lm(form$LLSC ~ form$SL)
+
+reg.form.SALL <- lm(form$SALL ~ form$SL)
+
+reg.form.SBLL <- lm(form$SBLL ~ form$SL)
+
+reg.form.SBDF <- lm(form$SBDF ~ form$SL)
+
+reg.form.TL <- lm(form$TL ~ form$SL)
+
+reg.form.BD <- lm(form$BD ~ form$SL)
+
+reg.form.CPD <- lm(form$CPD ~ form$SL)
+
+reg.form.CPL <- lm(form$CPL ~ form$SL)
+
+reg.form.PreDL <- lm(form$PreDL ~ form$SL)
+
+reg.form.DbL <- lm(form$DbL ~ form$SL)
+
+reg.form.HL <- lm(form$HL ~ form$SL)
+
+reg.form.HD <- lm(form$HD ~ form$SL)
+
+reg.form.HW <- lm(form$HW ~ form$SL)
+
+reg.form.SnL <- lm(form$SnL ~ form$SL)
+
+reg.form.OL <- lm(form$OL ~ form$SL)
+
 
 ```
 
 * STEP TWO: get residuals for each individual for that trait
 
-```{r}
+```{r echo=FALSE}
+res.lat.D <- resid(reg.lat.D)
+
+res.lat.P1 <- resid(reg.lat.P1)
+
+res.lat.P2.L <- resid(reg.lat.P2.L)
+
+res.lat.P2.R <- resid(reg.lat.P2.R)
+
+res.lat.A <- resid(reg.lat.A)
+
+res.lat.P1.R <- resid(reg.lat.P1.R)
+
 res.lat.LLSC <- resid(reg.lat.LLSC)
-res.lat.LLSC
 
-res.for.LLSC <- resid(reg.for.LLSC)
-res.for.LLSC
+res.lat.SALL <- resid(reg.lat.SALL)
+
+res.lat.SBLL <- resid(reg.lat.SBLL)
+
+res.lat.SBDF <- resid(reg.lat.SBDF)
+
+res.lat.TL <- resid(reg.lat.TL)
+
+res.lat.BD <- resid(reg.lat.BD)
+
+res.lat.CPD <- resid(reg.lat.CPD)
+
+res.lat.CPL <- resid(reg.lat.CPL)
+
+res.lat.PreDL <- resid(reg.lat.PreDL)
+
+res.lat.DbL <- resid(reg.lat.DbL)
+
+res.lat.HL <- resid(reg.lat.HL)
+
+res.lat.HD <- resid(reg.lat.HD)
+
+res.lat.HW <- resid(reg.lat.HW)
+
+res.lat.SnL <- resid(reg.lat.SnL)
+
+res.lat.OL <- resid(reg.lat.OL)
+
+
+res.form.D <- resid(reg.form.D)
+
+res.form.P1 <- resid(reg.form.P1)
+
+res.form.P2.L <- resid(reg.form.P2.L)
+
+res.form.P2.R <- resid(reg.form.P2.R)
+
+res.form.A <- resid(reg.form.A)
+
+res.form.P1.R <- resid(reg.form.P1.R)
+
+res.form.LLSC <- resid(reg.form.LLSC)
+
+res.form.SALL <- resid(reg.form.SALL)
+
+res.form.SBLL <- resid(reg.form.SBLL)
+
+res.form.SBDF <- resid(reg.form.SBDF)
+
+res.form.TL <- resid(reg.form.TL)
+
+res.form.BD <- resid(reg.form.BD)
+
+res.form.CPD <- resid(reg.form.CPD)
+
+res.form.CPL <- resid(reg.form.CPL)
+
+res.form.PreDL <- resid(reg.form.PreDL)
+
+res.form.DbL <- resid(reg.form.DbL)
+
+res.form.HL <- resid(reg.form.HL)
+
+res.form.HD <- resid(reg.form.HD)
+
+res.form.HW <- resid(reg.form.HW)
+
+res.form.SnL <- resid(reg.form.SnL)
+
+res.form.OL <- resid(reg.form.OL)
 
 ```
 
 
-* STEP THREE: convert residuals to absolute value ***MIKE SAID TO RUN FIRST W/RES AND THEN W/ABS AND NOTE WHEN THE SIG LEVELS ARE DIFFERENT***
+* STEP THREE: convert residuals to absolute value
 
-```{r}
+```{r echo=FALSE}
+abs.lat.D <- abs(res.lat.D)
+
+abs.lat.P1 <- abs(res.lat.P1)
+
+abs.lat.P2.L <- abs(res.lat.P2.L)
+
+abs.lat.P2.R <- abs(res.lat.P2.R)
+
+abs.lat.A <- abs(res.lat.A)
+
+abs.lat.P1.R <- abs(res.lat.P1.R)
+
 abs.lat.LLSC <- abs(res.lat.LLSC)
-abs.lat.LLSC
 
-abs.for.LLSC <- abs(res.for.LLSC)
-abs.for.LLSC
+abs.lat.SALL <- abs(res.lat.SALL)
+
+abs.lat.SBLL <- abs(res.lat.SBLL)
+
+abs.lat.SBDF <- abs(res.lat.SBDF)
+
+abs.lat.TL <- abs(res.lat.TL)
+
+abs.lat.BD <- abs(res.lat.BD)
+
+abs.lat.CPD <- abs(res.lat.CPD)
+
+abs.lat.CPL <- abs(res.lat.CPL)
+
+abs.lat.PreDL <- abs(res.lat.PreDL)
+
+abs.lat.DbL <- abs(res.lat.DbL)
+
+abs.lat.HL <- abs(res.lat.HL)
+
+abs.lat.HD <- abs(res.lat.HD)
+
+abs.lat.HW <- abs(res.lat.HW)
+
+abs.lat.SnL <- abs(res.lat.SnL)
+
+abs.lat.OL <- abs(res.lat.OL)
+
+
+abs.form.D <- abs(res.form.D)
+
+abs.form.P1 <- abs(res.form.P1)
+
+abs.form.P2.L <- abs(res.form.P2.L)
+
+abs.form.P2.R <- abs(res.form.P2.R)
+
+abs.form.A <- abs(res.form.A)
+
+abs.form.P1.R <- abs(res.form.P1.R)
+
+abs.form.LLSC <- abs(res.form.LLSC)
+
+abs.form.SALL <- abs(res.form.SALL)
+
+abs.form.SBLL <- abs(res.form.SBLL)
+
+abs.form.SBDF <- abs(res.form.SBDF)
+
+abs.form.TL <- abs(res.form.TL)
+
+abs.form.BD <- abs(res.form.BD)
+
+abs.form.CPD <- abs(res.form.CPD)
+
+abs.form.CPL <- abs(res.form.CPL)
+
+abs.form.PreDL <- abs(res.form.PreDL)
+
+abs.form.DbL <- abs(res.form.DbL)
+
+abs.form.HL <- abs(res.form.HL)
+
+abs.form.HD <- abs(res.form.HD)
+
+abs.form.HW <- abs(res.form.HW)
+
+abs.form.SnL <- abs(res.form.SnL)
+
+abs.form.OL <- abs(res.form.OL)
+
 
 ```
 
-* STEP 4a: perform F tests to compare species
+* STEP 4a: perform F tests to compare species (raw)
+  + just looked at greater (where lat is more variable than form)
 
-```{r}
-var.res.LLSC <- var.test(abs.lat.LLSC, abs.for.LLSC, alternative = "greater")
+```{r echo=FALSE}
+var.res.D <- var.test(res.lat.D, res.form.D, alternative = "greater")
+var.res.D
+
+var.res.P1 <- var.test(res.lat.P1, res.form.P1, alternative = "greater")
+var.res.P1
+
+var.res.P2.L <- var.test(res.lat.P2.L, res.form.P2.L, alternative = "greater")
+var.res.P2.L
+
+var.res.P2.R <- var.test(res.lat.P2.R, res.form.P2.R, alternative = "greater")
+var.res.P2.R
+
+var.res.A <- var.test(res.lat.A, res.form.A, alternative = "greater")
+var.res.A
+
+var.res.P1.R <- var.test(res.lat.P1.R, res.form.P1.R, alternative = "greater")
+var.res.P1.R
+
+var.res.LLSC <- var.test(res.lat.LLSC, res.form.LLSC, alternative = "greater")
 var.res.LLSC
 
-check <- var.test(res.lat.LLSC, abs.for.LLSC, alternative = "greater")
-check
+var.res.SALL <- var.test(res.lat.SALL, res.form.SALL, alternative = "greater")
+var.res.SALL
+
+var.res.SBLL <- var.test(res.lat.SBLL, res.form.SBLL, alternative = "greater")
+var.res.SBLL
+
+var.res.SBDF <- var.test(res.lat.SBDF, res.form.SBDF, alternative = "greater")
+var.res.SBDF
+
+var.res.TL <- var.test(res.lat.TL, res.form.TL, alternative = "greater")
+var.res.TL
+
+var.res.BD <- var.test(res.lat.BD, res.form.BD, alternative = "greater")
+var.res.BD
+
+var.res.CPD <- var.test(res.lat.CPD, res.form.CPD, alternative = "greater")
+var.res.CPD
+
+var.res.CPL <- var.test(res.lat.CPL, res.form.CPL, alternative = "greater")
+var.res.CPL
+
+var.res.PreDL <- var.test(res.lat.PreDL, res.form.PreDL, alternative = "greater")
+var.res.PreDL
+
+var.res.DbL <- var.test(res.lat.DbL, res.form.DbL, alternative = "greater")
+var.res.DbL
+
+var.res.HL <- var.test(res.lat.HL, res.form.HL, alternative = "greater")
+var.res.HL
+
+var.res.HD <- var.test(res.lat.HD, res.form.HD, alternative = "greater")
+var.res.HD
+
+var.res.HW <- var.test(res.lat.HW, res.form.HW, alternative = "greater")
+var.res.HW
+
+var.res.SnL <- var.test(res.lat.SnL, res.form.SnL, alternative = "greater")
+var.res.SnL
+
+var.res.OL <- var.test(res.lat.OL, res.form.OL, alternative = "greater")
+var.res.OL
 
 ```
 
 
+* STEP 4b: will compare variances with absolute value of residuals and mark which ones produce an alternative p-value
 
-library(car)
-m <- lm(data = raw, formula = LLSC ~ SL * SPP)
-summary(m)
-a <- lm(data=raw, LLSC~ SPP * SL)
-a <- Anova(a, type="III")
-a
+```{r echo=FALSE}
+var.abs.D <- var.test(abs.lat.D, abs.form.D, alternative = "greater")
+var.abs.D
+
+var.abs.P1 <- var.test(abs.lat.P1, abs.form.P1, alternative = "greater")
+var.abs.P1
+
+var.abs.P2.L <- var.test(abs.lat.P2.L, abs.form.P2.L, alternative = "greater")
+var.abs.P2.L
+
+var.abs.P2.R <- var.test(abs.lat.P2.R, abs.form.P2.R, alternative = "greater")
+var.abs.P2.R
+
+var.abs.A <- var.test(abs.lat.A, abs.form.A, alternative = "greater")
+var.abs.A
+
+var.abs.P1.R <- var.test(abs.lat.P1.R, abs.form.P1.R, alternative = "greater")
+var.abs.P1.R
+
+var.abs.LLSC <- var.test(abs.lat.LLSC, abs.form.LLSC, alternative = "greater")
+var.abs.LLSC
+
+var.abs.SALL <- var.test(abs.lat.SALL, abs.form.SALL, alternative = "greater")
+var.abs.SALL
+
+var.abs.SBLL <- var.test(abs.lat.SBLL, abs.form.SBLL, alternative = "greater")
+var.abs.SBLL
+
+var.abs.SBDF <- var.test(abs.lat.SBDF, abs.form.SBDF, alternative = "greater")
+var.abs.SBDF
+
+var.abs.TL <- var.test(abs.lat.TL, abs.form.TL, alternative = "greater")
+var.abs.TL
+
+var.abs.BD <- var.test(abs.lat.BD, abs.form.BD, alternative = "greater")
+var.abs.BD
+
+var.abs.CPD <- var.test(abs.lat.CPD, abs.form.CPD, alternative = "greater")
+var.abs.CPD
+
+var.abs.CPL <- var.test(abs.lat.CPL, abs.form.CPL, alternative = "greater")
+var.abs.CPL
+
+var.abs.PreDL <- var.test(abs.lat.PreDL, abs.form.PreDL, alternative = "greater")
+var.abs.PreDL
+
+var.abs.DbL <- var.test(abs.lat.DbL, abs.form.DbL, alternative = "greater")
+var.abs.DbL
+
+var.abs.HL <- var.test(abs.lat.HL, abs.form.HL, alternative = "greater")
+var.abs.HL
+
+var.abs.HD <- var.test(abs.lat.HD, abs.form.HD, alternative = "greater")
+var.abs.HD
+
+var.abs.HW <- var.test(abs.lat.HW, abs.form.HW, alternative = "greater")
+var.abs.HW
+
+var.abs.SnL <- var.test(abs.lat.SnL, abs.form.SnL, alternative = "greater")
+var.abs.SnL
+
+var.abs.OL <- var.test(abs.lat.OL, abs.form.OL, alternative = "greater")
+var.abs.OL
+
+```
 
 
-options(contrasts = c("contr.sum", "contr.poly"))
-
-z <- Anova(lm(data = raw, D~SPP*SL, contrasts = list(topic="contr.sum", sys="contr.sum")), type="III")
-
-summary(z)
-
-hist(residuals(m))
-qqnorm(residuals(m))
- qqline(residuals(m))
- 
-library(nlme)
-
-model1 <- gls(D~SPP, data = raw)
-summary(model1)
-
-model2<- update(model1, weights= varIdent(form = ~1 | SPP))
-summary(model2)
- 
- 
  
 
 
