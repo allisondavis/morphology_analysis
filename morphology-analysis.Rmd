@@ -50,7 +50,7 @@ ggplot(raw, aes(x=SPP, y=P1, fill=SPP)) + geom_boxplot() + xlab("Species") + yla
 
 ggplot(raw, aes(x=SPP, y=P2.L)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=P2.L)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=P2.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 
 ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
@@ -94,6 +94,133 @@ ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (m
 ```
 
 
+#### outliers
+There appear to be some outliers; for example, two points are well below the rest for pectoral count, and upon inspection at least one of these points has the note that the pectoral looks ripped. Will do an outlier test to remove what I can to ensure these outliers are not affecting the significance.
+
+```{r}
+
+
+library(DescTools)
+
+Outlier(lat$P1, method=c("boxplot"), value = FALSE)
+
+
+```
+  * sure enough, the two with ripped notes are popping out as outliers. Will remove and perform stat tests with new dataframe. 
+
+```{r}
+lat_pect <- lat[-c(11,17),]
+
+
+
+t.test(lat_pect$P1, form$P1, alternative = "two.sided")
+
+t.test(lat_pect$P1, form$P1, alternative = "greater")
+
+var.test(lat_pect$P1, form$P1, alternative = "two.sided")
+
+```
+  * doesn't look like the variance is significant any more...
+  * Will check for outliers in all characteristics to see if my stats were a lie...
+
+```{r}
+#latipinna
+Outlier(lat$D, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$P1, method=c("boxplot"), value = FALSE)  #11,17
+
+Outlier(lat$P2.L, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$P2.R, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$P1.R, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$A, method=c("boxplot"), value = FALSE)  #NEED TO REMOVE NAS
+
+Outlier(lat$LLSC, method=c("boxplot"), value = FALSE)  #14,28
+
+Outlier(lat$SALL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$SBLL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$SBDF, method=c("boxplot"), value = FALSE)  #15
+
+Outlier(lat$TL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$SL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$BD, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$CPD, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$CPL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$PreDL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$DbL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$HL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$HD, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$HW, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$SnL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(lat$OL, method=c("boxplot"), value = FALSE)  #none
+
+
+#formosa
+
+Outlier(form$D, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$P1, method=c("boxplot"), value = FALSE)  #27,31,32,38,39,44
+
+Outlier(form$P2.L, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$P2.R, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$A, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$P1.R, method=c("boxplot"), value = FALSE) #29,31,32,34
+
+Outlier(form$LLSC, method=c("boxplot"), value = FALSE)  #18,31
+
+Outlier(form$SALL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$SBLL, method=c("boxplot"), value = FALSE)  #10, 30,31,32,34,36,37.40.42.43
+
+Outlier(form$SBDF, method=c("boxplot"), value = FALSE)  #NEED TO REMOVE NAS
+
+Outlier(form$TL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$SL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$BD, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$CPD, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$CPL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$PreDL, method=c("boxplot"), value = FALSE)  #nnone
+
+Outlier(form$DbL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$HL, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$HD, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$HW, method=c("boxplot"), value = FALSE)  #none
+
+Outlier(form$SnL, method=c("boxplot"), value = FALSE)  #31
+
+Outlier(form$OL, method=c("boxplot"), value = FALSE)  #none
+
+
+```
+
+  * for latipinna: 11, 17 for P1/ 14, 28 for LLSC/ 15 for SBDF
+  * for formosa: not making sense. It's pulling out rows in which the numbers are the same as rows it did not pull out (ex: pulled out 30-32 for SBLL but they all have 5, which is the same value for 26-28 which they did not pull out).
 
 #### <font color ="deepskyblue"> T.TESTS</font>
 
@@ -631,10 +758,11 @@ abs.form.OL <- abs(res.form.OL)
 
 ```
 
-* STEP 4a: perform F tests to compare species (raw)
+* STEP 4a: perform t and F tests to compare species (raw)
     + just looked at greater (where lat is more variable than form)
 
     + first, lat>form, then form>lat
+    
     
 ```{r echo=FALSE}
 #lat>form
