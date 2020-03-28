@@ -45,49 +45,52 @@ library(ggplot2)
 ggplot(raw, aes(x=SPP, y=D, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Dorsal ray comparison\n") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 
-ggplot(raw, aes(x=SPP, y=P1, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Left pectoral ray comparison\n") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=D, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Dorsal ray comparison\n") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 
-ggplot(raw, aes(x=SPP, y=P2.L)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
-
-ggplot(raw, aes(x=SPP, y=P2.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=P1, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Left pectoral ray comparison\n") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 
-ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=P2.L)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=P2.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Pelvic ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=LLSC)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Lateral line scale comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SALL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales above Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SBLL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales below Lateral line comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SBDF)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales before dorsal fin comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=LLSC)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Lateral line scale comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=TL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Total length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=SALL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales above Lateral line comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Standard length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=SBLL)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales below Lateral line comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=BD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Body depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=SBDF)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Scales before dorsal fin comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=CPD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=TL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Total length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=CPL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=SL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Standard length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=PreDL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Pre-dorsal length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=BD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Body depth comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=DbL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Dorsal base length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=CPD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=HL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=CPL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Caudal peduncle length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=HD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head depth comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=PreDL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Pre-dorsal length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=HW)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head width comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=DbL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Dorsal base length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=SnL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Snout length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=HL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Orbital length comparison") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw, aes(x=SPP, y=HD)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head depth comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
+ggplot(raw, aes(x=SPP, y=HW)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Head width comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
+ggplot(raw, aes(x=SPP, y=SnL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Snout length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
+ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (mm)") + ggtitle("Orbital length comparison") + geom_dotplot(binaxis = "y", stackdir = "center") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 
 
@@ -135,7 +138,7 @@ Outlier(lat$P2.R, method=c("boxplot"), value = FALSE)  #none
 
 Outlier(lat$P1.R, method=c("boxplot"), value = FALSE)  #none
 
-Outlier(lat$A, method=c("boxplot"), value = FALSE)  #NEED TO REMOVE NAS
+#Outlier(lat$A, method=c("boxplot"), value = FALSE)  #NEED TO REMOVE NAS
 
 Outlier(lat$LLSC, method=c("boxplot"), value = FALSE)  #14,28
 
@@ -188,9 +191,9 @@ Outlier(form$LLSC, method=c("boxplot"), value = FALSE)  #18,31
 
 Outlier(form$SALL, method=c("boxplot"), value = FALSE)  #none
 
-Outlier(form$SBLL, method=c("boxplot"), value = FALSE)  #10, 30,31,32,34,36,37.40.42.43
+Outlier(form$SBLL, method=c("boxplot"), value = FALSE)  #10,30,31,32,34,36,37.40.42.43
 
-Outlier(form$SBDF, method=c("boxplot"), value = FALSE)  #NEED TO REMOVE NAS
+#Outlier(form$SBDF, method=c("boxplot"), value = FALSE)  #NEED TO REMOVE NAS
 
 Outlier(form$TL, method=c("boxplot"), value = FALSE)  #none
 
