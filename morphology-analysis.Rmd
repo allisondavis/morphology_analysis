@@ -43,7 +43,11 @@ I will first examine the data using box plots to visually assess any major diffe
 
 library(ggplot2)
 
+
 ggplot(raw, aes(x=SPP, y=D, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Dorsal ray comparison\n") + geom_jitter(shape=16, position=position_jitter(0.2)) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
+ggplot(raw, aes(x=SPP, y=D, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Dorsal ray comparison\n") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.15, fill= "black" ) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+
 
 
 ggplot(raw, aes(x=SPP, y=D, fill=SPP)) + geom_boxplot() + xlab("Species") + ylab("Ray count\n") + ggtitle("Dorsal ray comparison\n") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.15, fill= "black" ) + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
@@ -59,7 +63,8 @@ ggplot(raw, aes(x=SPP, y=P2.R)) + geom_boxplot() + xlab("Species") + ylab("Ray c
 
 ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.05, fill= "black") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
-ggplot(raw, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.08, fill= "black") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+raw2 <- raw[-c(57,59,60,62),]
+ggplot(raw2, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.08, fill= "black") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 ggplot(raw, aes(x=SPP, y=LLSC)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Lateral line scale comparison") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.15, fill= "black") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
