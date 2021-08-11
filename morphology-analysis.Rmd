@@ -9,7 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Data collection
+## *Morphological variation of amazon and sailfin mollies*
+
+In this study, I am looking at various populations of amazon and sailfin mollies across their native/introduced range to assess morphological variation both within and among the species. I am using the Pickle fish collections for my samples. 
+
+### Data collection {.tabset .tabset-fade .tabset-pills}
 
 
 
@@ -22,6 +26,7 @@ raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
 head(raw)
 
+
 lat <- raw[raw$SPP == "p.latipinna",]
 head(lat)
 lat
@@ -32,12 +37,66 @@ form
 
 ```
 
-## Preliminary data inspection
+### PCA analysis {.tabset .tabset-fade .tabset-pills}
+
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most wihtout worrying about differences in scales/measurements. 
+
+** Will use the original raw dataset rather than any outlier-removed datasets.**
+
+  * summary of PCs
+  
+```{r, echo=FALSE}
+
+
+# error when running PCA on raw data due to the two NA values; will remove these rows.
+
+raw1 <- raw[complete.cases(raw[, 8:29]),]
+
+
+#error when running PCA since some columns are integers; can't run scale/center on integers, especially when they're constant or near constant (e.g. pectoral fin ray counts) since the standard dev is infinity (variance is 0). Need to identify all integer columns and cooerce them into numeric
+
+#raw1$D<- as.numeric(raw1$D)
+#raw1$P1<- as.numeric(raw1$P1)
+#raw1$P2.L<- as.numeric(raw1$P2.L)
+#raw1$P2.R<- as.numeric(raw1$P2.R)
+#raw1$A<- as.numeric(raw1$A)
+#raw1$P1.R<- as.numeric(raw1$P1.R)
+#raw1$LLSC<- as.numeric(raw1$LLSC)
+#raw1$SALL<- as.numeric(raw1$SALL)
+#raw1$SBLL<- as.numeric(raw1$SBLL)
+#raw1$SBDF<- as.numeric(raw1$DSBDF)
+#nope, still not working. Maybe I can't use these columns in PCA? guess it makes sense since these aren't really varying too much. 
+
+#let's just see if I can get this to work with the numeric columns
+  #nope, WTF! Ok, so scaling still gave the same error message with all the numeric columns. However, all the numeric columns are measured in mm so maybe that's why it's throwing an error? Will try without scaling.
+  # without scaling, gives a different error: error in svd(x, num=0, nv=k): a dimension is zero. So something is still calculating as a zero, but I have no idea what?!?
+
+### OMG SO DUMB, I forgot to specify what columns I wanted the NAs to be removed, and since all have NA for photo date, it make raw1 with 0 obeservations, so that's why it wouldn't work. LOOOOOOL
+
+PCA1 <- prcomp(raw1[, 18:29], center=TRUE, scale. = TRUE)
+summary(PCA1)
+
+
+```
+
+
+  * visualization of PCA
+
+```{r, echo=FALSE}
+
+
+
+
+```
+
+
+
+### Preliminary data inspection {.tabset .tabset-fade .tabset-pills}
 
 I will first examine the data using box plots to visually assess any major differences. Then I will run t-tests and F-tests between the species for each characteristic to see what differences in means and variences exist *prior to any correction for body size.* At the end of this section, I will present a table with all characteristics, the mean for each species, the variance for each species, and the *p* results for the t- and F-tests.
 
 
-#### <font color = "deepskyblue"> BOX PLOTS</font>
+#### BOX PLOTS {.tabset .tabset-fade .tabset-pills}
 
 ```{r echo=FALSE}
 
@@ -60,7 +119,7 @@ ggplot(raw, aes(x=SPP, y=P2.R)) + geom_boxplot() + xlab("Species") + ylab("Ray c
 ggplot(raw, aes(x=SPP, y=A)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Anal ray comparison") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.05, fill= "black") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
 raw2 <- raw[-c(57,59,60,62),]
-ggplot(raw2, aes(x=SPP, y=P1.R)) + geom_boxplot() + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + scale_y_continuous(limits = c(12, 15)) + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.08, fill= "black") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
+ggplot(raw2, aes(x=SPP, y=P1.R)) + geom_boxplot(fill="transparent") + xlab("Species") + ylab("Ray count") + ggtitle("Right pectorcal ray comparison") + scale_y_continuous(limits = c(12, 15)) + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.08, fill= "black") + theme_classic() + theme(text = element_text(size = 16)) + theme(legend.position = "none") + theme(panel.background = element_rect(fill = "transparent"), plot.background = element_rect(fill = "transparent", color = NA))
 
 ggplot(raw, aes(x=SPP, y=LLSC)) + geom_boxplot() + xlab("Species") + ylab("Scale count") + ggtitle("Lateral line scale comparison") + geom_dotplot(binaxis = "y", stackdir = "center", method="histodot",binwidth = 1,  dotsize = 0.15, fill= "black") + theme_classic() + scale_fill_manual(values = c("#9C964A", "#FAD77B")) + theme(text = element_text(size = 16)) + theme(legend.position = "none")
 
@@ -99,7 +158,8 @@ ggplot(raw, aes(x=SPP, y=OL)) + geom_boxplot() + xlab("Species") + ylab("Size (m
 ```
 
 
-#### outliers
+#### outliers {.tabset .tabset-fade .tabset-pills}
+*not sure if I should do anymore??* 
 There appear to be some outliers; for example, two points are well below the rest for pectoral count, and upon inspection at least one of these points has the note that the pectoral looks ripped. Will do an outlier test to remove what I can to ensure these outliers are not affecting the significance.
 
 ```{r}
@@ -235,7 +295,7 @@ Outlier(form$OL, method=c("boxplot"), value = FALSE)  #none
   * for formosa: not making sense. It's pulling out rows in which the numbers are the same as rows it did not pull out (ex: pulled out 30-32 for SBLL but they all have 5, which is the same value for 26-28 which they did not pull out)
     - <font color = "red"> turns out the row numbers displayed in the form data table are the row numbers from the original raw table; they don't correspond to the row numbers highlighted by the outlier function or the tag IDs. Went through and found the correct tag IDs corresponding to outlier rows (see page 45 in lab notebook 3).</font>
 
-#### <font color ="deepskyblue"> T.TESTS</font>
+#### <font color ="deepskyblue"> T.TESTS (outlier removed)</font> {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 #doral ray counts
@@ -306,7 +366,7 @@ t.test(lat$OL, form$OL, alternative = "two.sided")
 
 ```
 
-#### <font color="deepskyblue"> VARIANCE </font>
+#### <font color="deepskyblue"> VARIANCE </font> {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 lat.var <- apply(lat[8:29], 2, var)
@@ -317,7 +377,7 @@ form.var
 
 ```
 
-#### <font color="deepskyblue"> VARIANCE TESTS </font>
+#### <font color="deepskyblue"> VARIANCE TESTS (outier removed) </font> {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 #doral ray counts
@@ -390,14 +450,14 @@ var.test(lat$OL, form$OL, alternative = "two.sided")
 
 
 
-## Corrections for body size
+## Corrections for body size {.tabset .tabset-fade .tabset-pills}
 
 The amazon mollies are on averages larger than the sailfin mollies, as shown in the t-test above. To ensure body size is not affecting our comparison of these characteristics, I will correct for body size in two main ways:
     1) I will run an ANCOVA for each characteristic using standard length (SL) as a covariate. Each model will resemble: trait ~ species * size. This will tell us if the mean differences of the traits are driven by the species or by the body length.
     2) To correct for body size with variance, I will regress each trait against SL and use the residuals in the F-test. The original residuals should express both negative and positive values. Additionally, I will run F-tests with the absolute value of the residuals and note any differences in levels of significance (i.e. if it was sig in one but not the other). *need to figure out why doing this was logical again.*
     
 
-#### <font color="deepskyblue"> ANCOVA </font>
+#### <font color="deepskyblue"> ANCOVA </font> {.tabset .tabset-fade .tabset-pills}
 
 * first I will visualize the regression of each trait against SL for each species to check linearity assumption.
 
@@ -492,7 +552,7 @@ Anova(lm(data = raw, OL ~ SPP * SL))
   
 ### <font color = "darkorchid4"> ***Unable to perform ANCOVA using the method from https://www.datanovia.com/en/lessons/ancova-in-r/. Not sure what's going on with the data.***</font>
 
-#### <font color = "deepskyblue"> Regression analysis</font>
+#### <font color = "deepskyblue"> Regression analysis</font> {.tabset .tabset-fade .tabset-pills}
 
 I will now use residuals to account for body size in each trait, and compare the variance for each species. Again, the first round will take the raw residuals, and the second round with use the absolute value of the raw residuals. 
 
@@ -1057,6 +1117,10 @@ var.abs.OL
 ```
 
 * <font color="darkorchid4"> The only p-value that changes direction after the absolute value transformation is anal ray count (A)</font>
+
+
+
+
 
 
 
