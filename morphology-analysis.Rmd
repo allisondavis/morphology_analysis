@@ -39,6 +39,29 @@ In this analysis, I will compare the principle components after centering and sc
 
 ***Will use the original raw data set rather than any outlier-removed data sets.***
 
+*Variable chart:*
+
+  - D: dorsal ray count
+  - P1: left pectoral ray count
+  - P2.L: left pelvic rays
+  - P2.R: right pelvic rays
+  - A: anal rays
+  - P1.R: right pectoral ray count
+  - LLSC: lateral line scale count
+  - SALL: scales above lateral line
+  - SBLL: scales below lateral line
+  - SBDF: scales before dorsal fin
+  - TL: total length
+  - SL: standard length
+  - BD: body depth
+  - CPD: caudal peduncle depth
+  - CPL: caudal peduncle length
+  - PreDL: pre-dorsal length
+  - DbL: dorsal base length
+  - HL/HW/HD: head length/width/depth
+  - SnL: snout length
+  - OL: ocular length
+
 -   summary of PCs
 
 ```{r, echo=FALSE}
@@ -69,9 +92,14 @@ raw1 <- raw[complete.cases(raw[, 8:29]),]
 
 ### OMG SO DUMB, I forgot to specify what columns I wanted the NAs to be removed, and since all have NA for photo date, it make raw1 with 0 obeservations, so that's why it wouldn't work. LOOOOOOL
 
-PCA1 <- prcomp(raw1[, 18:29], center=TRUE, scale. = TRUE)
-summary(PCA1)
+#excluded ray and scale counts for whatever reason...PCA1 <- prcomp(raw1[, 18:29], center=TRUE, scale. = TRUE)
+#summary(PCA1)
+#PCA1$rotation
 
+PCA2 <- prcomp(raw1[, 8:29], center=TRUE, scale. = TRUE)
+summary(PCA2)
+loadings <- PCA2$rotation
+loadings[, 1:5]
 
 ```
 
@@ -83,11 +111,17 @@ library(AMR)
 library(ggplot2)
 raw.spp <- c(rep("Sailfin", 27), rep("Amazon", 44))
 
-plot1<- ggplot_pca(PCA1) + ggtitle("Plot 1") + theme_minimal()
-plot1
+#wrong PCA...plot1<- ggplot_pca(PCA1) + ggtitle("Plot 1") + theme_minimal()
+#plot1
 
-plot2 <- ggplot_pca(PCA1, ellipse = TRUE, color= raw.spp, groups = raw.spp) + ggtitle("Plot 2") + theme_minimal()
-plot2
+#wrong PCA...plot2 <- ggplot_pca(PCA1, ellipse = TRUE, color= raw.spp, groups = raw.spp) + ggtitle("Plot 2") + theme_minimal()
+#plot2
+
+plot1b<- ggplot_pca(PCA2) + ggtitle("Plot 1") + theme_minimal()
+plot1b
+
+plot2b <- ggplot_pca(PCA2, ellipse = TRUE, color= raw.spp, groups = raw.spp) + ggtitle("Plot 2") + theme_minimal()
+plot2b
 
 
 #not sure I fully understand how to use this function/package. Put in the ellipse argument but for some reason it does not add any ellipse. It does add labels to all of the points, but that's not super helpful since there's so many. 
@@ -108,10 +142,39 @@ plot2
 
 library(ggfortify)
 
-plot4<- autoplot(PCA1, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("Plot 4") + theme_minimal()
-plot4
+#wrong PCA plot4<- autoplot(PCA1, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("Plot 4") + theme_minimal()
+#plot4
+
+plot5<- autoplot(PCA2, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("Plot 5") + theme_minimal()
+plot5
 
 ```
+
+*Variable chart:*
+
+  - D: dorsal ray count
+  - P1: left pectoral ray count
+  - P2.L: left pelvic rays
+  - P2.R: right pelvic rays
+  - A: anal rays
+  - P1.R: right pectoral ray count
+  - LLSC: lateral line scale count
+  - SALL: scales above lateral line
+  - SBLL: scales below lateral line
+  - SBDF: scales before dorsal fin
+  - TL: total length
+  - SL: standard length
+  - BD: body depth
+  - CPD: caudal peduncle depth
+  - CPL: caudal peduncle length
+  - PreDL: pre-dorsal length
+  - DbL: dorsal base length
+  - HL/HW/HD: head length/width/depth
+  - SnL: snout length
+  - OL: ocular length
+  
+  
+  
 
 ### Preliminary data inspection {.tabset .tabset-fade .tabset-pills}
 
