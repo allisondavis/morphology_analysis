@@ -37,7 +37,7 @@ head(form)
 
 In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **28 Sailfin and 45 Amazon**. 
 
-***Will use the original raw dataset rather than any outlier-removed datasets.***
+***Will use the original raw data set rather than any outlier-removed data sets.***
 
 -   summary of PCs
 
