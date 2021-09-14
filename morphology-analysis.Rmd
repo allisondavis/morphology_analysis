@@ -27,19 +27,17 @@ head(raw)
 
 lat <- raw[raw$SPP == "p.latipinna",]
 head(lat)
-lat
 
 form <- raw[raw$SPP == "p.formosa",]
 head(form)
-form
 
 ```
 
 ### PCA analysis {.tabset .tabset-fade .tabset-pills}
 
-In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements.
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **28 Sailfin and 45 Amazon**. 
 
-\*\* Will use the original raw dataset rather than any outlier-removed datasets.\*\*
+***Will use the original raw dataset rather than any outlier-removed datasets.***
 
 -   summary of PCs
 
@@ -82,22 +80,27 @@ summary(PCA1)
 ```{r, echo=FALSE}
 
 library(AMR)
-
+library(ggplot2)
 raw.spp <- c(rep("Sailfin", 27), rep("Amazon", 44))
 
-ggplot_pca(PCA1, ellipse = TRUE, color= raw.spp, groups = raw.spp)
+plot1<- ggplot_pca(PCA1) + ggtitle("Plot 1") + theme_minimal()
+plot1
+
+plot2 <- ggplot_pca(PCA1, ellipse = TRUE, color= raw.spp, groups = raw.spp) + ggtitle("Plot 2") + theme_minimal()
+plot2
+
 
 #not sure I fully understand how to use this function/package. Put in the ellipse argument but for some reason it does not add any ellipse. It does add labels to all of the points, but that's not super helpful since there's so many. 
 
 #will try using regular ggplot and attaching PC1 and PC2 values as new columns.
 
-library(ggplot2)
 
-rawPC <- cbind(raw1, PCA1$x[,1:2])
+#didn't really like this plot: rawPC <- cbind(raw1, PCA1$x[,1:2])
 
-ggplot(rawPC, aes(PC1, PC2, col=SPP, fill=SPP)) +
-  stat_ellipse(geom = "polygon", col="black", alpha=0.5) +
-  geom_point(shape=21, col="black")
+#plot3 <- ggplot(rawPC, aes(PC1, PC2, col=SPP, fill=SPP)) +
+  #stat_ellipse(geom = "polygon", col="black", alpha=0.5) +
+  #geom_point(shape=21, col="black") + ggtitle("Plot 3") + theme_minimal()
+#plot3
 
 #didn't quite give me what I want either. Seems to plot points and draw the ellipses, but doen't show percentage of PCs and doesn't have loading arrows with the variables.
 
@@ -105,6 +108,8 @@ ggplot(rawPC, aes(PC1, PC2, col=SPP, fill=SPP)) +
 
 library(ggfortify)
 
+plot4<- autoplot(PCA1, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("Plot 4") + theme_minimal()
+plot4
 
 ```
 
