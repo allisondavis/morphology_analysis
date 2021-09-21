@@ -1,0 +1,177 @@
+---
+title: "morphology-analysis_final"
+author: "Allison Davis Connelly"
+date: "9/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## *Morphological variation of amazon and sailfin mollies* {.tabset .tabset-fade .tabset-pills}
+
+In this study, I am looking at various populations of amazon and sailfin mollies across their native/introduced range to assess morphological variation both within and among the species. I am using the Pickle fish collections for my samples.
+
+### Data collection {.tabset .tabset-fade .tabset-pills}
+
+```{r, echo=FALSE}
+library(curl)
+
+raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morphology_raw-data.csv")
+
+raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+head(raw)
+
+
+lat <- raw[raw$SPP == "p.latipinna",]
+head(lat)
+
+form <- raw[raw$SPP == "p.formosa",]
+head(form)
+
+```
+
+### PCA analysis {.tabset .tabset-fade .tabset-pills}
+
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **27 Sailfin and 54 Amazon**. 
+
+***Will use the original raw data set rather than any outlier-removed data sets.***
+
+*Variable chart:*
+
+  - D: dorsal ray count
+  - P1: left pectoral ray count
+  - P2.L: left pelvic rays
+  - P2.R: right pelvic rays
+  - A: anal rays
+  - P1.R: right pectoral ray count
+  - LLSC: lateral line scale count
+  - SALL: scales above lateral line
+  - SBLL: scales below lateral line
+  - SBDF: scales before dorsal fin
+  - TL: total length
+  - SL: standard length
+  - BD: body depth
+  - CPD: caudal peduncle depth
+  - CPL: caudal peduncle length
+  - PreDL: pre-dorsal length
+  - DbL: dorsal base length
+  - HL/HW/HD: head length/width/depth
+  - SnL: snout length
+  - OL: ocular length
+
+-   summary of PCs
+
+```{r, echo=FALSE}
+
+
+# error when running PCA on raw data due to the two NA values; will remove these rows.
+
+raw1 <- raw[complete.cases(raw[, 8:29]),]
+
+
+#error when running PCA since some columns are integers; can't run scale/center on integers, especially when they're constant or near constant (e.g. pectoral fin ray counts) since the standard dev is infinity (variance is 0). Need to identify all integer columns and cooerce them into numeric
+
+#raw1$D<- as.numeric(raw1$D)
+#raw1$P1<- as.numeric(raw1$P1)
+#raw1$P2.L<- as.numeric(raw1$P2.L)
+#raw1$P2.R<- as.numeric(raw1$P2.R)
+#raw1$A<- as.numeric(raw1$A)
+#raw1$P1.R<- as.numeric(raw1$P1.R)
+#raw1$LLSC<- as.numeric(raw1$LLSC)
+#raw1$SALL<- as.numeric(raw1$SALL)
+#raw1$SBLL<- as.numeric(raw1$SBLL)
+#raw1$SBDF<- as.numeric(raw1$DSBDF)
+#nope, still not working. Maybe I can't use these columns in PCA? guess it makes sense since these aren't really varying too much. 
+
+#let's just see if I can get this to work with the numeric columns
+  #nope, WTF! Ok, so scaling still gave the same error message with all the numeric columns. However, all the numeric columns are measured in mm so maybe that's why it's throwing an error? Will try without scaling.
+  # without scaling, gives a different error: error in svd(x, num=0, nv=k): a dimension is zero. So something is still calculating as a zero, but I have no idea what?!?
+
+### OMG SO DUMB, I forgot to specify what columns I wanted the NAs to be removed, and since all have NA for photo date, it make raw1 with 0 obeservations, so that's why it wouldn't work. LOOOOOOL
+
+#excluded ray and scale counts for whatever reason...PCA1 <- prcomp(raw1[, 18:29], center=TRUE, scale. = TRUE)
+#summary(PCA1)
+#PCA1$rotation
+
+PCA2 <- prcomp(raw1[, 8:29], center=TRUE, scale. = TRUE)
+summary(PCA2)
+loadings <- PCA2$rotation
+loadings[, 1:5]
+
+```
+
+-   visualization of PCA
+
+```{r, echo=FALSE}
+
+library(AMR)
+library(ggplot2)
+raw.spp <- c(rep("Sailfin", 27), rep("Amazon", 55))
+
+#wrong PCA...plot1<- ggplot_pca(PCA1) + ggtitle("Plot 1") + theme_minimal()
+#plot1
+
+#wrong PCA...plot2 <- ggplot_pca(PCA1, ellipse = TRUE, color= raw.spp, groups = raw.spp) + ggtitle("Plot 2") + theme_minimal()
+#plot2
+
+plot1b<- ggplot_pca(PCA2) + ggtitle("Plot 1") + theme_minimal()
+plot1b
+
+plot2b <- ggplot_pca(PCA2, ellipse = TRUE, color= raw.spp, groups = raw.spp) + ggtitle("Plot 2") + theme_minimal()
+plot2b
+
+
+#not sure I fully understand how to use this function/package. Put in the ellipse argument but for some reason it does not add any ellipse. It does add labels to all of the points, but that's not super helpful since there's so many. 
+
+#will try using regular ggplot and attaching PC1 and PC2 values as new columns.
+
+
+#didn't really like this plot: rawPC <- cbind(raw1, PCA1$x[,1:2])
+
+#plot3 <- ggplot(rawPC, aes(PC1, PC2, col=SPP, fill=SPP)) +
+  #stat_ellipse(geom = "polygon", col="black", alpha=0.5) +
+  #geom_point(shape=21, col="black") + ggtitle("Plot 3") + theme_minimal()
+#plot3
+
+#didn't quite give me what I want either. Seems to plot points and draw the ellipses, but doen't show percentage of PCs and doesn't have loading arrows with the variables.
+
+#will try using ggfortify, which is a PCA extension of ggplot
+
+library(ggfortify)
+
+#wrong PCA plot4<- autoplot(PCA1, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("Plot 4") + theme_minimal()
+#plot4
+
+plot5<- autoplot(PCA2, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("Plot 5") + theme_minimal()
+plot5
+
+```
+
+*Variable chart:*
+
+  - D: dorsal ray count
+  - P1: left pectoral ray count
+  - P2.L: left pelvic rays
+  - P2.R: right pelvic rays
+  - A: anal rays
+  - P1.R: right pectoral ray count
+  - LLSC: lateral line scale count
+  - SALL: scales above lateral line
+  - SBLL: scales below lateral line
+  - SBDF: scales before dorsal fin
+  - TL: total length
+  - SL: standard length
+  - BD: body depth
+  - CPD: caudal peduncle depth
+  - CPL: caudal peduncle length
+  - PreDL: pre-dorsal length
+  - DbL: dorsal base length
+  - HL/HW/HD: head length/width/depth
+  - SnL: snout length
+  - OL: ocular length
+  
+  
+  

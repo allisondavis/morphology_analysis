@@ -109,7 +109,7 @@ loadings[, 1:5]
 
 library(AMR)
 library(ggplot2)
-raw.spp <- c(rep("Sailfin", 27), rep("Amazon", 44))
+raw.spp <- c(rep("Sailfin", 27), rep("Amazon", 55))
 
 #wrong PCA...plot1<- ggplot_pca(PCA1) + ggtitle("Plot 1") + theme_minimal()
 #plot1
@@ -358,7 +358,7 @@ Outlier(form$CPD, method=c("boxplot"), value = FALSE)  #none
 
 Outlier(form$CPL, method=c("boxplot"), value = FALSE)  #none
 
-Outlier(form$PreDL, method=c("boxplot"), value = FALSE)  #nnone
+Outlier(form$PreDL, method=c("boxplot"), value = FALSE)  #none
 
 Outlier(form$DbL, method=c("boxplot"), value = FALSE)  #none
 
