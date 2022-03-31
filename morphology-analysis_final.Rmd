@@ -35,7 +35,7 @@ head(form)
 
 ### PCA analysis {.tabset .tabset-fade .tabset-pills}
 
-In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **30 Sailfin and 71 Amazon**. (31 sailfin and 75 Amazon including NAs)
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **33 Sailfin and 73 Amazon**. (34 sailfin and 78 Amazon including NAs)
 
 ***Will use the original raw data set rather than any outlier-removed data sets.***
 
@@ -90,19 +90,21 @@ loadings[, 1:5]
 
 library(AMR)
 library(ggplot2)
-raw.spp <- c(rep("Sailfin", 30), rep("Amazon", 71))
 
-
-plot1c<- ggplot_pca(PCA2) + ggtitle("Plot 1") + theme_minimal()
-plot1c
-
-plot2c <- ggplot_pca(PCA2, ellipse = TRUE, color= raw.spp, groups = raw.spp) + ggtitle("Plot 2") + theme_minimal()
-plot2c
 
 library(ggfortify)
 
-plot6<- autoplot(PCA2, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("Plot 5") + theme_minimal()
+plot6<- autoplot(PCA2, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
 plot6
+
+raw.lat <- raw1[raw1$SPP == "p.latipinna",]
+raw.form <- raw1[raw1$SPP == "p.formosa",]
+
+plot7<- autoplot(PCA2, data = raw1, colour='COUNTY.ST', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot7
+#don't think this is actually useful. Would this be telling me that populations would be different?
+
+
 
 ```
 
@@ -133,6 +135,15 @@ plot6
   
 ### T and F tests (body size corrected) {.tabset .tabset-fade .tabset-pills}
 
+F tests on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F tests on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? What I need to do is first compare the absolute value of the residuals using a t-test; if the r2 for the regression plot of SL vs trait is not significant, than this suggests it does not vary with body size. I can then do the regular F tests on those traits.
+
+So: 
+    1. Plot regression of trait by SD for both species and all traits. Get r2 values and their associated p values.
+    2. Get the absolute value of the residual scores.
+    3. Plot the mean absolute values of the residuals for both species (with raw data) for each trait.
+    4. Run a t-test for the absolute values of the residuals for all traits.
+    5. Backtrack: if r2 is not significant from (1), then use F tests on raw data.
+
 #### Calculated residuals {.tabset .tabset-fade .tabset-pills}
 
 
@@ -140,96 +151,296 @@ I will now use residuals to account for body size in each trait, and compare the
 
 -   STEP ONE: plot trait vs body size
 
-```{r echo=FALSE}
+```{r}
+
+library(ggplot2)
+library(ggpubr)
+
 lat.1 <- lat[complete.cases(lat[, 8:29]),]
 form.1 <- form[complete.cases(form[, 8:29]),]
 
 
 reg.lat.D1 <- lm(lat.1$D ~ lat.1$SL)
+reg.lat.D1.plot <- ggplot(lat.1, aes(x = D, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.D1.plot
 
 reg.lat.P11 <- lm(lat.1$P1 ~ lat.1$SL)
+reg.lat.P11.plot <- ggplot(lat.1, aes(x = P1, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P11.plot
 
 reg.lat.P2.L1 <- lm(lat.1$P2.L ~ lat.1$SL)
+reg.lat.P2.L1.plot <- ggplot(lat.1, aes(x = P2.L, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P2.L1.plot
 
 reg.lat.P2.R1 <- lm(lat.1$P2.R ~ lat.1$SL)
+reg.lat.P2.R1.plot <- ggplot(lat.1, aes(x = P2.R, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P2.R1.plot
 
 reg.lat.A1 <- lm(lat.1$A ~ lat.1$SL)
+reg.lat.A1.plot <- ggplot(lat.1, aes(x = A, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.A1.plot
 
 reg.lat.P1.R1 <- lm(lat.1$P1.R ~ lat.1$SL)
+reg.lat.P1.R1.plot <- ggplot(lat.1, aes(x = P1.R, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P1.R1.plot
 
 reg.lat.LLSC1 <- lm(lat.1$LLSC ~ lat.1$SL)
+reg.lat.LLSC1.plot <- ggplot(lat.1, aes(x = LLSC, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.LLSC1.plot
 
 reg.lat.SALL1 <- lm(lat.1$SALL ~ lat.1$SL)
+reg.lat.SALL1.plot <- ggplot(lat.1, aes(x = SALL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SALL1.plot
 
 reg.lat.SBLL1 <- lm(lat.1$SBLL ~ lat.1$SL)
+reg.lat.SBLL1.plot <- ggplot(lat.1, aes(x = SBLL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SBLL1.plot
 
 reg.lat.SBDF1 <- lm(lat.1$SBDF ~ lat.1$SL)
-
-reg.lat.TL1 <- lm(lat.1$TL ~ lat.1$SL)
+reg.lat.SBDF1.plot <- ggplot(lat.1, aes(x = SBDF, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SBDF1.plot
 
 reg.lat.BD1 <- lm(lat.1$BD ~ lat.1$SL)
+reg.lat.BD1.plot <- ggplot(lat.1, aes(x = BD, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.BD1.plot
 
 reg.lat.CPD1 <- lm(lat.1$CPD ~ lat.1$SL)
+reg.lat.CPD1.plot <- ggplot(lat.1, aes(x = CPD, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.CPD1.plot
 
 reg.lat.CPL1 <- lm(lat.1$CPL ~ lat.1$SL)
+reg.lat.CPL1.plot <- ggplot(lat.1, aes(x = CPL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.CPL1.plot
 
 reg.lat.PreDL1 <- lm(lat.1$PreDL ~ lat.1$SL)
+reg.lat.PreDL1.plot <- ggplot(lat.1, aes(x = PreDL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.PreDL1.plot
 
 reg.lat.DbL1 <- lm(lat.1$DbL ~ lat.1$SL)
+reg.lat.DbL1.plot <- ggplot(lat.1, aes(x = DbL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.DbL1.plot
 
 reg.lat.HL1 <- lm(lat.1$HL ~ lat.1$SL)
+reg.lat.HL1.plot <- ggplot(lat.1, aes(x = HL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.HL1.plot
 
 reg.lat.HD1 <- lm(lat.1$HD ~ lat.1$SL)
+reg.lat.HD1.plot <- ggplot(lat.1, aes(x = HD, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.HD1.plot
 
 reg.lat.HW1 <- lm(lat.1$HW ~ lat.1$SL)
+reg.lat.HW1.plot <- ggplot(lat.1, aes(x = HW, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.HW1.plot
 
 reg.lat.SnL1 <- lm(lat.1$SnL ~ lat.1$SL)
+reg.lat.SnL1.plot <- ggplot(lat.1, aes(x = SnL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SnL1.plot
 
 reg.lat.OL1 <- lm(lat.1$OL ~ lat.1$SL)
+reg.lat.OL1.plot <- ggplot(lat.1, aes(x = OL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.OL1.plot
 
 
 
 reg.form.D1 <- lm(form.1$D ~ form.1$SL)
+reg.form.D1.plot <- ggplot(form.1, aes(x = D, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.D1.plot
 
 reg.form.P11 <- lm(form.1$P1 ~ form.1$SL)
+reg.form.P11.plot <- ggplot(form.1, aes(x = P1, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P11.plot
 
 reg.form.P2.L1 <- lm(form.1$P2.L ~ form.1$SL)
+reg.form.P2.L1.plot <- ggplot(form.1, aes(x = P2.L, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P2.L1.plot
 
 reg.form.P2.R1 <- lm(form.1$P2.R ~ form.1$SL)
+reg.form.P2.R1.plot <- ggplot(form.1, aes(x = P2.R, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P2.R1.plot
 
 reg.form.A1 <- lm(form.1$A ~ form.1$SL)
+reg.form.A1.plot <- ggplot(form.1, aes(x = A, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.A1.plot
 
 reg.form.P1.R1 <- lm(form.1$P1.R ~ form.1$SL)
+reg.form.P1.R1.plot <- ggplot(form.1, aes(x = P1.R, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P1.R1.plot
 
 reg.form.LLSC1 <- lm(form.1$LLSC ~ form.1$SL)
+reg.form.LLSC1.plot <- ggplot(form.1, aes(x = LLSC, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.LLSC1.plot
 
 reg.form.SALL1 <- lm(form.1$SALL ~ form.1$SL)
+reg.form.SALL1.plot <- ggplot(form.1, aes(x = SALL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SALL1.plot
 
 reg.form.SBLL1 <- lm(form.1$SBLL ~ form.1$SL)
+reg.form.SBLL1.plot <- ggplot(form.1, aes(x = SBLL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SBLL1.plot
 
 reg.form.SBDF1 <- lm(form.1$SBDF ~ form.1$SL)
-
-reg.form.TL1 <- lm(form.1$TL ~ form.1$SL)
+reg.form.SBDF1.plot <- ggplot(form.1, aes(x = SBDF, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SBDF1.plot
 
 reg.form.BD1 <- lm(form.1$BD ~ form.1$SL)
+reg.form.BD1.plot <- ggplot(form.1, aes(x = BD, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.BD1.plot
 
 reg.form.CPD1 <- lm(form.1$CPD ~ form.1$SL)
+reg.form.CPD1.plot <- ggplot(form.1, aes(x = CPD, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.CPD1.plot
 
 reg.form.CPL1 <- lm(form.1$CPL ~ form.1$SL)
+reg.form.CPL1.plot <- ggplot(form.1, aes(x = CPL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.CPL1.plot
 
 reg.form.PreDL1 <- lm(form.1$PreDL ~ form.1$SL)
+reg.form.PreDL1.plot <- ggplot(form.1, aes(x = PreDL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.PreDL1.plot
 
 reg.form.DbL1 <- lm(form.1$DbL ~ form.1$SL)
+reg.form.DbL1.plot <- ggplot(form.1, aes(x = DbL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.DbL1.plot
 
 reg.form.HL1 <- lm(form.1$HL ~ form.1$SL)
+reg.form.HL1.plot <- ggplot(form.1, aes(x = HL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.HL1.plot
 
 reg.form.HD1 <- lm(form.1$HD ~ form.1$SL)
+reg.form.HD1.plot <- ggplot(form.1, aes(x = HD, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.HD1.plot
 
 reg.form.HW1 <- lm(form.1$HW ~ form.1$SL)
+reg.form.HW1.plot <- ggplot(form.1, aes(x = HW, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.HW1.plot
 
 reg.form.SnL1 <- lm(form.1$SnL ~ form.1$SL)
+reg.form.SnL1.plot <- ggplot(form.1, aes(x = SnL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SnL1.plot
 
 reg.form.OL1 <- lm(form.1$OL ~ form.1$SL)
+reg.form.OL1.plot <- ggplot(form.1, aes(x = OL, y = SL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.OL1.plot
 
 
 ```
@@ -256,8 +467,6 @@ res.lat.SALL1 <- resid(reg.lat.SALL1)
 res.lat.SBLL1 <- resid(reg.lat.SBLL1)
 
 res.lat.SBDF1 <- resid(reg.lat.SBDF1)
-
-res.lat.TL1 <- resid(reg.lat.TL1)
 
 res.lat.BD1 <- resid(reg.lat.BD1)
 
@@ -300,8 +509,6 @@ res.form.SBLL1 <- resid(reg.form.SBLL1)
 
 res.form.SBDF1 <- resid(reg.form.SBDF1)
 
-res.form.TL1 <- resid(reg.form.TL1)
-
 res.form.BD1 <- resid(reg.form.BD1)
 
 res.form.CPD1 <- resid(reg.form.CPD1)
@@ -326,231 +533,370 @@ res.form.OL1 <- resid(reg.form.OL1)
 
 -   STEP THREE: convert residuals to absolute value
 
-```{r echo=FALSE}
+```{r}
 abs.lat.D1 <- abs(res.lat.D1)
+mean(abs.lat.D1)
 
 abs.lat.P11 <- abs(res.lat.P11)
+mean(abs.lat.P11)
 
 abs.lat.P2.L1 <- abs(res.lat.P2.L1)
+mean(abs.lat.P2.L1)
 
 abs.lat.P2.R1 <- abs(res.lat.P2.R1)
+mean(abs.lat.P2.R1)
 
 abs.lat.A1 <- abs(res.lat.A1)
+mean(abs.lat.A1)
 
 abs.lat.P1.R1 <- abs(res.lat.P1.R1)
+mean(abs.lat.P1.R1)
 
 abs.lat.LLSC1 <- abs(res.lat.LLSC1)
+mean(abs.lat.LLSC1)
 
 abs.lat.SALL1 <- abs(res.lat.SALL1)
+mean(abs.lat.SALL1)
 
 abs.lat.SBLL1 <- abs(res.lat.SBLL1)
+mean(abs.lat.SBLL1)
 
 abs.lat.SBDF1 <- abs(res.lat.SBDF1)
-
-abs.lat.TL1 <- abs(res.lat.TL1)
+mean(abs.lat.SBDF1)
 
 abs.lat.BD1 <- abs(res.lat.BD1)
+mean(abs.lat.BD1)
 
 abs.lat.CPD1 <- abs(res.lat.CPD1)
+mean(abs.lat.CPD1)
 
 abs.lat.CPL1 <- abs(res.lat.CPL1)
+mean(abs.lat.CPL1)
 
 abs.lat.PreDL1 <- abs(res.lat.PreDL1)
+mean(abs.lat.PreDL1)
 
 abs.lat.DbL1 <- abs(res.lat.DbL1)
+mean(abs.lat.DbL1)
 
 abs.lat.HL1 <- abs(res.lat.HL1)
+mean(abs.lat.HL1)
 
 abs.lat.HD1 <- abs(res.lat.HD1)
+mean(abs.lat.HD1)
 
 abs.lat.HW1 <- abs(res.lat.HW1)
+mean(abs.lat.HW1)
 
 abs.lat.SnL1 <- abs(res.lat.SnL1)
+mean(abs.lat.SnL1)
 
 abs.lat.OL1 <- abs(res.lat.OL1)
+mean(abs.lat.OL1)
 
 
 abs.form.D1 <- abs(res.form.D1)
+mean(abs.form.D1)
 
 abs.form.P11 <- abs(res.form.P11)
+mean(abs.form.P11)
 
 abs.form.P2.L1 <- abs(res.form.P2.L1)
+mean(abs.form.P2.L1)
 
 abs.form.P2.R1 <- abs(res.form.P2.R1)
+mean(abs.form.P2.R1)
 
 abs.form.A1 <- abs(res.form.A1)
+mean(abs.form.A1)
 
 abs.form.P1.R1 <- abs(res.form.P1.R1)
+mean(abs.form.P1.R1)
 
 abs.form.LLSC1 <- abs(res.form.LLSC1)
+mean(abs.form.LLSC1)
 
 abs.form.SALL1 <- abs(res.form.SALL1)
+mean(abs.form.SALL1)
 
 abs.form.SBLL1 <- abs(res.form.SBLL1)
+mean(abs.form.SBLL1)
 
 abs.form.SBDF1 <- abs(res.form.SBDF1)
-
-abs.form.TL1 <- abs(res.form.TL1)
+mean(abs.form.SBDF1)
 
 abs.form.BD1 <- abs(res.form.BD1)
+mean(abs.form.BD1)
 
 abs.form.CPD1 <- abs(res.form.CPD1)
+mean(abs.form.CPD1)
 
 abs.form.CPL1 <- abs(res.form.CPL1)
+mean(abs.form.CPL1)
 
 abs.form.PreDL1 <- abs(res.form.PreDL1)
+mean(abs.form.PreDL1)
 
 abs.form.DbL1 <- abs(res.form.DbL1)
+mean(abs.form.DbL1)
 
 abs.form.HL1 <- abs(res.form.HL1)
+mean(abs.form.HL1)
 
 abs.form.HD1 <- abs(res.form.HD1)
+mean(abs.form.HD1)
 
 abs.form.HW1 <- abs(res.form.HW1)
+mean(abs.form.HW1)
 
 abs.form.SnL1 <- abs(res.form.SnL1)
+mean(abs.form.SnL1)
 
 abs.form.OL1 <- abs(res.form.OL1)
+mean(abs.form.OL1)
+
+
+
+#let's get this into the raw1 data set so that we can plot this more easily
+
+abs.res.D <- append(abs.lat.D1, abs.form.D1)
+abs.res.P1 <- append(abs.lat.P11, abs.form.P11)
+abs.res.P2.L <- append(abs.lat.P2.L1, abs.form.P2.L1)
+abs.res.P2.R <- append(abs.lat.P2.R1, abs.form.P2.R1)
+abs.res.A <- append(abs.lat.A1, abs.form.A1)
+abs.res.P1.R <- append(abs.lat.P1.R1, abs.form.P1.R1)
+abs.res.LLSC<- append(abs.lat.LLSC1, abs.form.LLSC1)
+abs.res.SALL <- append(abs.lat.SALL1, abs.form.SALL1)
+abs.res.SBLL<- append(abs.lat.SBLL1, abs.form.SBLL1)
+abs.res.SBDF <- append(abs.lat.SBDF1, abs.form.SBDF1)
+abs.res.BD<- append(abs.lat.BD1, abs.form.BD1)
+abs.res.CPD<- append(abs.lat.CPD1, abs.form.CPD1)
+abs.res.CPL<- append(abs.lat.CPL1, abs.form.CPL1)
+abs.res.PreDL <- append(abs.lat.PreDL1, abs.form.PreDL1)
+abs.res.DbL <- append(abs.lat.DbL1, abs.form.DbL1)
+abs.res.HL<- append(abs.lat.HL1, abs.form.HL1)
+abs.res.HD<- append(abs.lat.HD1, abs.form.HD1)
+abs.res.HW <- append(abs.lat.HW1, abs.form.HW1)
+abs.res.SnL <- append(abs.lat.SnL1, abs.form.SnL1)
+abs.res.OL <- append(abs.lat.OL1, abs.form.OL1)
+
+raw3 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P2.L, abs.res.P2.R, abs.res.A, abs.res.P1.R, abs.res.LLSC, abs.res.SALL, abs.res.SBLL, abs.res.SBDF, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
 
 
 ```
 
-#### F tests to compare species (raw) {.tabset .tabset-fade .tabset-pills}
+-   STEP FOUR: plot the mean of the |residuals| for both species, for all traits
+
+```{r}
+
+#res.data <- matrix(c(abs.lat.D1, abs.lat.P11, abs.lat.P2.L1, abs.lat.P2.R1, abs.form.D1, abs.form.P11, abs.form.P2.L1, abs.form.P2.R1, abs.lat.A1, abs.form.A1, abs.lat.P1.R1, abs.form.P1.R1, abs.lat.LLSC1, abs.form.LLSC1, abs.lat.SALL1, abs.form.SALL1, abs.lat.SBLL1, abs.form.SBLL1, abs.lat.SBDF1, abs.form.SBDF1, abs.lat.BD1, abs.form.BD1, abs.lat.CPD1, abs.form.CPD1, abs.lat.CPL1, abs.form.CPL1, abs.lat.PreDL1, abs.form.PreDL1, abs.lat.DbL1, abs.form.DbL1, abs.lat.HL1, abs.form.HL1, abs.lat.HD1, abs.form.HD1, abs.lat.HW1, abs.form.HW1, abs.lat.SnL1, abs.form.SnL1, abs.lat.OL1, abs.form.OL1), ncol=2, byrow=TRUE)
+#res.data
+
+#can't for the life of me think of how to add the residuals to the raw data...I want the residuals for one trait for sailfin and then right under that, have the residuals for the amazon. 
+
+#library(gplots)
+
+#plotmeans(abs.res.CPL~SPP, data=raw3, connect=FALSE)
+## works, but doesn't give me raw data option I don't think
+
+
+ggplot(raw3, aes(SPP, abs.res.CPL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
+
+ggplot(raw3, aes(SPP, abs.res.P1)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+```
+
+
+
+#### F tests to compare species {.tabset .tabset-fade .tabset-pills}
 
 
     -   first, lat\>form, then form\>lat
 
-```{r echo=FALSE}
+```{r}
+
+var.left.pel <- var.test(lat.1$P2.L, form.1$P2.L, alternative = "greater")
+var.left.pel
+
+var.rig.pel <- var.test(lat.1$P2.R, form.1$P2.R, alternative = "greater")
+var.rig.pel
+
+var.anal <- var.test(lat.1$A, form.1$A, alternative = "greater")
+var.anal
+
+var.sca.abv <- var.test(lat.1$SALL, form.1$SALL, alternative = "greater")
+var.sca.abv
+
+var.sca.df <- var.test(lat.1$SBDF, form.1$SBDF, alternative = "greater")
+var.sca.df
+
+var.left.pel1 <- var.test(lat.1$P2.L, form.1$P2.L, alternative = "less")
+var.left.pel1
+
+var.rig.pel1 <- var.test(lat.1$P2.R, form.1$P2.R, alternative = "less")
+var.rig.pel1
+
+var.anal1 <- var.test(lat.1$A, form.1$A, alternative = "less")
+var.anal1
+
+var.sca.abv1 <- var.test(lat.1$SALL, form.1$SALL, alternative = "less")
+var.sca.abv1
+
+var.sca.df1 <- var.test(lat.1$SBDF, form.1$SBDF, alternative = "less")
+var.sca.df1
+
+
+```
+
+
+
+
+
+
+<br><br><br><br>
+
+
+
+
+#### T tests to compare species {.tabset .tabset-fade .tabset-pills}
+
+
+    -   first, lat\>form, then form\>lat
+    
+    ```{r echo=FALSE}
 #lat>form
 
-var.res.D1 <- var.test(res.lat.D1, res.form.D1, alternative = "greater")
+ttest.res.D1 <- t.test(res.lat.D1, res.form.D1, alternative = "greater")
 
 
-var.res.P11 <- var.test(res.lat.P11, res.form.P11, alternative = "greater")
+ttest.res.P11 <- t.test(res.lat.P11, res.form.P11, alternative = "greater")
 
 
-var.res.P2.L1 <- var.test(res.lat.P2.L1, res.form.P2.L1, alternative = "greater")
+ttest.res.P2.L1 <- t.test(res.lat.P2.L1, res.form.P2.L1, alternative = "greater")
 
 
-var.res.P2.R1 <- var.test(res.lat.P2.R1, res.form.P2.R1, alternative = "greater")
+ttest.res.P2.R1 <- t.test(res.lat.P2.R1, res.form.P2.R1, alternative = "greater")
 
 
-var.res.A1 <- var.test(res.lat.A1, res.form.A1, alternative = "greater")
+ttest.res.A1 <- t.test(res.lat.A1, res.form.A1, alternative = "greater")
 
 
-var.res.P1.R1 <- var.test(res.lat.P1.R1, res.form.P1.R1, alternative = "greater")
+ttest.res.P1.R1 <- t.test(res.lat.P1.R1, res.form.P1.R1, alternative = "greater")
 
 
-var.res.LLSC1 <- var.test(res.lat.LLSC1, res.form.LLSC1, alternative = "greater")
+ttest.res.LLSC1 <- t.test(res.lat.LLSC1, res.form.LLSC1, alternative = "greater")
 
 
-var.res.SALL1 <- var.test(res.lat.SALL1, res.form.SALL1, alternative = "greater")
+ttest.res.SALL1 <- t.test(res.lat.SALL1, res.form.SALL1, alternative = "greater")
 
 
-var.res.SBLL1 <- var.test(res.lat.SBLL1, res.form.SBLL1, alternative = "greater")
+ttest.res.SBLL1 <- t.test(res.lat.SBLL1, res.form.SBLL1, alternative = "greater")
 
 
-var.res.SBDF1 <- var.test(res.lat.SBDF1, res.form.SBDF1, alternative = "greater")
+ttest.res.SBDF1 <- t.test(res.lat.SBDF1, res.form.SBDF1, alternative = "greater")
 
 
-var.res.TL1 <- var.test(res.lat.TL1, res.form.TL1, alternative = "greater")
+ttest.res.BD1 <- t.test(res.lat.BD1, res.form.BD1, alternative = "greater")
 
 
-var.res.BD1 <- var.test(res.lat.BD1, res.form.BD1, alternative = "greater")
+ttest.res.CPD1 <- t.test(res.lat.CPD1, res.form.CPD1, alternative = "greater")
 
 
-var.res.CPD1 <- var.test(res.lat.CPD1, res.form.CPD1, alternative = "greater")
+ttest.res.CPL1 <- t.test(res.lat.CPL1, res.form.CPL1, alternative = "greater")
 
 
-var.res.CPL1 <- var.test(res.lat.CPL1, res.form.CPL1, alternative = "greater")
+ttest.res.PreDL1 <- t.test(res.lat.PreDL1, res.form.PreDL1, alternative = "greater")
 
 
-var.res.PreDL1 <- var.test(res.lat.PreDL1, res.form.PreDL1, alternative = "greater")
+ttest.res.DbL1 <- t.test(res.lat.DbL1, res.form.DbL1, alternative = "greater")
 
 
-var.res.DbL1 <- var.test(res.lat.DbL1, res.form.DbL1, alternative = "greater")
+ttest.res.HL1 <- t.test(res.lat.HL1, res.form.HL1, alternative = "greater")
 
 
-var.res.HL1 <- var.test(res.lat.HL1, res.form.HL1, alternative = "greater")
+ttest.res.HD1 <- t.test(res.lat.HD1, res.form.HD1, alternative = "greater")
 
 
-var.res.HD1 <- var.test(res.lat.HD1, res.form.HD1, alternative = "greater")
+ttest.res.HW1 <- t.test(res.lat.HW1, res.form.HW1, alternative = "greater")
 
 
-var.res.HW1 <- var.test(res.lat.HW1, res.form.HW1, alternative = "greater")
+ttest.res.SnL1 <- t.test(res.lat.SnL1, res.form.SnL1, alternative = "greater")
 
 
-var.res.SnL1 <- var.test(res.lat.SnL1, res.form.SnL1, alternative = "greater")
-
-
-var.res.OL1 <- var.test(res.lat.OL1, res.form.OL1, alternative = "greater")
+ttest.res.OL1 <- t.test(res.lat.OL1, res.form.OL1, alternative = "greater")
 
 
 
 
 #form>lat
 
-var.res.D2 <- var.test(res.lat.D1, res.form.D1, alternative = "less")
+ttest.res.D2 <- t.test(res.lat.D1, res.form.D1, alternative = "less")
 
 
-var.res.P12 <- var.test(res.lat.P11, res.form.P11, alternative = "less")
+ttest.res.P12 <- t.test(res.lat.P11, res.form.P11, alternative = "less")
 
 
-var.res.P2.L2 <- var.test(res.lat.P2.L1, res.form.P2.L1, alternative = "less")
+ttest.res.P2.L2 <- t.test(res.lat.P2.L1, res.form.P2.L1, alternative = "less")
 
 
-var.res.P2.R2 <- var.test(res.lat.P2.R1, res.form.P2.R1, alternative = "less")
+ttest.res.P2.R2 <- t.test(res.lat.P2.R1, res.form.P2.R1, alternative = "less")
 
 
-var.res.A2 <- var.test(res.lat.A1, res.form.A1, alternative = "less")
+ttest.res.A2 <- t.test(res.lat.A1, res.form.A1, alternative = "less")
 
 
-var.res.P1.R2 <- var.test(res.lat.P1.R1, res.form.P1.R1, alternative = "less")
+ttest.res.P1.R2 <- t.test(res.lat.P1.R1, res.form.P1.R1, alternative = "less")
 
 
-var.res.LLSC2 <- var.test(res.lat.LLSC1, res.form.LLSC1, alternative = "less")
+ttest.res.LLSC2 <- t.test(res.lat.LLSC1, res.form.LLSC1, alternative = "less")
 
 
-var.res.SALL2 <- var.test(res.lat.SALL1, res.form.SALL1, alternative = "less")
+ttest.res.SALL2 <- t.test(res.lat.SALL1, res.form.SALL1, alternative = "less")
 
 
-var.res.SBLL2 <- var.test(res.lat.SBLL1, res.form.SBLL1, alternative = "less")
+ttest.res.SBLL2 <- t.test(res.lat.SBLL1, res.form.SBLL1, alternative = "less")
 
 
-var.res.SBDF2 <- var.test(res.lat.SBDF1, res.form.SBDF1, alternative = "less")
+ttest.res.SBDF2 <- t.test(res.lat.SBDF1, res.form.SBDF1, alternative = "less")
 
 
-var.res.TL2 <- var.test(res.lat.TL1, res.form.TL1, alternative = "less")
+ttest.res.BD2 <- t.test(res.lat.BD1, res.form.BD1, alternative = "less")
 
 
-var.res.BD2 <- var.test(res.lat.BD1, res.form.BD1, alternative = "less")
+ttest.res.CPD2 <- t.test(res.lat.CPD1, res.form.CPD1, alternative = "less")
 
 
-var.res.CPD2 <- var.test(res.lat.CPD1, res.form.CPD1, alternative = "less")
+ttest.res.CPL2 <- t.test(res.lat.CPL1, res.form.CPL1, alternative = "less")
 
 
-var.res.CPL2 <- var.test(res.lat.CPL1, res.form.CPL1, alternative = "less")
+ttest.res.PreDL2 <- t.test(res.lat.PreDL1, res.form.PreDL1, alternative = "less")
 
 
-var.res.PreDL2 <- var.test(res.lat.PreDL1, res.form.PreDL1, alternative = "less")
+ttest.res.DbL2 <- t.test(res.lat.DbL1, res.form.DbL1, alternative = "less")
 
 
-var.res.DbL2 <- var.test(res.lat.DbL1, res.form.DbL1, alternative = "less")
+ttest.res.HL2 <- t.test(res.lat.HL1, res.form.HL1, alternative = "less")
 
 
-var.res.HL2 <- var.test(res.lat.HL1, res.form.HL1, alternative = "less")
+ttest.res.HD2 <- t.test(res.lat.HD1, res.form.HD1, alternative = "less")
 
 
-var.res.HD2 <- var.test(res.lat.HD1, res.form.HD1, alternative = "less")
+ttest.res.HW2 <- t.test(res.lat.HW1, res.form.HW1, alternative = "less")
 
 
-var.res.HW2 <- var.test(res.lat.HW1, res.form.HW1, alternative = "less")
+ttest.res.SnL2 <- t.test(res.lat.SnL1, res.form.SnL1, alternative = "less")
 
 
-var.res.SnL2 <- var.test(res.lat.SnL1, res.form.SnL1, alternative = "less")
-
-
-var.res.OL2 <- var.test(res.lat.OL1, res.form.OL1, alternative = "less")
+ttest.res.OL2 <- t.test(res.lat.OL1, res.form.OL1, alternative = "less")
 
 
 
@@ -559,134 +905,127 @@ var.res.OL2 <- var.test(res.lat.OL1, res.form.OL1, alternative = "less")
 #lat>form
 
 
-var.abs.D1 <- var.test(abs.lat.D1, abs.form.D1, alternative = "greater")
+ttest.abs.D1 <- t.test(abs.lat.D1, abs.form.D1, alternative = "greater")
 
 
-var.abs.P11 <- var.test(abs.lat.P11, abs.form.P11, alternative = "greater")
+ttest.abs.P11 <- t.test(abs.lat.P11, abs.form.P11, alternative = "greater")
 
 
-var.abs.P2.L1 <- var.test(abs.lat.P2.L1, abs.form.P2.L1, alternative = "greater")
+ttest.abs.P2.L1 <- t.test(abs.lat.P2.L1, abs.form.P2.L1, alternative = "greater")
 
 
-var.abs.P2.R1 <- var.test(abs.lat.P2.R1, abs.form.P2.R1, alternative = "greater")
+ttest.abs.P2.R1 <- t.test(abs.lat.P2.R1, abs.form.P2.R1, alternative = "greater")
 
 
-var.abs.A1 <- var.test(abs.lat.A1, abs.form.A1, alternative = "greater")
+ttest.abs.A1 <- t.test(abs.lat.A1, abs.form.A1, alternative = "greater")
 
 
-var.abs.P1.R1 <- var.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "greater")
+ttest.abs.P1.R1 <- t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "greater")
 
 
-var.abs.LLSC1 <- var.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "greater")
+ttest.abs.LLSC1 <- t.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "greater")
 
 
-var.abs.SALL1 <- var.test(abs.lat.SALL1, abs.form.SALL1, alternative = "greater")
+ttest.abs.SALL1 <- t.test(abs.lat.SALL1, abs.form.SALL1, alternative = "greater")
 
 
-var.abs.SBLL1 <- var.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "greater")
+ttest.abs.SBLL1 <- t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "greater")
 
 
-var.abs.SBDF1 <- var.test(abs.lat.SBDF1, abs.form.SBDF1, alternative = "greater")
+ttest.abs.SBDF1 <- t.test(abs.lat.SBDF1, abs.form.SBDF1, alternative = "greater")
 
 
-var.abs.TL1 <- var.test(abs.lat.TL1, abs.form.TL1, alternative = "greater")
+ttest.abs.BD1 <- t.test(abs.lat.BD1, abs.form.BD1, alternative = "greater")
 
 
-var.abs.BD1 <- var.test(abs.lat.BD1, abs.form.BD1, alternative = "greater")
+ttest.abs.CPD1 <- t.test(abs.lat.CPD1, abs.form.CPD1, alternative = "greater")
 
 
-var.abs.CPD1 <- var.test(abs.lat.CPD1, abs.form.CPD1, alternative = "greater")
+ttest.abs.CPL1 <- t.test(abs.lat.CPL1, abs.form.CPL1, alternative = "greater")
 
 
-var.abs.CPL1 <- var.test(abs.lat.CPL1, abs.form.CPL1, alternative = "greater")
+ttest.abs.PreDL1 <- t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "greater")
 
 
-var.abs.PreDL1 <- var.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "greater")
+ttest.abs.DbL1 <- t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "greater")
 
 
-var.abs.DbL1 <- var.test(abs.lat.DbL1, abs.form.DbL1, alternative = "greater")
+ttest.abs.HL1 <- t.test(abs.lat.HL1, abs.form.HL1, alternative = "greater")
 
 
-var.abs.HL1 <- var.test(abs.lat.HL1, abs.form.HL1, alternative = "greater")
+ttest.abs.HD1 <- t.test(abs.lat.HD1, abs.form.HD1, alternative = "greater")
 
 
-var.abs.HD1 <- var.test(abs.lat.HD1, abs.form.HD1, alternative = "greater")
+ttest.abs.HW1 <- t.test(abs.lat.HW1, abs.form.HW1, alternative = "greater")
 
 
-var.abs.HW1 <- var.test(abs.lat.HW1, abs.form.HW1, alternative = "greater")
+ttest.abs.SnL1 <- t.test(abs.lat.SnL1, abs.form.SnL1, alternative = "greater")
 
 
-var.abs.SnL1 <- var.test(abs.lat.SnL1, abs.form.SnL1, alternative = "greater")
-
-
-var.abs.OL1 <- var.test(abs.lat.OL1, abs.form.OL1, alternative = "greater")
+ttest.abs.OL1 <- t.test(abs.lat.OL1, abs.form.OL1, alternative = "greater")
 
 
 
 
 #form>lat
 
-var.abs.D2 <- var.test(abs.lat.D1, abs.form.D1, alternative = "less")
+ttest.abs.D2 <- t.test(abs.lat.D1, abs.form.D1, alternative = "less")
 
 
-var.abs.P12 <- var.test(abs.lat.P11, abs.form.P11, alternative = "less")
+ttest.abs.P12 <- t.test(abs.lat.P11, abs.form.P11, alternative = "less")
 
 
-var.abs.P2.L2 <- var.test(abs.lat.P2.L1, abs.form.P2.L1, alternative = "less")
+ttest.abs.P2.L2 <- t.test(abs.lat.P2.L1, abs.form.P2.L1, alternative = "less")
 
 
-var.abs.P2.R2 <- var.test(abs.lat.P2.R1, abs.form.P2.R1, alternative = "less")
+ttest.abs.P2.R2 <- t.test(abs.lat.P2.R1, abs.form.P2.R1, alternative = "less")
 
 
-var.abs.A2 <- var.test(abs.lat.A1, abs.form.A1, alternative = "less")
+ttest.abs.A2 <- t.test(abs.lat.A1, abs.form.A1, alternative = "less")
 
 
-var.abs.P1.R2 <- var.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "less")
+ttest.abs.P1.R2 <- t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "less")
 
 
-var.abs.LLSC2 <- var.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "less")
+ttest.abs.LLSC2 <- t.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "less")
 
 
-var.abs.SALL2 <- var.test(abs.lat.SALL1, abs.form.SALL1, alternative = "less")
+ttest.abs.SALL2 <- t.test(abs.lat.SALL1, abs.form.SALL1, alternative = "less")
 
 
-var.abs.SBLL2 <- var.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "less")
+ttest.abs.SBLL2 <- t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "less")
 
 
-var.abs.SBDF2 <- var.test(abs.lat.SBDF1, abs.form.SBDF1, alternative = "less")
+ttest.abs.SBDF2 <- t.test(abs.lat.SBDF1, abs.form.SBDF1, alternative = "less")
 
 
-var.abs.TL2 <- var.test(abs.lat.TL1, abs.form.TL1, alternative = "less")
+ttest.abs.BD2 <- t.test(abs.lat.BD1, abs.form.BD1, alternative = "less")
 
 
-var.abs.BD2 <- var.test(abs.lat.BD1, abs.form.BD1, alternative = "less")
+ttest.abs.CPD2 <- t.test(abs.lat.CPD1, abs.form.CPD1, alternative = "less")
+
+ttest.abs.CPL2 <- t.test(abs.lat.CPL1, abs.form.CPL1, alternative = "less")
 
 
-var.abs.CPD2 <- var.test(abs.lat.CPD1, abs.form.CPD1, alternative = "less")
+ttest.abs.PreDL2 <- t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "less")
 
 
-var.abs.CPL2 <- var.test(abs.lat.CPL1, abs.form.CPL1, alternative = "less")
+ttest.abs.DbL2 <- t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "less")
 
 
-var.abs.PreDL2 <- var.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "less")
+ttest.abs.HL2 <- t.test(abs.lat.HL1, abs.form.HL1, alternative = "less")
 
 
-var.abs.DbL2 <- var.test(abs.lat.DbL1, abs.form.DbL1, alternative = "less")
+ttest.abs.HD2 <- t.test(abs.lat.HD1, abs.form.HD1, alternative = "less")
 
 
-var.abs.HL2 <- var.test(abs.lat.HL1, abs.form.HL1, alternative = "less")
+ttest.abs.HW2 <- t.test(abs.lat.HW1, abs.form.HW1, alternative = "less")
 
 
-var.abs.HD2 <- var.test(abs.lat.HD1, abs.form.HD1, alternative = "less")
+ttest.abs.SnL2 <- t.test(abs.lat.SnL1, abs.form.SnL1, alternative = "less")
 
 
-var.abs.HW2 <- var.test(abs.lat.HW1, abs.form.HW1, alternative = "less")
-
-
-var.abs.SnL2 <- var.test(abs.lat.SnL1, abs.form.SnL1, alternative = "less")
-
-
-var.abs.OL2 <- var.test(abs.lat.OL1, abs.form.OL1, alternative = "less")
+ttest.abs.OL2 <- t.test(abs.lat.OL1, abs.form.OL1, alternative = "less")
 
 
 ```
@@ -694,13 +1033,13 @@ var.abs.OL2 <- var.test(abs.lat.OL1, abs.form.OL1, alternative = "less")
 
 ```{r, echo=FALSE}
 
-variance.table <- matrix(c(var.res.D1$p.value, var.res.D2$p.value, var.abs.D1$p.value, var.abs.D2$p.value, var.res.P11$p.value, var.res.P12$p.value, var.abs.P11$p.value, var.abs.P12$p.value, var.res.P2.L1$p.value, var.res.P2.L2$p.value, var.abs.P2.L1$p.value, var.abs.P2.L2$p.value, var.res.P2.R1$p.value, var.res.P2.R2$p.value, var.abs.P2.R1$p.value, var.abs.P2.R2$p.value, var.res.A1$p.value, var.res.A2$p.value, var.abs.A1$p.value, var.abs.A2$p.value, var.res.P1.R1$p.value, var.res.P1.R2$p.value, var.abs.P1.R1$p.value, var.abs.P1.R2$p.value, var.res.LLSC1$p.value, var.res.LLSC2$p.value, var.abs.LLSC1$p.value, var.abs.LLSC2$p.value, var.res.SALL1$p.value, var.res.SALL2$p.value, var.abs.SALL1$p.value, var.abs.SALL2$p.value, var.res.SBLL1$p.value, var.res.SBLL2$p.value, var.abs.SBLL1$p.value, var.abs.SBLL2$p.value, var.res.SBDF1$p.value, var.res.SBDF2$p.value, var.abs.SBDF1$p.value, var.abs.SBDF2$p.value, var.res.TL1$p.value, var.res.TL2$p.value, var.abs.TL1$p.value, var.abs.TL2$p.value, var.res.BD1$p.value, var.res.BD2$p.value, var.abs.BD1$p.value, var.abs.BD2$p.value, var.res.CPD1$p.value, var.res.CPD2$p.value, var.abs.CPD1$p.value, var.abs.CPD2$p.value, var.res.CPL1$p.value, var.res.CPL2$p.value, var.abs.CPL1$p.value, var.abs.CPL2$p.value, var.res.PreDL1$p.value, var.res.PreDL2$p.value, var.abs.PreDL1$p.value, var.abs.PreDL2$p.value, var.res.DbL1$p.value, var.res.DbL2$p.value, var.abs.DbL1$p.value, var.abs.DbL2$p.value, var.res.HL1$p.value, var.res.HL2$p.value, var.abs.HL1$p.value, var.abs.HL2$p.value, var.res.HD1$p.value, var.res.HD2$p.value, var.abs.HD1$p.value, var.abs.HD2$p.value, var.res.HW1$p.value, var.res.HW2$p.value, var.abs.HW1$p.value, var.abs.HW2$p.value, var.res.SnL1$p.value, var.res.SnL2$p.value, var.abs.SnL1$p.value, var.abs.SnL2$p.value, var.res.OL1$p.value, var.res.OL2$p.value, var.abs.OL1$p.value, var.abs.OL2$p.value), ncol=4, byrow=TRUE)
+average.table <- matrix(c(ttest.res.D1$p.value, ttest.res.D2$p.value, ttest.abs.D1$p.value, ttest.abs.D2$p.value, ttest.res.P11$p.value, ttest.res.P12$p.value, ttest.abs.P11$p.value, ttest.abs.P12$p.value, ttest.res.P2.L1$p.value, ttest.res.P2.L2$p.value, ttest.abs.P2.L1$p.value, ttest.abs.P2.L2$p.value, ttest.res.P2.R1$p.value, ttest.res.P2.R2$p.value, ttest.abs.P2.R1$p.value, ttest.abs.P2.R2$p.value, ttest.res.A1$p.value, ttest.res.A2$p.value, ttest.abs.A1$p.value, ttest.abs.A2$p.value, ttest.res.P1.R1$p.value, ttest.res.P1.R2$p.value, ttest.abs.P1.R1$p.value, ttest.abs.P1.R2$p.value, ttest.res.LLSC1$p.value, ttest.res.LLSC2$p.value, ttest.abs.LLSC1$p.value, ttest.abs.LLSC2$p.value, ttest.res.SALL1$p.value, ttest.res.SALL2$p.value, ttest.abs.SALL1$p.value, ttest.abs.SALL2$p.value, ttest.res.SBLL1$p.value, ttest.res.SBLL2$p.value, ttest.abs.SBLL1$p.value, ttest.abs.SBLL2$p.value, ttest.res.SBDF1$p.value, ttest.res.SBDF2$p.value, ttest.abs.SBDF1$p.value, ttest.abs.SBDF2$p.value,  ttest.res.BD1$p.value, ttest.res.BD2$p.value, ttest.abs.BD1$p.value, ttest.abs.BD2$p.value, ttest.res.CPD1$p.value, ttest.res.CPD2$p.value, ttest.abs.CPD1$p.value, ttest.abs.CPD2$p.value, ttest.res.CPL1$p.value, ttest.res.CPL2$p.value, ttest.abs.CPL1$p.value, ttest.abs.CPL2$p.value, ttest.res.PreDL1$p.value, ttest.res.PreDL2$p.value, ttest.abs.PreDL1$p.value, ttest.abs.PreDL2$p.value, ttest.res.DbL1$p.value, ttest.res.DbL2$p.value, ttest.abs.DbL1$p.value, ttest.abs.DbL2$p.value, ttest.res.HL1$p.value, ttest.res.HL2$p.value, ttest.abs.HL1$p.value, ttest.abs.HL2$p.value, ttest.res.HD1$p.value, ttest.res.HD2$p.value, ttest.abs.HD1$p.value, ttest.abs.HD2$p.value, ttest.res.HW1$p.value, ttest.res.HW2$p.value, ttest.abs.HW1$p.value, ttest.abs.HW2$p.value, ttest.res.SnL1$p.value, ttest.res.SnL2$p.value, ttest.abs.SnL1$p.value, ttest.abs.SnL2$p.value, ttest.res.OL1$p.value, ttest.res.OL2$p.value, ttest.abs.OL1$p.value, ttest.abs.OL2$p.value), ncol=4, byrow=TRUE)
 
-colnames(variance.table)<- c('sail>amz', 'amz>sail', '|sail>amz|', '|amz>sail|')
+colnames(average.table)<- c('sail>amz', 'amz>sail', '|sail>amz|', '|amz>sail|')
 
-rownames(variance.table) <- c('dorsal rays', 'L pect rays', 'L pelvic rays', 'R pelvic rays', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor', 'total len', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng')
+rownames(average.table) <- c('dorsal rays', 'L pect rays', 'L pelvic rays', 'R pelvic rays', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng')
 
-variance.table
+average.table
 
 
 ```
