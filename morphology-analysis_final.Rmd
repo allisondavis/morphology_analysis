@@ -32,6 +32,19 @@ form <- raw[raw$SPP == "p.formosa",]
 head(form)
 
 ```
+#### Summary data {.tabset .tabset-fade .tabset-pills}
+
+Here I will calculate the means for each of the traits between the amazons and sailfin. I will then perform a t-test to compare means (recognizing that nothing is corrected for size here).
+
+
+```{r}
+avg_comp <- matrix(c(mean(lat$D), mean(form$D), mean(lat$P1), mean(form$P1), mean(lat$P2.L), mean(form$P2.L), mean(lat$P2.R), mean(form$P2.R), mean(lat$A), mean(form$A), mean(lat$A), mean(form$A), mean(lat$P1.R), mean(form$P1.R), mean(lat$LLSC), mean(form$LLSC), mean(lat$SALL), mean(form$SALL), mean(lat$SBLL), mean(form$SBLL), mean(lat$SBDF), mean(form$SBDF), mean(lat$TL), mean(form$TL), mean(lat$SL), mean(form$SL), mean(lat$BD), mean(form$BD), mean(lat$CPD), mean(form$CPD), mean(lat$CPL), mean(form$CPL), mean(lat$PreDL), mean(form$PreDL), mean(lat$DbL), mean(form$DbL), mean(lat$HL), mean(form$HL), mean(lat$HW), mean(form$HW), mean(lat$HD), mean(form$HD), mean(lat$SnL), mean(form$SnL), mean(lat$OL), mean(form$OL), ))
+
+
+
+```
+
+
 
 ### PCA analysis {.tabset .tabset-fade .tabset-pills}
 
@@ -83,7 +96,7 @@ loadings <- PCA2$rotation
 loadings[, 1:5]
 
 VM_PCA <- varimax(PCA2$rotation)
-VM_PCA
+summary(VM_PCA)
 
 ```
 
