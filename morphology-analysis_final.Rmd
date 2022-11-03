@@ -24,12 +24,17 @@ raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
 head(raw)
 
+raw1 <- raw[complete.cases(raw[, 8:29]),]
+
 
 lat <- raw[raw$SPP == "p.latipinna",]
 head(lat)
 
 form <- raw[raw$SPP == "p.formosa",]
 head(form)
+
+lat.1 <- lat[complete.cases(lat[, 8:29]),]
+form.1 <- form[complete.cases(form[, 8:29]),]
 
 ```
 #### Summary data {.tabset .tabset-fade .tabset-pills}
@@ -38,11 +43,42 @@ Here I will calculate the means for each of the traits between the amazons and s
 
 
 ```{r}
-avg_comp <- matrix(c(mean(lat$D), mean(form$D), mean(lat$P1), mean(form$P1), mean(lat$P2.L), mean(form$P2.L), mean(lat$P2.R), mean(form$P2.R), mean(lat$A), mean(form$A), mean(lat$A), mean(form$A), mean(lat$P1.R), mean(form$P1.R), mean(lat$LLSC), mean(form$LLSC), mean(lat$SALL), mean(form$SALL), mean(lat$SBLL), mean(form$SBLL), mean(lat$SBDF), mean(form$SBDF), mean(lat$TL), mean(form$TL), mean(lat$SL), mean(form$SL), mean(lat$BD), mean(form$BD), mean(lat$CPD), mean(form$CPD), mean(lat$CPL), mean(form$CPL), mean(lat$PreDL), mean(form$PreDL), mean(lat$DbL), mean(form$DbL), mean(lat$HL), mean(form$HL), mean(lat$HW), mean(form$HW), mean(lat$HD), mean(form$HD), mean(lat$SnL), mean(form$SnL), mean(lat$OL), mean(form$OL), ))
+
+tt_D <- t.test(lat.1$D, form.1$D, alternative = "two.sided")
+tt_P1 <- t.test(lat.1$P1, form.1$P1, alternative = "two.sided")
+tt_P2.L <- t.test(lat.1$P2.L, form.1$P2.L, alternative = "two.sided")
+tt_P2.R <- t.test(lat.1$P2.R, form.1$P2.R, alternative = "two.sided")
+tt_A <- t.test(lat.1$A, form.1$A, alternative = "two.sided")
+tt_P1.R <- t.test(lat.1$P1.R, form.1$P1.R, alternative = "two.sided")
+tt_LLSC <- t.test(lat.1$LLSC, form.1$LLSC, alternative = "two.sided")
+tt_SALL <- t.test(lat.1$SALL, form.1$SALL, alternative = "two.sided")
+tt_SBLL <- t.test(lat.1$SBLL, form.1$SBLL, alternative = "two.sided")
+tt_SBDF <- t.test(lat.1$SBDF, form.1$SBDF, alternative = "two.sided")
+tt_TL <- t.test(lat.1$TL, form.1$TL, alternative = "two.sided")
+tt_SL <- t.test(lat.1$SL, form.1$SL, alternative = "two.sided")
+tt_BD <- t.test(lat.1$BD, form.1$BD, alternative = "two.sided")
+tt_CPD <- t.test(lat.1$CPD, form.1$CPD, alternative = "two.sided")
+tt_CPL <- t.test(lat.1$CPL, form.1$CPL, alternative = "two.sided")
+tt_PreDL <- t.test(lat.1$PreDL, form.1$PreDL, alternative = "two.sided")
+tt_DbL <- t.test(lat.1$DbL, form.1$DbL, alternative = "two.sided")
+tt_HL <- t.test(lat.1$HL, form.1$HL, alternative = "two.sided")
+tt_HW <- t.test(lat.1$HW, form.1$HW, alternative = "two.sided")
+tt_HD <- t.test(lat.1$HD, form.1$HD, alternative = "two.sided")
+tt_SnL <- t.test(lat.1$SnL, form.1$SnL, alternative = "two.sided")
+tt_OL <- t.test(lat.1$OL, form.1$OL, alternative = "two.sided")
 
 
+avg_comp <- matrix(c(mean(lat.1$D), mean(form.1$D), tt_D$p.value, mean(lat.1$P1), mean(form.1$P1), tt_P1$p.value, mean(lat.1$P2.L), mean(form.1$P2.L), tt_P2.L$p.value, mean(lat.1$P2.R), mean(form.1$P2.R), tt_P2.R$p.value,  mean(lat.1$A), mean(form.1$A), tt_A$p.value, mean(lat.1$P1.R), mean(form.1$P1.R), tt_P1.R$p.value, mean(lat.1$LLSC), mean(form.1$LLSC), tt_LLSC$p.value, mean(lat.1$SALL), mean(form.1$SALL), tt_SALL$p.value, mean(lat.1$SBLL), mean(form.1$SBLL), tt_SBLL$p.value, mean(lat.1$SBDF), mean(form.1$SBDF), tt_SBDF$p.value, mean(lat.1$TL), mean(form.1$TL), tt_TL$p.value, mean(lat.1$SL), mean(form.1$SL), tt_SL$p.value, mean(lat.1$BD), mean(form.1$BD), tt_BD$p.value, mean(lat.1$CPD), mean(form.1$CPD), tt_CPD$p.value, mean(lat.1$CPL), mean(form.1$CPL), tt_CPL$p.value, mean(lat.1$PreDL), mean(form.1$PreDL), tt_PreDL$p.value, mean(lat.1$DbL), mean(form.1$DbL), tt_DbL$p.value, mean(lat.1$HL), mean(form.1$HL), tt_HL$p.value, mean(lat.1$HW), mean(form.1$HW), tt_HW$p.value, mean(lat.1$HD), mean(form.1$HD), tt_HD$p.value, mean(lat.1$SnL), mean(form.1$SnL), tt_SnL$p.value, mean(lat.1$OL), mean(form.1$OL), tt_OL$p.value), ncol=3, byrow = TRUE)
+
+colnames(avg_comp)<- c('Lat mean', 'Form mean', 't-test p-value')
+
+rownames(avg_comp) <- c('dorsal rays', 'L pect rays', 'L pelvic rays', 'R pelvic rays', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor', 'total len', 'standard len', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head length',  'head width', 'head depth', 'snout leng', 'orbital leng')
+
+avg_comp
 
 ```
+
+
 
 
 
@@ -78,17 +114,6 @@ In this analysis, I will compare the principle components after centering and sc
 -   summary of PCs
 
 ```{r, echo=FALSE}
-
-
-# error when running PCA on raw data due to the two NA values; will remove these rows.
-
-raw1 <- raw[complete.cases(raw[, 8:29]),]
-
-
-
-#excluded ray and scale counts for whatever reason...PCA1 <- prcomp(raw1[, 18:29], center=TRUE, scale. = TRUE)
-#summary(PCA1)
-#PCA1$rotation
 
 PCA2 <- prcomp(raw1[, 8:29], center=TRUE, scale. = TRUE) #includes all 22 traits 
 summary(PCA2)
@@ -190,7 +215,7 @@ form.1 <- form[complete.cases(form[, 8:29]),]
 #previously performed regression with SL on y and trait on x; corrected the code below to have SL on x and trait on y; kept a copy of the old version for the D trait just to show there is no difference
 
 reg.lat.D1 <- lm(lat.1$D ~ lat.1$SL)
-reg.lat.D1.plot <- ggplot(lat.1, aes(x = D, y = SL)) + 
+reg.lat.D1.plot <- ggplot(lat.1, aes(x = SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
@@ -474,7 +499,7 @@ reg.form.OL1.plot
 
 ```
 
-**ALL BUT P2.R, P2.L, A, SALL, AND SBDF WERE SIGNIFICANT FOR ONE OR BOTH SPECIES**
+**ALL BUT P2.R, P2.L, AND SBDF WERE SIGNIFICANT FOR ONE OR BOTH SPECIES**
 
 
 -   STEP TWO: get residuals for each individual for that trait
@@ -486,7 +511,11 @@ res.lat.P11 <- resid(reg.lat.P11)
 
 res.lat.P1.R1 <- resid(reg.lat.P1.R1)
 
+res.lat.A1 <- resid(reg.lat.A1)
+
 res.lat.LLSC1 <- resid(reg.lat.LLSC1)
+
+res.lat.SALL1 <- resid(reg.lat.SALL1)
 
 res.lat.SBLL1 <- resid(reg.lat.SBLL1)
 
@@ -517,7 +546,11 @@ res.form.P11 <- resid(reg.form.P11)
 
 res.form.P1.R1 <- resid(reg.form.P1.R1)
 
+res.form.A1 <- resid(reg.form.A1)
+
 res.form.LLSC1 <- resid(reg.form.LLSC1)
+
+res.form.SALL1 <- resid(reg.form.SALL1)
 
 res.form.SBLL1 <- resid(reg.form.SBLL1)
 
@@ -555,8 +588,14 @@ mean(abs.lat.P11)
 abs.lat.P1.R1 <- abs(res.lat.P1.R1)
 mean(abs.lat.P1.R1)
 
+abs.lat.A1 <- abs(res.lat.A1)
+mean(abs.lat.A1)
+
 abs.lat.LLSC1 <- abs(res.lat.LLSC1)
 mean(abs.lat.LLSC1)
+
+abs.lat.SALL1 <- abs(res.lat.SALL1)
+mean(abs.lat.SALL1)
 
 abs.lat.SBLL1 <- abs(res.lat.SBLL1)
 mean(abs.lat.SBLL1)
@@ -598,12 +637,17 @@ mean(abs.form.D1)
 abs.form.P11 <- abs(res.form.P11)
 mean(abs.form.P11)
 
-
 abs.form.P1.R1 <- abs(res.form.P1.R1)
 mean(abs.form.P1.R1)
 
+abs.form.A1 <- abs(res.form.A1)
+mean(abs.form.A1)
+
 abs.form.LLSC1 <- abs(res.form.LLSC1)
 mean(abs.form.LLSC1)
+
+abs.form.SALL1 <- abs(res.form.SALL1)
+mean(abs.form.SALL1)
 
 abs.form.SBLL1 <- abs(res.form.SBLL1)
 mean(abs.form.SBLL1)
@@ -644,8 +688,10 @@ mean(abs.form.OL1)
 
 abs.res.D <- append(abs.lat.D1, abs.form.D1)
 abs.res.P1 <- append(abs.lat.P11, abs.form.P11)
+abs.res.A <- append(abs.lat.A1, abs.form.A1)
 abs.res.P1.R <- append(abs.lat.P1.R1, abs.form.P1.R1)
 abs.res.LLSC<- append(abs.lat.LLSC1, abs.form.LLSC1)
+abs.res.SALL <- append(abs.lat.SALL1, abs.form.SALL1)
 abs.res.SBLL<- append(abs.lat.SBLL1, abs.form.SBLL1)
 abs.res.BD<- append(abs.lat.BD1, abs.form.BD1)
 abs.res.CPD<- append(abs.lat.CPD1, abs.form.CPD1)
@@ -658,7 +704,7 @@ abs.res.HW <- append(abs.lat.HW1, abs.form.HW1)
 abs.res.SnL <- append(abs.lat.SnL1, abs.form.SnL1)
 abs.res.OL <- append(abs.lat.OL1, abs.form.OL1)
 
-raw3 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
+raw3 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.A, abs.res.LLSC, abs.res.SALL, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
 
 
 ```
@@ -696,7 +742,19 @@ ggplot(raw3, aes(SPP, abs.res.P1.R)) +
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
 
+ggplot(raw3, aes(SPP, abs.res.A)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
 ggplot(raw3, aes(SPP, abs.res.LLSC)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw3, aes(SPP, abs.res.SALL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
@@ -789,12 +847,6 @@ var.left.pel
 var.rig.pel <- var.test(lat.1$P2.R, form.1$P2.R, alternative = "two.sided")
 var.rig.pel
 
-var.anal <- var.test(lat.1$A, form.1$A, alternative = "two.sided")
-var.anal
-
-var.sca.abv <- var.test(lat.1$SALL, form.1$SALL, alternative = "two.sided")
-var.sca.abv
-
 var.sca.df <- var.test(lat.1$SBDF, form.1$SBDF, alternative = "two.sided")
 var.sca.df
 
@@ -832,7 +884,13 @@ ttest.abs.P11 <- t.test(abs.lat.P11, abs.form.P11, alternative = "two.sided")
 ttest.abs.P1.R1 <- t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "two.sided")
 
 
+ttest.abs.A1 <- t.test(abs.lat.A1, abs.form.A1, alternative = "two.sided")
+
+
 ttest.abs.LLSC1 <- t.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "two.sided")
+
+
+ttest.abs.SALL1 <- t.test(abs.lat.SALL1, abs.form.SALL1, alternative = "two.sided")
 
 
 ttest.abs.SBLL1 <- t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "two.sided")
@@ -871,12 +929,41 @@ ttest.abs.OL1 <- t.test(abs.lat.OL1, abs.form.OL1, alternative = "two.sided")
 
 
 
-average.table <- matrix(c(ttest.abs.D1$p.value, ttest.abs.P11$p.value, var.rig.pel$p.value, var.left.pel$p.value, var.anal$p.value, ttest.abs.P1.R1$p.value, ttest.abs.LLSC1$p.value, var.sca.abv$p.value, ttest.abs.SBLL1$p.value, var.sca.df$p.value, ttest.abs.BD1$p.value, ttest.abs.CPD1$p.value, ttest.abs.CPL1$p.value, ttest.abs.PreDL1$p.value, ttest.abs.DbL1$p.value, ttest.abs.HL1$p.value, ttest.abs.HD1$p.value, ttest.abs.HW1$p.value, ttest.abs.SnL1$p.value, ttest.abs.OL1$p.value), ncol=1, byrow=TRUE)
+average.table <- matrix(c(ttest.abs.D1$p.value, ttest.abs.P11$p.value, var.rig.pel$p.value, var.left.pel$p.value, ttest.abs.A1$p.value, ttest.abs.P1.R1$p.value, ttest.abs.LLSC1$p.value, ttest.abs.SALL1$p.value, ttest.abs.SBLL1$p.value, var.sca.df$p.value, ttest.abs.BD1$p.value, ttest.abs.CPD1$p.value, ttest.abs.CPL1$p.value, ttest.abs.PreDL1$p.value, ttest.abs.DbL1$p.value, ttest.abs.HL1$p.value, ttest.abs.HD1$p.value, ttest.abs.HW1$p.value, ttest.abs.SnL1$p.value, ttest.abs.OL1$p.value), ncol=1, byrow=TRUE)
 
 colnames(average.table)<- c('p-value for variance')
 
-rownames(average.table) <- c('dorsal rays', 'L pect rays', 'L pelvic rays*', 'R pelvic rays*', 'Anal rays*', 'R pect rays', 'lat line scales', 'scales above LL*', 'scales below LL', 'scales before dor*', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng')
+rownames(average.table) <- c('dorsal rays', 'L pect rays', 'L pelvic rays*', 'R pelvic rays*', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor*', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng')
 
 average.table
+
+
+
+```
+
+
+* Not sure how to tell which species is varying more when I do a two-sided. Steve said to just look at the means, but that doesn't make much sense to me (the mean can still be high with very little variation)...maybe I'm missing something? Just to find out, I ran one-sided tests below.
+
+  - Think I need to present residual means instead
+
+```{r}
+#right pectoral ray count --sailfins vary more
+t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "greater")
+t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "less")
+
+
+#scales below lateral line--amazons vary more
+t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "greater")
+t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "less")
+
+
+#predorsal length--amazons vary more
+t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "greater")
+t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "less")
+
+
+#dorsal base length--sailfins vary more
+t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "greater")
+t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "less")
 
 ```
