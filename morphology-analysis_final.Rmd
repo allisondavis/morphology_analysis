@@ -202,6 +202,8 @@ So:
 
 I will now use residuals to account for body size in each trait, and compare the variance for each species. Again, the first round will take the raw residuals, and the second round with use the absolute value of the raw residuals.
 
+##### Regressions {.tabset .tabset-fade .tabset-pills}
+
 -   STEP ONE: plot trait vs body size
 
 ```{r}
@@ -502,6 +504,8 @@ reg.form.OL1.plot
 **ALL BUT P2.R, P2.L, AND SBDF WERE SIGNIFICANT FOR ONE OR BOTH SPECIES**
 
 
+##### Residuals {.tabset .tabset-fade .tabset-pills}
+
 -   STEP TWO: get residuals for each individual for that trait
 
 ```{r echo=FALSE}
@@ -709,26 +713,44 @@ raw3 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.A, abs.res.LLSC
 
 ```
 
+
+##### Residual Comparisons {.tabset .tabset-fade .tabset-pills}
+
+
+
 -   STEP FOUR: plot the mean of the |residuals| for both species, for all traits
 
 ```{r}
 
-#res.data <- matrix(c(abs.lat.D1, abs.lat.P11, abs.lat.P2.L1, abs.lat.P2.R1, abs.form.D1, abs.form.P11, abs.form.P2.L1, abs.form.P2.R1, abs.lat.A1, abs.form.A1, abs.lat.P1.R1, abs.form.P1.R1, abs.lat.LLSC1, abs.form.LLSC1, abs.lat.SALL1, abs.form.SALL1, abs.lat.SBLL1, abs.form.SBLL1, abs.lat.SBDF1, abs.form.SBDF1, abs.lat.BD1, abs.form.BD1, abs.lat.CPD1, abs.form.CPD1, abs.lat.CPL1, abs.form.CPL1, abs.lat.PreDL1, abs.form.PreDL1, abs.lat.DbL1, abs.form.DbL1, abs.lat.HL1, abs.form.HL1, abs.lat.HD1, abs.form.HD1, abs.lat.HW1, abs.form.HW1, abs.lat.SnL1, abs.form.SnL1, abs.lat.OL1, abs.form.OL1), ncol=2, byrow=TRUE)
-#res.data
-
-#can't for the life of me think of how to add the residuals to the raw data...I want the residuals for one trait for sailfin and then right under that, have the residuals for the amazon. 
-
-#library(gplots)
-
-#plotmeans(abs.res.CPL~SPP, data=raw3, connect=FALSE)
-## works, but doesn't give me raw data option I don't think
+library(ggbeeswarm)
+library(dplyr)
 
 
 ggplot(raw3, aes(SPP, abs.res.D)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+scatter_violin <- ggplot(data=raw3, aes(x=SPP, y=abs.res.D)) +
+  geom_violin(trim = FALSE) + 
+  stat_summary(
+    fun.data = "mean_sdl",  fun.args = list(mult = 1),
+    geom = "pointrange", color = "black"
+    )
+
+print(scatter_violin)
+
+scatter_violin1 <- ggplot(data=raw3, aes(x=SPP, y=abs.res.D)) +
+  geom_violin(trim = FALSE) + 
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="crossbar", fill="red", width=0.03)
+
+print(scatter_violin1)
+
+
 
 ggplot(raw3, aes(SPP, abs.res.P1)) +
   geom_point(alpha=0.3) +
@@ -876,94 +898,96 @@ var.sca.df
 
 
 ttest.abs.D1 <- t.test(abs.lat.D1, abs.form.D1, alternative = "two.sided")
+ttest.abs.D1
 
 
 ttest.abs.P11 <- t.test(abs.lat.P11, abs.form.P11, alternative = "two.sided")
+ttest.abs.P11
 
 
 ttest.abs.P1.R1 <- t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "two.sided")
+ttest.abs.P1.R1
 
 
 ttest.abs.A1 <- t.test(abs.lat.A1, abs.form.A1, alternative = "two.sided")
+ttest.abs.A1
 
 
 ttest.abs.LLSC1 <- t.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "two.sided")
+ttest.abs.LLSC1
 
 
 ttest.abs.SALL1 <- t.test(abs.lat.SALL1, abs.form.SALL1, alternative = "two.sided")
+ttest.abs.SALL1
 
 
 ttest.abs.SBLL1 <- t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "two.sided")
+ttest.abs.SBLL1
 
 
 ttest.abs.BD1 <- t.test(abs.lat.BD1, abs.form.BD1, alternative = "two.sided")
+ttest.abs.BD1
 
 
 ttest.abs.CPD1 <- t.test(abs.lat.CPD1, abs.form.CPD1, alternative = "two.sided")
+ttest.abs.CPD1
 
 
 ttest.abs.CPL1 <- t.test(abs.lat.CPL1, abs.form.CPL1, alternative = "two.sided")
+ttest.abs.CPL1
 
 
 ttest.abs.PreDL1 <- t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "two.sided")
+ttest.abs.PreDL1
 
 
 ttest.abs.DbL1 <- t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "two.sided")
+ttest.abs.DbL1
 
 
 ttest.abs.HL1 <- t.test(abs.lat.HL1, abs.form.HL1, alternative = "two.sided")
+ttest.abs.HL1
 
 
 ttest.abs.HD1 <- t.test(abs.lat.HD1, abs.form.HD1, alternative = "two.sided")
+ttest.abs.HD1
 
 
 ttest.abs.HW1 <- t.test(abs.lat.HW1, abs.form.HW1, alternative = "two.sided")
+ttest.abs.HW1
 
 
 ttest.abs.SnL1 <- t.test(abs.lat.SnL1, abs.form.SnL1, alternative = "two.sided")
+ttest.abs.SnL1
 
 
 ttest.abs.OL1 <- t.test(abs.lat.OL1, abs.form.OL1, alternative = "two.sided")
+ttest.abs.OL1
 
 
 
 
+```
 
-average.table <- matrix(c(ttest.abs.D1$p.value, ttest.abs.P11$p.value, var.rig.pel$p.value, var.left.pel$p.value, ttest.abs.A1$p.value, ttest.abs.P1.R1$p.value, ttest.abs.LLSC1$p.value, ttest.abs.SALL1$p.value, ttest.abs.SBLL1$p.value, var.sca.df$p.value, ttest.abs.BD1$p.value, ttest.abs.CPD1$p.value, ttest.abs.CPL1$p.value, ttest.abs.PreDL1$p.value, ttest.abs.DbL1$p.value, ttest.abs.HL1$p.value, ttest.abs.HD1$p.value, ttest.abs.HW1$p.value, ttest.abs.SnL1$p.value, ttest.abs.OL1$p.value), ncol=1, byrow=TRUE)
 
-colnames(average.table)<- c('p-value for variance')
 
-rownames(average.table) <- c('dorsal rays', 'L pect rays', 'L pelvic rays*', 'R pelvic rays*', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor*', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng')
+
+#### Summary of variance results {.tabset .tabset-fade .tabset-pills}
+
+
+```{r}
+
+average.table <- matrix(c(ttest.abs.D1$p.value, mean(abs.lat.D1), mean(abs.form.D1), ttest.abs.P11$p.value, mean(abs.lat.P11), mean(abs.form.P11), var.rig.pel$p.value, mean(lat.1$P2.R), mean(form.1$P2.R), var.left.pel$p.value, mean(lat.1$P2.L), mean(form.1$P2.L), ttest.abs.A1$p.value, mean(abs.lat.A1), mean(abs.form.A1), ttest.abs.P1.R1$p.value, mean(abs.lat.P1.R1), mean(abs.form.P1.R1), ttest.abs.LLSC1$p.value, mean(abs.lat.LLSC1), mean(abs.form.LLSC1), ttest.abs.SALL1$p.value, mean(abs.lat.SALL1), mean(abs.form.SALL1), ttest.abs.SBLL1$p.value, mean(abs.lat.SBLL1), mean(abs.form.SBLL1), var.sca.df$p.value, mean(lat.1$SBDF), mean(form.1$SBDF), ttest.abs.BD1$p.value, mean(abs.lat.BD1), mean(abs.form.BD1), ttest.abs.CPD1$p.value, mean(abs.lat.CPD1), mean(abs.form.CPD1), ttest.abs.CPL1$p.value, mean(abs.lat.CPL1), mean(abs.form.CPL1), ttest.abs.PreDL1$p.value, mean(abs.lat.PreDL1), mean(abs.form.PreDL1), ttest.abs.DbL1$p.value, mean(abs.lat.DbL1), mean(abs.form.DbL1), ttest.abs.HL1$p.value, mean(abs.lat.HL1), mean(abs.form.HL1), ttest.abs.HD1$p.value, mean(abs.lat.HD1), mean(abs.form.HD1), ttest.abs.HW1$p.value, mean(abs.lat.HW1), mean(abs.form.HW1), ttest.abs.SnL1$p.value, mean(abs.lat.SnL1), mean(abs.form.SnL1), ttest.abs.OL1$p.value, mean(abs.lat.OL1), mean(abs.form.OL1)), ncol=3, byrow=TRUE)
+
+colnames(average.table)<- c('p-value for variance', 'lat mean', 'form mean')
+
+rownames(average.table) <- c('dorsal rays', 'L pect rays', 'R pelvic rays*', 'L pelvic rays*', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor*', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng')
 
 average.table
 
 
-
 ```
 
 
-* Not sure how to tell which species is varying more when I do a two-sided. Steve said to just look at the means, but that doesn't make much sense to me (the mean can still be high with very little variation)...maybe I'm missing something? Just to find out, I ran one-sided tests below.
 
-  - Think I need to present residual means instead
-
-```{r}
-#right pectoral ray count --sailfins vary more
-t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "greater")
-t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "less")
-
-
-#scales below lateral line--amazons vary more
-t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "greater")
-t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "less")
-
-
-#predorsal length--amazons vary more
-t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "greater")
-t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "less")
-
-
-#dorsal base length--sailfins vary more
-t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "greater")
-t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "less")
-
-```
+<br><br><br><br>
