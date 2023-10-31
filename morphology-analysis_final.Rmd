@@ -232,6 +232,8 @@ plot9
 
 
 
+
+
 ```
 
 *Variable chart:*
@@ -775,6 +777,20 @@ abs.res.OL <- append(abs.lat.OL1, abs.form.OL1)
 
 raw4 <- cbind(raw2, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
 #because I performed the regression calculations on the raw data, I believe it automatically removes NAs BUT only for that value. So a fish that is excluded from P1 may be included for LLSC. This means that the number of fish at the end in each of the abs. lists is different. It won't let me append it to the original data frame because the number of rows don't match. Will go back and use a dataset with NAs removed (boo) to see if that helps --> yep, that did it
+
+#need to put the PCA visualization for residuals here since raw4 doesn't appear until now
+
+PCA2 <- prcomp(raw4[, 32:47], center=TRUE, scale. = TRUE) #includes all 22 traits 
+summary(PCA2)
+loadings1 <- PCA2$rotation
+loadings1[, 1:5]
+
+plot10<- autoplot(PCA2, x=1, y=2, data = raw4, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology trait Residuals") + theme_minimal()
+plot10
+
+plot11<- autoplot(PCA2, x=1, y=2, data = raw4, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot11
+
 
 ```
 
