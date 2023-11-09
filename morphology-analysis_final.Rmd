@@ -124,7 +124,7 @@ In this analysis, I will compare the principle components after centering and sc
 
 #keeps giving an error about infinite or missing values, even when I do na.omit. Will try with a dataframe that already omits NAs
 
-raw2 <- raw1[complete.cases(raw1[, 9:30]),] #that worked!
+raw2 <- raw1[complete.cases(raw1[, 10:31]),] #that worked!
 
 #also want the FLA to be in there so gonna try to move the column to 31
 
@@ -163,7 +163,7 @@ moveme <- function (invec, movecommand) {
 
 raw3 <- raw2[moveme(names(raw2), "FLA before SPP")] #is useful, but not sure if I want it in the PCA, especially if I already use the pect counts
 
-PCA <- prcomp(raw2[, 9:30], center=TRUE, scale. = TRUE) #includes all 22 traits 
+PCA <- prcomp(raw2[, 10:31], center=TRUE, scale. = TRUE) #includes all 22 traits 
 summary(PCA)
 loadings <- PCA$rotation
 loadings[, 1:5]
@@ -286,8 +286,8 @@ I will now use residuals to account for body size in each trait, and compare the
 library(ggplot2)
 library(ggpubr)
 
-lat1 <- lat[complete.cases(lat[, 9:30]),]
-form1 <- form[complete.cases(form[, 9:30]),]
+lat1 <- lat[complete.cases(lat[, 10:31]),]
+form1 <- form[complete.cases(form[, 10:31]),]
 
 #previously performed regression with SL on y and trait on x; corrected the code below to have SL on x and trait on y
 
@@ -780,7 +780,7 @@ raw4 <- cbind(raw2, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.S
 
 #need to put the PCA visualization for residuals here since raw4 doesn't appear until now
 
-PCA2 <- prcomp(raw4[, 32:47], center=TRUE, scale. = TRUE) #includes all 22 traits 
+PCA2 <- prcomp(raw4[, 33:48], center=TRUE, scale. = TRUE) #includes all 22 traits 
 summary(PCA2)
 loadings1 <- PCA2$rotation
 loadings1[, 1:5]
@@ -1085,6 +1085,115 @@ plot_multi_histogram(raw4, "FLA", "SPP")
 
 
 ```
+
+
+
+
+### ANOVA {.tabset .tabset-fade .tabset-pills}
+
+Will run a nested ANOVA on the residuals (and raw data that isn't affected by body size?) with location as a nested effect to see if variation is partitioned more within populations or among populations. 
+
+
+```{r}
+
+
+#runs on the assumption that each subgroup has a normal distribution, check for normality among location?
+#raw.q1 <- raw1[raw1$QUARTILE == "Q1",]
+#raw.q2 <- raw1[raw1$QUARTILE == "Q2",]
+#raw.q3 <- raw1[raw1$QUARTILE == "Q3",]
+#raw.q4 <- raw1[raw1$QUARTILE == "Q4",]
+
+#ks.test(raw.q1$CPL, "pnorm", mean=mean(raw.q1$CPL), sd=sd(raw.q1$CPL)) #NOT SIG (NORMAL)
+
+#seems to give me a 'ties' error with NA as the p value. When looking up the error most people stated this test was useless, but that the alternatives were also useless, so idk what to do...
+
+
+nest <- aov(raw4$abs.res.D ~ raw4$SPP / factor(raw4$QUARTILE))
+summary(nest)
+
+A.D <- aov(abs.res.D ~ SPP*QUARTILE, data=raw4)
+summary(A.D)
+
+A.P1 <- aov(abs.res.P1 ~ SPP*QUARTILE, data=raw4)
+summary(A.P1)
+
+A.P1.R <- aov(abs.res.P1.R ~ SPP*QUARTILE, data=raw4)
+summary(A.P1.R)
+
+A.LLSC <- aov(abs.res.LLSC ~ SPP*QUARTILE, data=raw4)
+summary(A.LLSC)
+
+A.SBLL <- aov(abs.res.SBLL ~ SPP*QUARTILE, data=raw4)
+summary(A.SBLL)
+
+A.BD <- aov(abs.res.BD ~ SPP*QUARTILE, data=raw4)
+summary(A.BD)
+
+A.CPD <- aov(abs.res.CPD ~ SPP*QUARTILE, data=raw4)
+summary(A.CPD)
+
+A.CPL <- aov(abs.res.CPL ~ SPP*QUARTILE, data=raw4)
+summary(A.CPL)
+
+A.PreDL <- aov(abs.res.PreDL ~ SPP*QUARTILE, data=raw4)
+summary(A.PreDL)
+
+A.DbL <- aov(abs.res.DbL ~ SPP*QUARTILE, data=raw4)
+summary(A.DbL)
+
+A.HL <- aov(abs.res.HL ~ SPP*QUARTILE, data=raw4)
+summary(A.HL)
+
+A.HD <- aov(abs.res.HD ~ SPP*QUARTILE, data=raw4)
+summary(A.HD)
+
+A.HW <- aov(abs.res.HW ~ SPP*QUARTILE, data=raw4)
+summary(A.HW)
+
+A.SnL <- aov(abs.res.SnL ~ SPP*QUARTILE, data=raw4)
+summary(A.SnL)
+
+A.OL <- aov(abs.res.OL ~ SPP*QUARTILE, data=raw4)
+summary(A.OL)
+
+A.A <- aov(A ~ SPP*QUARTILE, data=raw4)
+summary(A.A)
+
+A.SALL <- aov(SALL ~ SPP*QUARTILE, data=raw4)
+summary(A.SALL)
+
+A.SBDF <- aov(SBDF ~ SPP*QUARTILE, data=raw4)
+summary(A.SBDF)
+
+A.FLA <- aov(FLA ~ SPP*QUARTILE, data=raw4)
+summary(A.FLA)
+
+ggplot(raw4, aes(x=factor(QUARTILE), y=FLA, fill=SPP)) + geom_boxplot()
+
+
+library(ggplot2)
+
+
+ggplot(raw4, aes(x=factor(QUARTILE), y=abs.res.D, fill=SPP)) +
+  geom_boxplot()
+
+nest2 <- aov(raw4$abs.res.P1.R ~ raw4$SPP / factor(raw4$QUARTILE))
+summary(nest2)
+
+
+ggplot(raw4, aes(x=factor(QUARTILE), y=abs.res.P1.R, fill=SPP)) +
+  geom_boxplot()
+
+```
+
+
+
+
+
+
+
+
+
 
 
 <br><br><br><br>
