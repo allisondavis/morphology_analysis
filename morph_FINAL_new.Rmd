@@ -1,7 +1,7 @@
 ---
-title: "morphology-analysis_final"
+title: "morph_FINAL_new"
 author: "Allison Davis Connelly"
-date: "9/21/2021"
+date: "12/22/2023"
 output: html_document
 ---
 
@@ -9,11 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## *Morphological variation of amazon and sailfin mollies* {.tabset .tabset-fade .tabset-pills}
+
+*Morphological variation of amazon and sailfin mollies* {.tabset .tabset-fade .tabset-pills}
 
 In this study, I am looking at various populations of amazon and sailfin mollies across their native/introduced range to assess morphological variation both within and among the species. I am using the Pickle fish collections for my samples.
 
-### Data collection {.tabset .tabset-fade .tabset-pills}
+# Data collection {.tabset .tabset-fade .tabset-pills}
 
 ```{r, echo=FALSE}
 library(curl)
@@ -24,246 +25,16 @@ raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
 head(raw)
 
-#raw1 <- raw[complete.cases(raw[, 8:29]),] dont think I want to do this; just use remove NA for specific functions to not remove too much data
 
-
-#lat.1 <- lat[complete.cases(lat[, 8:29]),] SEE COMMENT ABOVE
-#form <- form[complete.cases(form[, 8:29]),]
-
-
-#to test for fluctuating asymmetries, I want to create a column that illustrates the difference between P1 L & R
-
-FLA <- (abs((raw$P1)-(raw$P1.R)))+1
-raw1 <- cbind(raw, FLA)
-
-lat <- raw1[raw1$SPP == "p.latipinna",]
+lat <- raw[raw$SPP == "p.latipinna",]
 head(lat)
 
-form <- raw1[raw1$SPP == "p.formosa",]
+form <- raw[raw$SPP == "p.formosa",]
 head(form)
 
 ```
-#### Summary data {.tabset .tabset-fade .tabset-pills}
-
-Here I will calculate the means for each of the traits between the amazons and sailfin. I will then perform a t-test to compare means (recognizing that nothing is corrected for size here).
 
 
-```{r}
-
-tt_D <- t.test(lat$D, form$D, alternative = "two.sided", na.action=na.omit)
-tt_P1 <- t.test(lat$P1, form$P1, alternative = "two.sided", na.action=na.omit)
-#tt_P2.L <- t.test(lat$P2.L, form$P2.L, alternative = "two.sided", na.action=na.omit) REMOVED SINCE IT NEVER CHANGED (ALL WERE 6-6 IN BOTH SPECIES)
-#tt_P2.R <- t.test(lat$P2.R, form$P2.R, alternative = "two.sided", na.action=na.omit)
-tt_A <- t.test(lat$A, form$A, alternative = "two.sided", na.action=na.omit)
-tt_P1.R <- t.test(lat$P1.R, form$P1.R, alternative = "two.sided", na.action=na.omit)
-tt_LLSC <- t.test(lat$LLSC, form$LLSC, alternative = "two.sided", na.action=na.omit)
-tt_SALL <- t.test(lat$SALL, form$SALL, alternative = "two.sided", na.action=na.omit)
-tt_SBLL <- t.test(lat$SBLL, form$SBLL, alternative = "two.sided", na.action=na.omit)
-tt_SBDF <- t.test(lat$SBDF, form$SBDF, alternative = "two.sided", na.action=na.omit)
-tt_TL <- t.test(lat$TL, form$TL, alternative = "two.sided", na.action=na.omit)
-tt_SL <- t.test(lat$SL, form$SL, alternative = "two.sided", na.action=na.omit)
-tt_BD <- t.test(lat$BD, form$BD, alternative = "two.sided", na.action=na.omit)
-tt_CPD <- t.test(lat$CPD, form$CPD, alternative = "two.sided", na.action=na.omit)
-tt_CPL <- t.test(lat$CPL, form$CPL, alternative = "two.sided", na.action=na.omit)
-tt_PreDL <- t.test(lat$PreDL, form$PreDL, alternative = "two.sided", na.action=na.omit)
-tt_DbL <- t.test(lat$DbL, form$DbL, alternative = "two.sided", na.action=na.omit)
-tt_HL <- t.test(lat$HL, form$HL, alternative = "two.sided", na.action=na.omit)
-tt_HW <- t.test(lat$HW, form$HW, alternative = "two.sided", na.action=na.omit)
-tt_HD <- t.test(lat$HD, form$HD, alternative = "two.sided", na.action=na.omit)
-tt_SnL <- t.test(lat$SnL, form$SnL, alternative = "two.sided", na.action=na.omit)
-tt_OL <- t.test(lat$OL, form$OL, alternative = "two.sided", na.action=na.omit)
-tt_FLA <- t.test(lat$FLA, form$FLA, alternative = "two.sided", na.action=na.omit)
-
-
-avg_comp <- matrix(c(mean(lat$D, na.rm = TRUE), mean(form$D, na.rm = TRUE), tt_D$p.value, mean(lat$P1, na.rm = TRUE), mean(form$P1, na.rm = TRUE), tt_P1$p.value,  mean(lat$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), tt_A$p.value, mean(lat$P1.R, na.rm = TRUE), mean(form$P1.R, na.rm = TRUE), tt_P1.R$p.value, mean(lat$LLSC, na.rm = TRUE), mean(form$LLSC, na.rm = TRUE), tt_LLSC$p.value, mean(lat$SALL, na.rm = TRUE), mean(form$SALL, na.rm = TRUE), tt_SALL$p.value, mean(lat$SBLL, na.rm = TRUE), mean(form$SBLL, na.rm = TRUE), tt_SBLL$p.value, mean(lat$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), tt_SBDF$p.value, mean(lat$TL, na.rm = TRUE), mean(form$TL, na.rm = TRUE), tt_TL$p.value, mean(lat$SL, na.rm = TRUE), mean(form$SL, na.rm = TRUE), tt_SL$p.value, mean(lat$BD, na.rm = TRUE), mean(form$BD, na.rm = TRUE), tt_BD$p.value, mean(lat$CPD, na.rm = TRUE), mean(form$CPD, na.rm = TRUE), tt_CPD$p.value, mean(lat$CPL, na.rm = TRUE), mean(form$CPL, na.rm = TRUE), tt_CPL$p.value, mean(lat$PreDL, na.rm = TRUE), mean(form$PreDL, na.rm = TRUE), tt_PreDL$p.value, mean(lat$DbL, na.rm = TRUE), mean(form$DbL, na.rm = TRUE), tt_DbL$p.value, mean(lat$HL, na.rm = TRUE), mean(form$HL, na.rm = TRUE), tt_HL$p.value, mean(lat$HW, na.rm = TRUE), mean(form$HW, na.rm = TRUE), tt_HW$p.value, mean(lat$HD, na.rm = TRUE), mean(form$HD, na.rm = TRUE), tt_HD$p.value, mean(lat$SnL, na.rm = TRUE), mean(form$SnL, na.rm = TRUE), tt_SnL$p.value, mean(lat$OL, na.rm = TRUE), mean(form$OL, na.rm = TRUE), tt_OL$p.value, mean(lat$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE), tt_FLA$p.value), ncol=3, byrow = TRUE)
-
-colnames(avg_comp)<- c('Lat mean', 'Form mean', 't-test p-value')
-
-rownames(avg_comp) <- c('dorsal rays', 'L pect rays',  'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor', 'total len', 'standard len', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head length',  'head width', 'head depth', 'snout leng', 'orbital leng', 'asymmetries, pect')
-
-avg_comp
-
-```
-
-
-
-
-
-### PCA analysis {.tabset .tabset-fade .tabset-pills}
-
-In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **116 Sailfin and 186 Amazon**. 
-
-
-
-*Variable chart:*
-
-  - D: dorsal ray count
-  - P1: left pectoral ray count
-  - P2.L: left pelvic rays
-  - P2.R: right pelvic rays
-  - A: anal rays
-  - P1.R: right pectoral ray count
-  - LLSC: lateral line scale count
-  - SALL: scales above lateral line
-  - SBLL: scales below lateral line
-  - SBDF: scales before dorsal fin
-  - TL: total length
-  - SL: standard length
-  - BD: body depth
-  - CPD: caudal peduncle depth
-  - CPL: caudal peduncle length
-  - PreDL: pre-dorsal length
-  - DbL: dorsal base length
-  - HL/HW/HD: head length/width/depth
-  - SnL: snout length
-  - OL: ocular length
-
--   summary of PCs
-
-```{r, echo=FALSE}
-
-#keeps giving an error about infinite or missing values, even when I do na.omit. Will try with a dataframe that already omits NAs
-
-raw2 <- raw1[complete.cases(raw1[, 10:31]),] #that worked!
-
-#also want the FLA to be in there so gonna try to move the column to 31
-
-moveme <- function (invec, movecommand) {
-  movecommand <- lapply(strsplit(strsplit(movecommand, ";")[[1]], 
-                                 ",|\\s+"), function(x) x[x != ""])
-  movelist <- lapply(movecommand, function(x) {
-    Where <- x[which(x %in% c("before", "after", "first", 
-                              "last")):length(x)]
-    ToMove <- setdiff(x, Where)
-    list(ToMove, Where)
-  })
-  myVec <- invec
-  for (i in seq_along(movelist)) {
-    temp <- setdiff(myVec, movelist[[i]][[1]])
-    A <- movelist[[i]][[2]][1]
-    if (A %in% c("before", "after")) {
-      ba <- movelist[[i]][[2]][2]
-      if (A == "before") {
-        after <- match(ba, temp) - 1
-      }
-      else if (A == "after") {
-        after <- match(ba, temp)
-      }
-    }
-    else if (A == "first") {
-      after <- 0
-    }
-    else if (A == "last") {
-      after <- length(myVec)
-    }
-    myVec <- append(temp, values = movelist[[i]][[1]], after = after)
-  }
-  myVec
-}
-
-raw3 <- raw2[moveme(names(raw2), "FLA before SPP")] #is useful, but not sure if I want it in the PCA, especially if I already use the pect counts
-
-PCA <- prcomp(raw2[, 10:31], center=TRUE, scale. = TRUE) #includes all 22 traits 
-summary(PCA)
-loadings <- PCA$rotation
-loadings[, 1:5]
-
-
-VM_PCA <- varimax(PCA$rotation)
-summary(VM_PCA)
-
-```
-
--   visualization of PCA
-
-```{r, echo=FALSE}
-
-library(AMR)
-library(ggplot2)
-
-
-library(ggfortify)
-
-evplot <- function(ev)
-{
-	# Broken stick model (MacArthur 1957)
-	n <- length(ev)
-	bsm <- data.frame(j=seq(1:n), p=0)
-	bsm$p[1] <- 1/n
-	for (i in 2:n) bsm$p[i] <- bsm$p[i-1] + (1/(n + 1 - i))
-	bsm$p <- 100*bsm$p/n
-	# Plot eigenvalues and % of variation for each axis
-	op <- par(mfrow=c(2,1))
-	barplot(ev, main="Eigenvalues", col="bisque", las=2)
-	abline(h=mean(ev), col="red")
-	legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
-	barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
-		main="% variation", col=c("bisque",2), las=2)
-	legend("topright", c("% eigenvalue", "Broken stick model"), 
-		pch=15, col=c("bisque",2), bty="n")
-	par(op)
-}
-
-ev <- PCA$sdev^2
-evplot(ev) #according to Kaiser-Guttman criteron, we can use the first 4 PCs, even though the broken stick model shows only the first above the red bar plot... not 100% confident I know what this means, but pretty sure PC1 is body size 
-
-plot6<- autoplot(PCA, data = raw2, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
-plot6
-
-plot6.1<- autoplot(PCA, data = raw2, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
-plot6.1
-
-#raw.lat <- raw1[raw1$SPP == "p.latipinna",] no idea what these were for
-#raw.form <- raw1[raw1$SPP == "p.formosa",]
-
-plot7<- autoplot(PCA, data = raw2, colour='COUNTY.ST', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
-plot7
-#don't think this is actually useful. Would this be telling me that populations would be different?
-
-
-#Let's try this was PC2 and 3, since 1 is mostly size anyways.
-
-plot8<- autoplot(PCA, x=2, y=3, data = raw2, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
-plot8
-
-plot8.1<- autoplot(PCA, x=2, y=3, data = raw2, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
-plot8.1
-
-
-plot9<- autoplot(PCA, x=2, y=3, data = raw2, colour='COUNTY.ST', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
-plot9
-
-
-
-
-
-```
-
-*Variable chart:*
-
-  - D: dorsal ray count
-  - P1: left pectoral ray count
-  - P2.L: left pelvic rays
-  - P2.R: right pelvic rays
-  - A: anal rays
-  - P1.R: right pectoral ray count
-  - LLSC: lateral line scale count
-  - SALL: scales above lateral line
-  - SBLL: scales below lateral line
-  - SBDF: scales before dorsal fin
-  - TL: total length
-  - SL: standard length
-  - BD: body depth
-  - CPD: caudal peduncle depth
-  - CPL: caudal peduncle length
-  - PreDL: pre-dorsal length
-  - DbL: dorsal base length
-  - HL/HW/HD: head length/width/depth
-  - SnL: snout length
-  - OL: ocular length
-  
-  
-  
 ### T and F tests (body size corrected) {.tabset .tabset-fade .tabset-pills}
 
 F tests on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F tests on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? What I need to do is first compare the absolute value of the residuals using a t-test; if the r2 for the regression plot of SL vs trait is not significant, than this suggests it does not vary with body size. I can then do the regular F tests on those traits.
@@ -295,6 +66,7 @@ form1 <- form[complete.cases(form[, 10:31]),]
 #previously performed regression with SL on y and trait on x; corrected the code below to have SL on x and trait on y
 
 reg.lat.D1 <- lm(lat1$D ~ lat1$SL)
+sd.lat.D1 <- rstandard(reg.lat.D1)
 reg.lat.D1.plot <- ggplot(lat1, aes(x = SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -302,6 +74,7 @@ reg.lat.D1.plot <- ggplot(lat1, aes(x = SL, y = D)) +
 reg.lat.D1.plot
 
 reg.lat.P11 <- lm(lat1$P1 ~ lat1$SL)
+sd.lat.P11 <- rstandard(reg.lat.P11)
 reg.lat.P11.plot <- ggplot(lat1, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -309,6 +82,7 @@ reg.lat.P11.plot <- ggplot(lat1, aes(x = SL, y = P1)) +
 reg.lat.P11.plot
 
 reg.lat.P2.L1 <- lm(lat1$P2.L ~ lat1$SL)
+sd.lat.P2.L1 <- rstandard(reg.lat.P2.L1)
 reg.lat.P2.L1.plot <- ggplot(lat1, aes(x = SL, y = P2.L)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -316,6 +90,7 @@ reg.lat.P2.L1.plot <- ggplot(lat1, aes(x = SL, y = P2.L)) +
 reg.lat.P2.L1.plot
 
 reg.lat.P2.R1 <- lm(lat1$P2.R ~ lat1$SL)
+sd.lat.P2.R1 <- rstandard(reg.lat.P2.R1)
 reg.lat.P2.R1.plot <- ggplot(lat1, aes(x = SL, y = P2.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -323,6 +98,7 @@ reg.lat.P2.R1.plot <- ggplot(lat1, aes(x = SL, y = P2.R)) +
 reg.lat.P2.R1.plot
 
 reg.lat.A1 <- lm(lat1$A ~ lat1$SL)
+sd.lat.A1 <- rstandard(reg.lat.A1)
 reg.lat.A1.plot <- ggplot(lat1, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -330,6 +106,7 @@ reg.lat.A1.plot <- ggplot(lat1, aes(x = SL, y = A)) +
 reg.lat.A1.plot
 
 reg.lat.P1.R1 <- lm(lat1$P1.R ~ lat1$SL)
+sd.lat.P1.R1 <- rstandard(reg.lat.P1.R1)
 reg.lat.P1.R1.plot <- ggplot(lat1, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -337,6 +114,7 @@ reg.lat.P1.R1.plot <- ggplot(lat1, aes(x = SL, y = P1.R)) +
 reg.lat.P1.R1.plot
 
 reg.lat.LLSC1 <- lm(lat1$LLSC ~ lat1$SL)
+sd.lat.LLSC1 <- rstandard(reg.lat.LLSC1)
 reg.lat.LLSC1.plot <- ggplot(lat1, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -344,6 +122,7 @@ reg.lat.LLSC1.plot <- ggplot(lat1, aes(x = SL, y = LLSC)) +
 reg.lat.LLSC1.plot
 
 reg.lat.SALL1 <- lm(lat1$SALL ~ lat1$SL)
+sd.lat.SALL1 <- rstandard(reg.lat.SALL1)
 reg.lat.SALL1.plot <- ggplot(lat1, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -351,6 +130,7 @@ reg.lat.SALL1.plot <- ggplot(lat1, aes(x = SL, y = SALL)) +
 reg.lat.SALL1.plot
 
 reg.lat.SBLL1 <- lm(lat1$SBLL ~ lat1$SL)
+sd.lat.SBLL1 <- rstandard(reg.lat.SBLL1)
 reg.lat.SBLL1.plot <- ggplot(lat1, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -358,6 +138,7 @@ reg.lat.SBLL1.plot <- ggplot(lat1, aes(x = SL, y = SBLL)) +
 reg.lat.SBLL1.plot
 
 reg.lat.SBDF1 <- lm(lat1$SBDF ~ lat1$SL)
+sd.lat.SBDF1 <- rstandard(reg.lat.SBDF1)
 reg.lat.SBDF1.plot <- ggplot(lat1, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -365,6 +146,7 @@ reg.lat.SBDF1.plot <- ggplot(lat1, aes(x = SL, y = SBDF)) +
 reg.lat.SBDF1.plot
 
 reg.lat.BD1 <- lm(lat1$BD ~ lat1$SL)
+sd.lat.BD1 <- rstandard(reg.lat.BD1)
 reg.lat.BD1.plot <- ggplot(lat1, aes(x = SL, y = BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -372,6 +154,7 @@ reg.lat.BD1.plot <- ggplot(lat1, aes(x = SL, y = BD)) +
 reg.lat.BD1.plot
 
 reg.lat.CPD1 <- lm(lat1$CPD ~ lat1$SL)
+sd.lat.CPD1 <- rstandard(reg.lat.CPD1)
 reg.lat.CPD1.plot <- ggplot(lat1, aes(x = SL, y = CPD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -379,6 +162,7 @@ reg.lat.CPD1.plot <- ggplot(lat1, aes(x = SL, y = CPD)) +
 reg.lat.CPD1.plot
 
 reg.lat.CPL1 <- lm(lat1$CPL ~ lat1$SL)
+sd.lat.CPL1 <- rstandard(reg.lat.CPL1)
 reg.lat.CPL1.plot <- ggplot(lat1, aes(x = SL, y = CPL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -386,6 +170,7 @@ reg.lat.CPL1.plot <- ggplot(lat1, aes(x = SL, y = CPL)) +
 reg.lat.CPL1.plot
 
 reg.lat.PreDL1 <- lm(lat1$PreDL ~ lat1$SL)
+sd.lat.PreDL1 <- rstandard(reg.lat.PreDL1)
 reg.lat.PreDL1.plot <- ggplot(lat1, aes(x = SL, y = PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -393,6 +178,7 @@ reg.lat.PreDL1.plot <- ggplot(lat1, aes(x = SL, y = PreDL)) +
 reg.lat.PreDL1.plot
 
 reg.lat.DbL1 <- lm(lat1$DbL ~ lat1$SL)
+sd.lat.DbL1 <- rstandard(reg.lat.DbL1)
 reg.lat.DbL1.plot <- ggplot(lat1, aes(x = SL, y = DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -400,6 +186,7 @@ reg.lat.DbL1.plot <- ggplot(lat1, aes(x = SL, y = DbL)) +
 reg.lat.DbL1.plot
 
 reg.lat.HL1 <- lm(lat1$HL ~ lat1$SL)
+sd.lat.HL1 <- rstandard(reg.lat.HL1)
 reg.lat.HL1.plot <- ggplot(lat1, aes(x = SL, y = HL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -407,6 +194,7 @@ reg.lat.HL1.plot <- ggplot(lat1, aes(x = SL, y = HL)) +
 reg.lat.HL1.plot
 
 reg.lat.HD1 <- lm(lat1$HD ~ lat1$SL)
+sd.lat.HD1 <- rstandard(reg.lat.HD1)
 reg.lat.HD1.plot <- ggplot(lat1, aes(x = SL, y = HD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -414,6 +202,7 @@ reg.lat.HD1.plot <- ggplot(lat1, aes(x = SL, y = HD)) +
 reg.lat.HD1.plot
 
 reg.lat.HW1 <- lm(lat1$HW ~ lat1$SL)
+sd.lat.HW1 <- rstandard(reg.lat.HW1)
 reg.lat.HW1.plot <- ggplot(lat1, aes(x = SL, y = HW)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -421,6 +210,7 @@ reg.lat.HW1.plot <- ggplot(lat1, aes(x = SL, y = HW)) +
 reg.lat.HW1.plot
 
 reg.lat.SnL1 <- lm(lat1$SnL ~ lat1$SL)
+sd.lat.SnL1 <- rstandard(reg.lat.SnL1)
 reg.lat.SnL1.plot <- ggplot(lat1, aes(x = SL, y = SnL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -428,6 +218,7 @@ reg.lat.SnL1.plot <- ggplot(lat1, aes(x = SL, y = SnL)) +
 reg.lat.SnL1.plot
 
 reg.lat.OL1 <- lm(lat1$OL ~ lat1$SL)
+sd.lat.OL1 <- rstandard(reg.lat.OL1)
 reg.lat.OL1.plot <- ggplot(lat1, aes(x = SL, y = OL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -435,6 +226,7 @@ reg.lat.OL1.plot <- ggplot(lat1, aes(x = SL, y = OL)) +
 reg.lat.OL1.plot
 
 reg.lat.FLA <- lm(lat1$FLA ~ lat1$SL)
+sd.lat.FLA <- rstandard(reg.lat.FLA)
 reg.lat.FLA.plot <- ggplot(lat1, aes(x = SL, y = FLA)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -444,6 +236,7 @@ reg.lat.FLA.plot
 
 
 reg.form.D1 <- lm(form1$D ~ form1$SL)
+sd.form.D1 <- rstandard(reg.form.D1)
 reg.form.D1.plot <- ggplot(form1, aes(x =SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -451,6 +244,7 @@ reg.form.D1.plot <- ggplot(form1, aes(x =SL, y = D)) +
 reg.form.D1.plot
 
 reg.form.P11 <- lm(form1$P1 ~ form1$SL)
+sd.form.P11 <- rstandard(reg.form.P11)
 reg.form.P11.plot <- ggplot(form1, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -458,6 +252,7 @@ reg.form.P11.plot <- ggplot(form1, aes(x = SL, y = P1)) +
 reg.form.P11.plot
 
 reg.form.P2.L1 <- lm(form1$P2.L ~ form1$SL)
+sd.form.P2.L1 <- rstandard(reg.form.P2.L1)
 reg.form.P2.L1.plot <- ggplot(form1, aes(x = SL, y = P2.L)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -465,6 +260,7 @@ reg.form.P2.L1.plot <- ggplot(form1, aes(x = SL, y = P2.L)) +
 reg.form.P2.L1.plot
 
 reg.form.P2.R1 <- lm(form1$P2.R ~ form1$SL)
+sd.form.P2.R1 <- rstandard(reg.form.P2.R1)
 reg.form.P2.R1.plot <- ggplot(form1, aes(x = SL, y = P2.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -472,6 +268,7 @@ reg.form.P2.R1.plot <- ggplot(form1, aes(x = SL, y = P2.R)) +
 reg.form.P2.R1.plot
 
 reg.form.A1 <- lm(form1$A ~ form1$SL)
+sd.form.A1 <- rstandard(reg.form.A1)
 reg.form.A1.plot <- ggplot(form1, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -479,6 +276,7 @@ reg.form.A1.plot <- ggplot(form1, aes(x = SL, y = A)) +
 reg.form.A1.plot
 
 reg.form.P1.R1 <- lm(form1$P1.R ~ form1$SL)
+sd.form.P1.R1 <- rstandard(reg.form.P1.R1)
 reg.form.P1.R1.plot <- ggplot(form1, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -486,6 +284,7 @@ reg.form.P1.R1.plot <- ggplot(form1, aes(x = SL, y = P1.R)) +
 reg.form.P1.R1.plot
 
 reg.form.LLSC1 <- lm(form1$LLSC ~ form1$SL)
+sd.form.LLSC1 <- rstandard(reg.form.LLSC1)
 reg.form.LLSC1.plot <- ggplot(form1, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -493,6 +292,7 @@ reg.form.LLSC1.plot <- ggplot(form1, aes(x = SL, y = LLSC)) +
 reg.form.LLSC1.plot
 
 reg.form.SALL1 <- lm(form1$SALL ~ form1$SL)
+sd.form.SALL1 <- rstandard(reg.form.SALL1)
 reg.form.SALL1.plot <- ggplot(form1, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -500,6 +300,7 @@ reg.form.SALL1.plot <- ggplot(form1, aes(x = SL, y = SALL)) +
 reg.form.SALL1.plot
 
 reg.form.SBLL1 <- lm(form1$SBLL ~ form1$SL)
+sd.form.SBLL1 <- rstandard(reg.form.SBLL1)
 reg.form.SBLL1.plot <- ggplot(form1, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -507,6 +308,7 @@ reg.form.SBLL1.plot <- ggplot(form1, aes(x = SL, y = SBLL)) +
 reg.form.SBLL1.plot
 
 reg.form.SBDF1 <- lm(form1$SBDF ~ form1$SL)
+sd.form.SBDF1 <- rstandard(reg.form.SBDF1)
 reg.form.SBDF1.plot <- ggplot(form1, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -514,6 +316,7 @@ reg.form.SBDF1.plot <- ggplot(form1, aes(x = SL, y = SBDF)) +
 reg.form.SBDF1.plot
 
 reg.form.BD1 <- lm(form1$BD ~ form1$SL)
+sd.form.BD1 <- rstandard(reg.form.BD1)
 reg.form.BD1.plot <- ggplot(form1, aes(x = SL, y = BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -521,6 +324,7 @@ reg.form.BD1.plot <- ggplot(form1, aes(x = SL, y = BD)) +
 reg.form.BD1.plot
 
 reg.form.CPD1 <- lm(form1$CPD ~ form1$SL)
+sd.form.CPD1 <- rstandard(reg.form.CPD1)
 reg.form.CPD1.plot <- ggplot(form1, aes(x = SL, y = CPD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -528,6 +332,7 @@ reg.form.CPD1.plot <- ggplot(form1, aes(x = SL, y = CPD)) +
 reg.form.CPD1.plot
 
 reg.form.CPL1 <- lm(form1$CPL ~ form1$SL)
+sd.form.CPL1 <- rstandard(reg.form.CPL1)
 reg.form.CPL1.plot <- ggplot(form1, aes(x = SL, y = CPL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -535,6 +340,7 @@ reg.form.CPL1.plot <- ggplot(form1, aes(x = SL, y = CPL)) +
 reg.form.CPL1.plot
 
 reg.form.PreDL1 <- lm(form1$PreDL ~ form1$SL)
+sd.form.PreDL1 <- rstandard(reg.form.PreDL1)
 reg.form.PreDL1.plot <- ggplot(form1, aes(x = SL, y = PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -542,6 +348,7 @@ reg.form.PreDL1.plot <- ggplot(form1, aes(x = SL, y = PreDL)) +
 reg.form.PreDL1.plot
 
 reg.form.DbL1 <- lm(form1$DbL ~ form1$SL)
+sd.form.DbL1 <- rstandard(reg.form.DbL1)
 reg.form.DbL1.plot <- ggplot(form1, aes(x = SL, y = DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -549,6 +356,7 @@ reg.form.DbL1.plot <- ggplot(form1, aes(x = SL, y = DbL)) +
 reg.form.DbL1.plot
 
 reg.form.HL1 <- lm(form1$HL ~ form1$SL)
+sd.form.HL1 <- rstandard(reg.form.HL1)
 reg.form.HL1.plot <- ggplot(form1, aes(x = SL, y = HL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -556,6 +364,7 @@ reg.form.HL1.plot <- ggplot(form1, aes(x = SL, y = HL)) +
 reg.form.HL1.plot
 
 reg.form.HD1 <- lm(form1$HD ~ form1$SL)
+sd.form.HD1 <- rstandard(reg.form.HD1)
 reg.form.HD1.plot <- ggplot(form1, aes(x = SL, y = HD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -563,6 +372,7 @@ reg.form.HD1.plot <- ggplot(form1, aes(x = SL, y = HD)) +
 reg.form.HD1.plot
 
 reg.form.HW1 <- lm(form1$HW ~ form1$SL)
+sd.form.HW1 <- rstandard(reg.form.HW1)
 reg.form.HW1.plot <- ggplot(form1, aes(x = SL, y = HW)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -570,6 +380,7 @@ reg.form.HW1.plot <- ggplot(form1, aes(x = SL, y = HW)) +
 reg.form.HW1.plot
 
 reg.form.SnL1 <- lm(form1$SnL ~ form1$SL)
+sd.form.SnL1 <- rstandard(reg.form.SnL1)
 reg.form.SnL1.plot <- ggplot(form1, aes(x = SL, y = SnL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -577,6 +388,7 @@ reg.form.SnL1.plot <- ggplot(form1, aes(x = SL, y = SnL)) +
 reg.form.SnL1.plot
 
 reg.form.OL1 <- lm(form1$OL ~ form1$SL)
+sd.form.OL1 <- rstandard(reg.form.OL1)
 reg.form.OL1.plot <- ggplot(form1, aes(x = SL, y = OL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
@@ -584,13 +396,12 @@ reg.form.OL1.plot <- ggplot(form1, aes(x = SL, y = OL)) +
 reg.form.OL1.plot
 
 reg.form.FLA <- lm(form1$FLA ~ form1$SL)
+sd.form.FLA <- rstandard(reg.form.FLA)
 reg.form.FLA.plot <- ggplot(form1, aes(x = SL, y = FLA)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
 reg.form.FLA.plot
-
-
 ```
 
 **ALL BUT P2, A, SALL, SBDF, and FLA WERE SIGNIFICANT FOR ONE OR BOTH SPECIES**
@@ -797,7 +608,6 @@ plot11
 
 ```
 
-
 ##### Residual Comparisons {.tabset .tabset-fade .tabset-pills}
 
 
@@ -924,6 +734,7 @@ ggplot(raw4, aes(SPP, abs.res.OL)) +
 
 
 ```
+
 
 
 
@@ -1099,6 +910,80 @@ Will run a nested ANOVA on the residuals (and raw data that isn't affected by bo
 
 
 ```{r}
+sd.res.D <- append(sd.lat.D1, sd.form.D1)
+sd.res.P1 <- append(sd.lat.P11, sd.form.P11)
+sd.res.P1.R <- append(sd.lat.P1.R1, sd.form.P1.R1)
+sd.res.LLSC<- append(sd.lat.LLSC1, sd.form.LLSC1)
+sd.res.SBLL<- append(sd.lat.SBLL1, sd.form.SBLL1)
+sd.res.BD<- append(sd.lat.BD1, sd.form.BD1)
+sd.res.CPD<- append(sd.lat.CPD1, sd.form.CPD1)
+sd.res.CPL<- append(sd.lat.CPL1, sd.form.CPL1)
+sd.res.PreDL <- append(sd.lat.PreDL1, sd.form.PreDL1)
+sd.res.DbL <- append(sd.lat.DbL1, sd.form.DbL1)
+sd.res.HL<- append(sd.lat.HL1, sd.form.HL1)
+sd.res.HD<- append(sd.lat.HD1, sd.form.HD1)
+sd.res.HW <- append(sd.lat.HW1, sd.form.HW1)
+sd.res.SnL <- append(sd.lat.SnL1, sd.form.SnL1)
+sd.res.OL <- append(sd.lat.OL1, sd.form.OL1)
+
+raw5 <- cbind(raw4, sd.res.D, sd.res.P1, sd.res.P1.R, sd.res.LLSC, sd.res.SBLL, sd.res.BD, sd.res.CPD, sd.res.CPL, sd.res.PreDL, sd.res.DbL, sd.res.HL, sd.res.HD, sd.res.HW, sd.res.SnL, sd.res.OL)
+
+
+library(dplyr)
+raw5a <- raw5 %>%
+  select(49:63) %>%
+  abs()
+
+raw5a <- cbind(raw5, raw5a)
+
+raw5b <- cbind(raw5a[1:32], stack(raw5a[49:78])) 
+raw5b$abs_sd = abs(raw5b$values)
+
+lat.raw5 <- raw5b[raw5b$SPP == "p.latipinna",]
+
+form.raw5 <- raw5b[raw5b$SPP == "p.formosa",]
+
+A2.lat <- aov(abs_sd~QUARTILE, data=lat.raw5)
+summary(A2.lat)
+
+A2.form <- aov(abs_sd~QUARTILE, data=form.raw5)
+summary(A2.form)
+
+#between species
+
+A2 <- aov(abs_sd~QUARTILE*SPP, data=raw5b)
+summary(A2)
+
+
+
+
+#BELOW: I compiled all the residual scores into each quartile (so all residuals for all traits in Q1, ex) and then ran the anovas below. BUT the residuals are not unitless--so I need to standardize them. Will try this again above with standardized residuals
+library(curl)
+
+df <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/ANOVA_res-data.csv")
+
+df <- read.csv(df, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+head(df)
+
+lat.df <- df[df$Spp == "lat",]
+head(lat.df)
+
+form.df <- df[df$Spp == "form",]
+head(form.df)
+
+#within species
+
+A.lat <- aov(X.U.FEFF.Residuals~Location, data=lat.df)
+summary(A.lat)
+
+A.form <- aov(X.U.FEFF.Residuals~Location, data=form.df)
+summary(A.form)
+
+#between species
+
+A <- aov(X.U.FEFF.Residuals~Location*Spp, data=df)
+summary(A)
 
 
 #runs on the assumption that each subgroup has a normal distribution, check for normality among location?
@@ -1192,12 +1077,177 @@ ggplot(raw4, aes(x=factor(QUARTILE), y=abs.res.P1.R, fill=SPP)) +
 
 
 
+### PCA analysis {.tabset .tabset-fade .tabset-pills}
+
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **116 Sailfin and 186 Amazon**. 
+
+
+
+*Variable chart:*
+
+  - D: dorsal ray count
+  - P1: left pectoral ray count
+  - P2.L: left pelvic rays
+  - P2.R: right pelvic rays
+  - A: anal rays
+  - P1.R: right pectoral ray count
+  - LLSC: lateral line scale count
+  - SALL: scales above lateral line
+  - SBLL: scales below lateral line
+  - SBDF: scales before dorsal fin
+  - TL: total length
+  - SL: standard length
+  - BD: body depth
+  - CPD: caudal peduncle depth
+  - CPL: caudal peduncle length
+  - PreDL: pre-dorsal length
+  - DbL: dorsal base length
+  - HL/HW/HD: head length/width/depth
+  - SnL: snout length
+  - OL: ocular length
+
+-   summary of PCs
+
+```{r, echo=FALSE}
+
+#keeps giving an error about infinite or missing values, even when I do na.omit. Will try with a dataframe that already omits NAs
+
+raw2 <- raw1[complete.cases(raw1[, 10:31]),] #that worked!
+
+#also want the FLA to be in there so gonna try to move the column to 31
+
+moveme <- function (invec, movecommand) {
+  movecommand <- lapply(strsplit(strsplit(movecommand, ";")[[1]], 
+                                 ",|\\s+"), function(x) x[x != ""])
+  movelist <- lapply(movecommand, function(x) {
+    Where <- x[which(x %in% c("before", "after", "first", 
+                              "last")):length(x)]
+    ToMove <- setdiff(x, Where)
+    list(ToMove, Where)
+  })
+  myVec <- invec
+  for (i in seq_along(movelist)) {
+    temp <- setdiff(myVec, movelist[[i]][[1]])
+    A <- movelist[[i]][[2]][1]
+    if (A %in% c("before", "after")) {
+      ba <- movelist[[i]][[2]][2]
+      if (A == "before") {
+        after <- match(ba, temp) - 1
+      }
+      else if (A == "after") {
+        after <- match(ba, temp)
+      }
+    }
+    else if (A == "first") {
+      after <- 0
+    }
+    else if (A == "last") {
+      after <- length(myVec)
+    }
+    myVec <- append(temp, values = movelist[[i]][[1]], after = after)
+  }
+  myVec
+}
+
+raw3 <- raw2[moveme(names(raw2), "FLA before SPP")] #is useful, but not sure if I want it in the PCA, especially if I already use the pect counts
+
+PCA <- prcomp(raw2[, 10:31], center=TRUE, scale. = TRUE) #includes all 22 traits 
+summary(PCA)
+loadings <- PCA$rotation
+loadings[, 1:5]
+
+
+VM_PCA <- varimax(PCA$rotation)
+summary(VM_PCA)
+
+```
+
+-   visualization of PCA
+
+```{r, echo=FALSE}
+
+library(AMR)
+library(ggplot2)
+
+
+library(ggfortify)
+
+evplot <- function(ev)
+{
+	# Broken stick model (MacArthur 1957)
+	n <- length(ev)
+	bsm <- data.frame(j=seq(1:n), p=0)
+	bsm$p[1] <- 1/n
+	for (i in 2:n) bsm$p[i] <- bsm$p[i-1] + (1/(n + 1 - i))
+	bsm$p <- 100*bsm$p/n
+	# Plot eigenvalues and % of variation for each axis
+	op <- par(mfrow=c(2,1))
+	barplot(ev, main="Eigenvalues", col="bisque", las=2)
+	abline(h=mean(ev), col="red")
+	legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
+	barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
+		main="% variation", col=c("bisque",2), las=2)
+	legend("topright", c("% eigenvalue", "Broken stick model"), 
+		pch=15, col=c("bisque",2), bty="n")
+	par(op)
+}
+
+ev <- PCA$sdev^2
+evplot(ev) #according to Kaiser-Guttman criteron, we can use the first 4 PCs, even though the broken stick model shows only the first above the red bar plot... not 100% confident I know what this means, but pretty sure PC1 is body size 
+
+plot6<- autoplot(PCA, data = raw2, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot6
+
+plot6.1<- autoplot(PCA, data = raw2, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot6.1
+
+#raw.lat <- raw1[raw1$SPP == "p.latipinna",] no idea what these were for
+#raw.form <- raw1[raw1$SPP == "p.formosa",]
+
+plot7<- autoplot(PCA, data = raw2, colour='COUNTY.ST', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot7
+#don't think this is actually useful. Would this be telling me that populations would be different?
+
+
+#Let's try this was PC2 and 3, since 1 is mostly size anyways.
+
+plot8<- autoplot(PCA, x=2, y=3, data = raw2, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot8
+
+plot8.1<- autoplot(PCA, x=2, y=3, data = raw2, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot8.1
+
+
+plot9<- autoplot(PCA, x=2, y=3, data = raw2, colour='COUNTY.ST', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot9
 
 
 
 
 
+```
 
+*Variable chart:*
 
-
-<br><br><br><br>
+  - D: dorsal ray count
+  - P1: left pectoral ray count
+  - P2.L: left pelvic rays
+  - P2.R: right pelvic rays
+  - A: anal rays
+  - P1.R: right pectoral ray count
+  - LLSC: lateral line scale count
+  - SALL: scales above lateral line
+  - SBLL: scales below lateral line
+  - SBDF: scales before dorsal fin
+  - TL: total length
+  - SL: standard length
+  - BD: body depth
+  - CPD: caudal peduncle depth
+  - CPL: caudal peduncle length
+  - PreDL: pre-dorsal length
+  - DbL: dorsal base length
+  - HL/HW/HD: head length/width/depth
+  - SnL: snout length
+  - OL: ocular length
+  
+  
