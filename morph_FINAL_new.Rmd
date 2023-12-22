@@ -10,11 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-*Morphological variation of amazon and sailfin mollies* {.tabset .tabset-fade .tabset-pills}
+# *Morphological variation of amazon and sailfin mollies* {.tabset .tabset-fade .tabset-pills}
 
 In this study, I am looking at various populations of amazon and sailfin mollies across their native/introduced range to assess morphological variation both within and among the species. I am using the Pickle fish collections for my samples.
 
-Data collection {.tabset .tabset-fade .tabset-pills}
+*Data collection* 
 
 ```{r, echo=FALSE}
 library(curl)
@@ -25,26 +25,29 @@ raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
 
 #raw$SALL <- as.numeric(as.character(raw$SALL))
 
-head(raw)
+
 
 
 lat <- raw[raw$SPP == "p.latipinna",]
-head(lat)
+
 
 form <- raw[raw$SPP == "p.formosa",]
-head(form)
+
+
+mex <- raw[raw$SPP == "p.mexicana",]
+
 
 ```
 
 
-# Correcting for body size (residuals) {.tabset .tabset-fade .tabset-pills}
+## Correcting for body size (residuals) {.tabset .tabset-fade .tabset-pills}
 
 Since amazons are in general bigger than sailfin, we don't want any results to be due to this difference in body size bias. Therefore, we will see what traits are influenced by body size (regressions) and correct for body size when necessary (absolute value of residuals). We can then use the residuals when comparing between species for traits that are influenced by body size, and raw data for traits that are not influenced by body size. I will also calculate standardized residuals to compare residuals across traits in later analyses.
 
-**Quick results summary:** traits *not* influenced by body size are; all other traits influenced by body size. 
+**Quick results summary:** traits *not* influenced by body size are left & right pelvic, anal, scales below lateral line and fluctuating asymmetry; all other traits influenced by body size. 
 
 
-## Regressions {.tabset .tabset-fade .tabset-pills}
+### Regressions {.tabset .tabset-fade .tabset-pills}
 
 -   STEP ONE: plot trait vs body size
 
@@ -55,8 +58,9 @@ library(ggpubr)
 
 lat1 <- lat[complete.cases(lat[, 15:37]),]
 form1 <- form[complete.cases(form[, 15:37]),]
+mex1 <- mex[complete.cases(mex[, 15:37]),]
 
-
+##### LAT #####
 reg.lat.D <- lm(lat1$D ~ lat1$SL)
 sd.lat.D <- rstandard(reg.lat.D)
 reg.lat.D.plot <- ggplot(lat1, aes(x = SL, y = D)) + 
@@ -225,7 +229,7 @@ reg.lat.FLA.plot <- ggplot(lat1, aes(x = SL, y = FLA)) +
   stat_cor(label.y = 10)
 reg.lat.FLA.plot
 
-
+##### FORM #####
 
 reg.form.D <- lm(form1$D ~ form1$SL)
 sd.form.D <- rstandard(reg.form.D)
@@ -396,15 +400,188 @@ reg.form.FLA.plot <- ggplot(form1, aes(x = SL, y = FLA)) +
 reg.form.FLA.plot
 
 
+
+##### MEX #####
+reg.mex.D <- lm(mex1$D ~ mex1$SL)
+sd.mex.D <- rstandard(reg.mex.D)
+reg.mex.D.plot <- ggplot(mex1, aes(x = SL, y = D)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.D.plot
+
+reg.mex.P1 <- lm(mex1$P1 ~ mex1$SL)
+sd.mex.P1 <- rstandard(reg.mex.P1)
+reg.mex.P1.plot <- ggplot(mex1, aes(x = SL, y = P1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P1.plot
+
+reg.mex.P2.L <- lm(mex1$P2.L ~ mex1$SL)
+sd.mex.P2.L <- rstandard(reg.mex.P2.L)
+reg.mex.P2.L.plot <- ggplot(mex1, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P2.L.plot
+
+reg.mex.P2.R <- lm(mex1$P2.R ~ mex1$SL)
+sd.mex.P2.R <- rstandard(reg.mex.P2.R)
+reg.mex.P2.R.plot <- ggplot(mex1, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P2.R.plot
+
+reg.mex.A <- lm(mex1$A ~ mex1$SL)
+sd.mex.A <- rstandard(reg.mex.A)
+reg.mex.A.plot <- ggplot(mex1, aes(x = SL, y = A)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.A.plot
+
+reg.mex.P1.R <- lm(mex1$P1.R ~ mex1$SL)
+sd.mex.P1.R <- rstandard(reg.mex.P1.R)
+reg.mex.P1.R.plot <- ggplot(mex1, aes(x = SL, y = P1.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P1.R.plot
+
+reg.mex.LLSC <- lm(mex1$LLSC ~ mex1$SL)
+sd.mex.LLSC <- rstandard(reg.mex.LLSC)
+reg.mex.LLSC.plot <- ggplot(mex1, aes(x = SL, y = LLSC)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.LLSC.plot
+
+reg.mex.SALL <- lm(mex1$SALL ~ mex1$SL)
+sd.mex.SALL <- rstandard(reg.mex.SALL)
+reg.mex.SALL.plot <- ggplot(mex1, aes(x = SL, y = SALL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SALL.plot
+
+reg.mex.SBLL <- lm(mex1$SBLL ~ mex1$SL)
+sd.mex.SBLL <- rstandard(reg.mex.SBLL)
+reg.mex.SBLL.plot <- ggplot(mex1, aes(x = SL, y = SBLL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SBLL.plot
+
+reg.mex.SBDF <- lm(mex1$SBDF ~ mex1$SL)
+sd.mex.SBDF <- rstandard(reg.mex.SBDF)
+reg.mex.SBDF.plot <- ggplot(mex1, aes(x = SL, y = SBDF)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SBDF.plot
+
+reg.mex.BD <- lm(mex1$BD ~ mex1$SL)
+sd.mex.BD <- rstandard(reg.mex.BD)
+reg.mex.BD.plot <- ggplot(mex1, aes(x = SL, y = BD)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.BD.plot
+
+reg.mex.CPD <- lm(mex1$CPD ~ mex1$SL)
+sd.mex.CPD <- rstandard(reg.mex.CPD)
+reg.mex.CPD.plot <- ggplot(mex1, aes(x = SL, y = CPD)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.CPD.plot
+
+reg.mex.CPL <- lm(mex1$CPL ~ mex1$SL)
+sd.mex.CPL <- rstandard(reg.mex.CPL)
+reg.mex.CPL.plot <- ggplot(mex1, aes(x = SL, y = CPL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.CPL.plot
+
+reg.mex.PreDL <- lm(mex1$PreDL ~ mex1$SL)
+sd.mex.PreDL <- rstandard(reg.mex.PreDL)
+reg.mex.PreDL.plot <- ggplot(mex1, aes(x = SL, y = PreDL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.PreDL.plot
+
+reg.mex.DbL <- lm(mex1$DbL ~ mex1$SL)
+sd.mex.DbL <- rstandard(reg.mex.DbL)
+reg.mex.DbL.plot <- ggplot(mex1, aes(x = SL, y = DbL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.DbL.plot
+
+reg.mex.HL <- lm(mex1$HL ~ mex1$SL)
+sd.mex.HL <- rstandard(reg.mex.HL)
+reg.mex.HL.plot <- ggplot(mex1, aes(x = SL, y = HL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.HL.plot
+
+reg.mex.HD <- lm(mex1$HD ~ mex1$SL)
+sd.mex.HD <- rstandard(reg.mex.HD)
+reg.mex.HD.plot <- ggplot(mex1, aes(x = SL, y = HD)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.HD.plot
+
+reg.mex.HW <- lm(mex1$HW ~ mex1$SL)
+sd.mex.HW <- rstandard(reg.mex.HW)
+reg.mex.HW.plot <- ggplot(mex1, aes(x = SL, y = HW)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.HW.plot
+
+reg.mex.SnL <- lm(mex1$SnL ~ mex1$SL)
+sd.mex.SnL <- rstandard(reg.mex.SnL)
+reg.mex.SnL.plot <- ggplot(mex1, aes(x = SL, y = SnL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SnL.plot
+
+reg.mex.OL <- lm(mex1$OL ~ mex1$SL)
+sd.mex.OL <- rstandard(reg.mex.OL)
+reg.mex.OL.plot <- ggplot(mex1, aes(x = SL, y = OL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.OL.plot
+
+reg.mex.FLA <- lm(mex1$FLA ~ mex1$SL)
+sd.mex.FLA <- rstandard(reg.mex.FLA)
+reg.mex.FLA.plot <- ggplot(mex1, aes(x = SL, y = FLA)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.FLA.plot
+
+
 ```
 
 
 
-## Residuals {.tabset .tabset-fade .tabset-pills}
+### Residuals {.tabset .tabset-fade .tabset-pills}
 
 -   STEP TWO: get residuals for each individual for traits that were influenced by body size
 
 ```{r echo=FALSE}
+
+##### LAT #####
 res.lat.D <- resid(reg.lat.D)
 
 res.lat.P1 <- resid(reg.lat.P1)
@@ -412,6 +589,8 @@ res.lat.P1 <- resid(reg.lat.P1)
 res.lat.P1.R <- resid(reg.lat.P1.R)
 
 res.lat.LLSC <- resid(reg.lat.LLSC)
+
+res.lat.SALL <- resid(reg.lat.SALL)
 
 res.lat.SBLL <- resid(reg.lat.SBLL)
 
@@ -435,6 +614,7 @@ res.lat.SnL <- resid(reg.lat.SnL)
 
 res.lat.OL <- resid(reg.lat.OL)
 
+##### FORM #####
 
 res.form.D <- resid(reg.form.D)
 
@@ -443,6 +623,8 @@ res.form.P1 <- resid(reg.form.P1)
 res.form.P1.R <- resid(reg.form.P1.R)
 
 res.form.LLSC <- resid(reg.form.LLSC)
+
+res.form.SALL <- resid(reg.form.SALL)
 
 res.form.SBLL <- resid(reg.form.SBLL)
 
@@ -466,11 +648,49 @@ res.form.SnL <- resid(reg.form.SnL)
 
 res.form.OL <- resid(reg.form.OL)
 
+
+##### MEX #####
+res.mex.D <- resid(reg.mex.D)
+
+res.mex.P1 <- resid(reg.mex.P1)
+
+res.mex.P1.R <- resid(reg.mex.P1.R)
+
+res.mex.LLSC <- resid(reg.mex.LLSC)
+
+res.mex.SALL <- resid(reg.mex.SALL)
+
+res.mex.SBLL <- resid(reg.mex.SBLL)
+
+res.mex.BD <- resid(reg.mex.BD)
+
+res.mex.CPD <- resid(reg.mex.CPD)
+
+res.mex.CPL <- resid(reg.mex.CPL)
+
+res.mex.PreDL <- resid(reg.mex.PreDL)
+
+res.mex.DbL <- resid(reg.mex.DbL)
+
+res.mex.HL <- resid(reg.mex.HL)
+
+res.mex.HD <- resid(reg.mex.HD)
+
+res.mex.HW <- resid(reg.mex.HW)
+
+res.mex.SnL <- resid(reg.mex.SnL)
+
+res.mex.OL <- resid(reg.mex.OL)
+
+
 ```
 
 -   STEP THREE: convert residuals to absolute value
 
 ```{r}
+
+##### LAT #####
+
 abs.lat.D <- abs(res.lat.D)
 mean(abs.lat.D)
 
@@ -482,6 +702,9 @@ mean(abs.lat.P1.R)
 
 abs.lat.LLSC <- abs(res.lat.LLSC)
 mean(abs.lat.LLSC)
+
+abs.lat.SALL <- abs(res.lat.SALL)
+mean(abs.lat.SALL)
 
 abs.lat.SBLL <- abs(res.lat.SBLL)
 mean(abs.lat.SBLL)
@@ -517,6 +740,8 @@ abs.lat.OL <- abs(res.lat.OL)
 mean(abs.lat.OL)
 
 
+##### FORM #####
+
 abs.form.D <- abs(res.form.D)
 mean(abs.form.D)
 
@@ -528,6 +753,9 @@ mean(abs.form.P1.R)
 
 abs.form.LLSC <- abs(res.form.LLSC)
 mean(abs.form.LLSC)
+
+abs.form.SALL <- abs(res.form.SALL)
+mean(abs.form.SALL)
 
 abs.form.SBLL <- abs(res.form.SBLL)
 mean(abs.form.SBLL)
@@ -562,33 +790,83 @@ mean(abs.form.SnL)
 abs.form.OL <- abs(res.form.OL)
 mean(abs.form.OL)
 
+##### MEX #####
+
+abs.mex.D <- abs(res.mex.D)
+mean(abs.mex.D)
+
+abs.mex.P1 <- abs(res.mex.P1)
+mean(abs.mex.P1)
+
+abs.mex.P1.R <- abs(res.mex.P1.R)
+mean(abs.mex.P1.R)
+
+abs.mex.LLSC <- abs(res.mex.LLSC)
+mean(abs.mex.LLSC)
+
+abs.mex.SALL <- abs(res.mex.SALL)
+mean(abs.mex.SALL)
+
+abs.mex.SBLL <- abs(res.mex.SBLL)
+mean(abs.mex.SBLL)
+
+abs.mex.BD <- abs(res.mex.BD)
+mean(abs.mex.BD)
+
+abs.mex.CPD <- abs(res.mex.CPD)
+mean(abs.mex.CPD)
+
+abs.mex.CPL <- abs(res.mex.CPL)
+mean(abs.mex.CPL)
+
+abs.mex.PreDL <- abs(res.mex.PreDL)
+mean(abs.mex.PreDL)
+
+abs.mex.DbL <- abs(res.mex.DbL)
+mean(abs.mex.DbL)
+
+abs.mex.HL <- abs(res.mex.HL)
+mean(abs.mex.HL)
+
+abs.mex.HD <- abs(res.mex.HD)
+mean(abs.mex.HD)
+
+abs.mex.HW <- abs(res.mex.HW)
+mean(abs.mex.HW)
+
+abs.mex.SnL <- abs(res.mex.SnL)
+mean(abs.mex.SnL)
+
+abs.mex.OL <- abs(res.mex.OL)
+mean(abs.mex.OL)
 
 
 #let's get this into the raw1 data set so that we can plot this more easily
 
-abs.res.D <- append(abs.lat.D, abs.form.D)
-abs.res.P1 <- append(abs.lat.P1, abs.form.P1)
-abs.res.P1.R <- append(abs.lat.P1.R, abs.form.P1.R)
-abs.res.LLSC<- append(abs.lat.LLSC, abs.form.LLSC)
-abs.res.SBLL<- append(abs.lat.SBLL, abs.form.SBLL)
-abs.res.BD<- append(abs.lat.BD, abs.form.BD)
-abs.res.CPD<- append(abs.lat.CPD, abs.form.CPD)
-abs.res.CPL<- append(abs.lat.CPL, abs.form.CPL)
-abs.res.PreDL <- append(abs.lat.PreDL, abs.form.PreDL)
-abs.res.DbL <- append(abs.lat.DbL, abs.form.DbL)
-abs.res.HL<- append(abs.lat.HL, abs.form.HL)
-abs.res.HD<- append(abs.lat.HD, abs.form.HD)
-abs.res.HW <- append(abs.lat.HW, abs.form.HW)
-abs.res.SnL <- append(abs.lat.SnL, abs.form.SnL)
-abs.res.OL <- append(abs.lat.OL, abs.form.OL)
+abs.res.D <- c(abs.lat.D, abs.form.D, abs.mex.D)
+abs.res.P1 <- c(abs.lat.P1, abs.form.P1, abs.mex.P1)
+abs.res.P1.R <- c(abs.lat.P1.R, abs.form.P1.R, abs.mex.P1.R)
+abs.res.LLSC<- c(abs.lat.LLSC, abs.form.LLSC, abs.mex.LLSC)
+abs.res.SALL<- c(abs.lat.SALL, abs.form.SALL, abs.mex.SALL)
+abs.res.SBLL<- c(abs.lat.SBLL, abs.form.SBLL, abs.mex.SBLL)
+abs.res.BD<- c(abs.lat.BD, abs.form.BD, abs.mex.BD)
+abs.res.CPD<- c(abs.lat.CPD, abs.form.CPD, abs.mex.CPD)
+abs.res.CPL<- c(abs.lat.CPL, abs.form.CPL, abs.mex.CPL)
+abs.res.PreDL <- c(abs.lat.PreDL, abs.form.PreDL, abs.mex.PreDL)
+abs.res.DbL <- c(abs.lat.DbL, abs.form.DbL, abs.mex.DbL)
+abs.res.HL<- c(abs.lat.HL, abs.form.HL, abs.mex.HL)
+abs.res.HD<- c(abs.lat.HD, abs.form.HD, abs.mex.HD)
+abs.res.HW <- c(abs.lat.HW, abs.form.HW, abs.mex.HW)
+abs.res.SnL <- c(abs.lat.SnL, abs.form.SnL, abs.mex.SnL)
+abs.res.OL <- c(abs.lat.OL, abs.form.OL, abs.mex.OL)
 
 raw1 <- raw[complete.cases(raw[, 15:37]),] #since the regressions automatically pulled the NAs out, the appended data set does not match the original data set. Will remove NAs in original data set to match. 
 
-raw2 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
+raw2 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SALL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
 
 ```
 
-## Residual Comparisons {.tabset .tabset-fade .tabset-pills}
+### Residual Comparisons {.tabset .tabset-fade .tabset-pills}
 
 
 
@@ -626,7 +904,7 @@ print(scatter_violin1)
 
 
 
-ggplot(raw2, aes(SPP, abs.res.P)) +
+ggplot(raw2, aes(SPP, abs.res.P1)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
@@ -718,7 +996,7 @@ ggplot(raw2, aes(SPP, abs.res.OL)) +
 
 
 
-# Comparing variation (F & T-tests) {.tabset .tabset-fade .tabset-pills}
+## Comparing variation (F & T-tests) {.tabset .tabset-fade .tabset-pills}
 
 F tests on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F tests on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? Based on the regressions, if the trait was influenced by body size, I will perform a t-test on the absolute value of the residuals. If the trait was not influenced by body size, I will perform an F test of variance on the raw data.
 
@@ -727,7 +1005,7 @@ F tests on residuals doesn't make much sense; the residuals themselves are repre
 
     -   will do two-tailed and check out the residual means to infer direction; for traits in which we use raw data, a one-tailed f-test will be perfomed in both direction to determine which species is varying more. We will also visulize the variation using a histogram to confirm direction results.
 
-## F tests of variation {.tabset .tabset-fade .tabset-pills} 
+### F tests of variation {.tabset .tabset-fade .tabset-pills} 
 
 This is for traits NOT influenced by body size. 
 
@@ -766,7 +1044,7 @@ var.flu.asy
 
 
 
-## T tests on residuals {.tabset .tabset-fade .tabset-pills}
+### T tests on residuals {.tabset .tabset-fade .tabset-pills}
 
 This will be for traits that WERE influenced by body size. The absolute value of the residuals will be used. 
 
@@ -840,7 +1118,7 @@ ttest.abs.OL
 
 
 
-## Summary of variance results {.tabset .tabset-fade .tabset-pills}
+### Summary of variance results {.tabset .tabset-fade .tabset-pills}
 
 
 ```{r}
@@ -857,7 +1135,7 @@ average.table
 ```
 
 
-## Visualization of significant results {.tabset .tabset-fade .tabset-pills
+### Visualization of significant results {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 
@@ -887,7 +1165,7 @@ plot_multi_histogram(raw2, "A", "SPP")
 
 
 
-# ANOVA {.tabset .tabset-fade .tabset-pills}
+## ANOVA {.tabset .tabset-fade .tabset-pills}
 
 Will run an ANOVA on the residuals with location and species as fixed effects. This will show me if morphology depends on the species, the location, and if the location and species interact to determine morphology. 
 
@@ -897,7 +1175,7 @@ I will then run the same analysis using basin as the location faction. Since fis
 
 Lastly I will run ANOVAs with both zones and basins but with standardized residuals. This would allow me to compare overall variation across traits (at least those that are depended on body size) rather than just one trait at a time. Not 100% sure if this is useful (or correct to do), but thought it would be interesting. 
 
-## Quartiles {.tabset .tabset-fade .tabset-pills}
+### Quartiles {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 
@@ -975,7 +1253,7 @@ ggplot(raw2, aes(x=factor(QUARTILE), y=abs.res.P1.R, fill=SPP)) +
 ```
 
 
-## Basins {.tabset .tabset-fade .tabset-pills}
+### Basins {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 
@@ -1043,7 +1321,7 @@ summary(A.FLA)
 ```
 
 
-## Watersheds {.tabset .tabset-fade .tabset-pills}
+### Watersheds {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 
@@ -1112,7 +1390,7 @@ summary(A.FLA)
 
 
 
-## Standardized {.tabset .tabset-fade .tabset-pills}
+### Standardized {.tabset .tabset-fade .tabset-pills}
 
 
 
@@ -1195,7 +1473,7 @@ summary(A5)
 
 
 
-# PCA analysis {.tabset .tabset-fade .tabset-pills}
+## PCA analysis {.tabset .tabset-fade .tabset-pills}
 
 LOGAN: CHECK THAT EACH VARIABLES IS NEAR NORMALLY DISTRIBUTED. IF NOT, LOG TRANSFORM BEFORE PCA. ALSO CHECK THAT PCA CALCULATES Z SCORES AND PLOTS BASED ON THAT; IF NOT CONVERT TO Z SCORES THEN RUN PCA.
 
