@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 In this study, I am looking at various populations of amazon and sailfin mollies across their native/introduced range to assess morphological variation both within and among the species. I am using the Pickle fish collections for my samples.
 
-# Data collection {.tabset .tabset-fade .tabset-pills}
+Data collection {.tabset .tabset-fade .tabset-pills}
 
 ```{r, echo=FALSE}
 library(curl)
@@ -22,6 +22,8 @@ library(curl)
 raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morphology_raw-data_NEAR-FINAL.csv")
 
 raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+#raw$SALL <- as.numeric(as.character(raw$SALL))
 
 head(raw)
 
@@ -35,23 +37,14 @@ head(form)
 ```
 
 
-### T and F tests (body size corrected) {.tabset .tabset-fade .tabset-pills}
+# Correcting for body size (residuals) {.tabset .tabset-fade .tabset-pills}
 
-F tests on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F tests on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? What I need to do is first compare the absolute value of the residuals using a t-test; if the r2 for the regression plot of SL vs trait is not significant, than this suggests it does not vary with body size. I can then do the regular F tests on those traits.
+Since amazons are in general bigger than sailfin, we don't want any results to be due to this difference in body size bias. Therefore, we will see what traits are influenced by body size (regressions) and correct for body size when necessary (absolute value of residuals). We can then use the residuals when comparing between species for traits that are influenced by body size, and raw data for traits that are not influenced by body size. I will also calculate standardized residuals to compare residuals across traits in later analyses.
 
-So: 
-    1. Plot regression of trait by SL for both species and all traits. Get r2 values and their associated p values.
-    2. Get the absolute value of the residual scores.
-    3. Plot the mean absolute values of the residuals for both species (with raw data) for each trait.
-    4. Run a t-test for the absolute values of the residuals for all traits.
-    5. Backtrack: if r2 is not significant from (1), then use F tests on raw data.
-
-#### Calculated residuals {.tabset .tabset-fade .tabset-pills}
+**Quick results summary:** traits *not* influenced by body size are; all other traits influenced by body size. 
 
 
-I will now use residuals to account for body size in each trait, and compare the variance for each species. Again, the first round will take the raw residuals, and the second round with use the absolute value of the raw residuals.
-
-##### Regressions {.tabset .tabset-fade .tabset-pills}
+## Regressions {.tabset .tabset-fade .tabset-pills}
 
 -   STEP ONE: plot trait vs body size
 
@@ -60,170 +53,169 @@ I will now use residuals to account for body size in each trait, and compare the
 library(ggplot2)
 library(ggpubr)
 
-lat1 <- lat[complete.cases(lat[, 10:31]),]
-form1 <- form[complete.cases(form[, 10:31]),]
+lat1 <- lat[complete.cases(lat[, 15:37]),]
+form1 <- form[complete.cases(form[, 15:37]),]
 
-#previously performed regression with SL on y and trait on x; corrected the code below to have SL on x and trait on y
 
-reg.lat.D1 <- lm(lat1$D ~ lat1$SL)
-sd.lat.D1 <- rstandard(reg.lat.D1)
-reg.lat.D1.plot <- ggplot(lat1, aes(x = SL, y = D)) + 
+reg.lat.D <- lm(lat1$D ~ lat1$SL)
+sd.lat.D <- rstandard(reg.lat.D)
+reg.lat.D.plot <- ggplot(lat1, aes(x = SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.D1.plot
+reg.lat.D.plot
 
-reg.lat.P11 <- lm(lat1$P1 ~ lat1$SL)
-sd.lat.P11 <- rstandard(reg.lat.P11)
-reg.lat.P11.plot <- ggplot(lat1, aes(x = SL, y = P1)) + 
+reg.lat.P1 <- lm(lat1$P1 ~ lat1$SL)
+sd.lat.P1 <- rstandard(reg.lat.P1)
+reg.lat.P1.plot <- ggplot(lat1, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.P11.plot
+reg.lat.P1.plot
 
-reg.lat.P2.L1 <- lm(lat1$P2.L ~ lat1$SL)
-sd.lat.P2.L1 <- rstandard(reg.lat.P2.L1)
-reg.lat.P2.L1.plot <- ggplot(lat1, aes(x = SL, y = P2.L)) + 
+reg.lat.P2.L <- lm(lat1$P2.L ~ lat1$SL)
+sd.lat.P2.L <- rstandard(reg.lat.P2.L)
+reg.lat.P2.L.plot <- ggplot(lat1, aes(x = SL, y = P2.L)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.P2.L1.plot
+reg.lat.P2.L.plot
 
-reg.lat.P2.R1 <- lm(lat1$P2.R ~ lat1$SL)
-sd.lat.P2.R1 <- rstandard(reg.lat.P2.R1)
-reg.lat.P2.R1.plot <- ggplot(lat1, aes(x = SL, y = P2.R)) + 
+reg.lat.P2.R <- lm(lat1$P2.R ~ lat1$SL)
+sd.lat.P2.R <- rstandard(reg.lat.P2.R)
+reg.lat.P2.R.plot <- ggplot(lat1, aes(x = SL, y = P2.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.P2.R1.plot
+reg.lat.P2.R.plot
 
-reg.lat.A1 <- lm(lat1$A ~ lat1$SL)
-sd.lat.A1 <- rstandard(reg.lat.A1)
-reg.lat.A1.plot <- ggplot(lat1, aes(x = SL, y = A)) + 
+reg.lat.A <- lm(lat1$A ~ lat1$SL)
+sd.lat.A <- rstandard(reg.lat.A)
+reg.lat.A.plot <- ggplot(lat1, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.A1.plot
+reg.lat.A.plot
 
-reg.lat.P1.R1 <- lm(lat1$P1.R ~ lat1$SL)
-sd.lat.P1.R1 <- rstandard(reg.lat.P1.R1)
-reg.lat.P1.R1.plot <- ggplot(lat1, aes(x = SL, y = P1.R)) + 
+reg.lat.P1.R <- lm(lat1$P1.R ~ lat1$SL)
+sd.lat.P1.R <- rstandard(reg.lat.P1.R)
+reg.lat.P1.R.plot <- ggplot(lat1, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.P1.R1.plot
+reg.lat.P1.R.plot
 
-reg.lat.LLSC1 <- lm(lat1$LLSC ~ lat1$SL)
-sd.lat.LLSC1 <- rstandard(reg.lat.LLSC1)
-reg.lat.LLSC1.plot <- ggplot(lat1, aes(x = SL, y = LLSC)) + 
+reg.lat.LLSC <- lm(lat1$LLSC ~ lat1$SL)
+sd.lat.LLSC <- rstandard(reg.lat.LLSC)
+reg.lat.LLSC.plot <- ggplot(lat1, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.LLSC1.plot
+reg.lat.LLSC.plot
 
-reg.lat.SALL1 <- lm(lat1$SALL ~ lat1$SL)
-sd.lat.SALL1 <- rstandard(reg.lat.SALL1)
-reg.lat.SALL1.plot <- ggplot(lat1, aes(x = SL, y = SALL)) + 
+reg.lat.SALL <- lm(lat1$SALL ~ lat1$SL)
+sd.lat.SALL <- rstandard(reg.lat.SALL)
+reg.lat.SALL.plot <- ggplot(lat1, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.SALL1.plot
+reg.lat.SALL.plot
 
-reg.lat.SBLL1 <- lm(lat1$SBLL ~ lat1$SL)
-sd.lat.SBLL1 <- rstandard(reg.lat.SBLL1)
-reg.lat.SBLL1.plot <- ggplot(lat1, aes(x = SL, y = SBLL)) + 
+reg.lat.SBLL <- lm(lat1$SBLL ~ lat1$SL)
+sd.lat.SBLL <- rstandard(reg.lat.SBLL)
+reg.lat.SBLL.plot <- ggplot(lat1, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.SBLL1.plot
+reg.lat.SBLL.plot
 
-reg.lat.SBDF1 <- lm(lat1$SBDF ~ lat1$SL)
-sd.lat.SBDF1 <- rstandard(reg.lat.SBDF1)
-reg.lat.SBDF1.plot <- ggplot(lat1, aes(x = SL, y = SBDF)) + 
+reg.lat.SBDF <- lm(lat1$SBDF ~ lat1$SL)
+sd.lat.SBDF <- rstandard(reg.lat.SBDF)
+reg.lat.SBDF.plot <- ggplot(lat1, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.SBDF1.plot
+reg.lat.SBDF.plot
 
-reg.lat.BD1 <- lm(lat1$BD ~ lat1$SL)
-sd.lat.BD1 <- rstandard(reg.lat.BD1)
-reg.lat.BD1.plot <- ggplot(lat1, aes(x = SL, y = BD)) + 
+reg.lat.BD <- lm(lat1$BD ~ lat1$SL)
+sd.lat.BD <- rstandard(reg.lat.BD)
+reg.lat.BD.plot <- ggplot(lat1, aes(x = SL, y = BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.BD1.plot
+reg.lat.BD.plot
 
-reg.lat.CPD1 <- lm(lat1$CPD ~ lat1$SL)
-sd.lat.CPD1 <- rstandard(reg.lat.CPD1)
-reg.lat.CPD1.plot <- ggplot(lat1, aes(x = SL, y = CPD)) + 
+reg.lat.CPD <- lm(lat1$CPD ~ lat1$SL)
+sd.lat.CPD <- rstandard(reg.lat.CPD)
+reg.lat.CPD.plot <- ggplot(lat1, aes(x = SL, y = CPD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.CPD1.plot
+reg.lat.CPD.plot
 
-reg.lat.CPL1 <- lm(lat1$CPL ~ lat1$SL)
-sd.lat.CPL1 <- rstandard(reg.lat.CPL1)
-reg.lat.CPL1.plot <- ggplot(lat1, aes(x = SL, y = CPL)) + 
+reg.lat.CPL <- lm(lat1$CPL ~ lat1$SL)
+sd.lat.CPL <- rstandard(reg.lat.CPL)
+reg.lat.CPL.plot <- ggplot(lat1, aes(x = SL, y = CPL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.CPL1.plot
+reg.lat.CPL.plot
 
-reg.lat.PreDL1 <- lm(lat1$PreDL ~ lat1$SL)
-sd.lat.PreDL1 <- rstandard(reg.lat.PreDL1)
-reg.lat.PreDL1.plot <- ggplot(lat1, aes(x = SL, y = PreDL)) + 
+reg.lat.PreDL <- lm(lat1$PreDL ~ lat1$SL)
+sd.lat.PreDL <- rstandard(reg.lat.PreDL)
+reg.lat.PreDL.plot <- ggplot(lat1, aes(x = SL, y = PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.PreDL1.plot
+reg.lat.PreDL.plot
 
-reg.lat.DbL1 <- lm(lat1$DbL ~ lat1$SL)
-sd.lat.DbL1 <- rstandard(reg.lat.DbL1)
-reg.lat.DbL1.plot <- ggplot(lat1, aes(x = SL, y = DbL)) + 
+reg.lat.DbL <- lm(lat1$DbL ~ lat1$SL)
+sd.lat.DbL <- rstandard(reg.lat.DbL)
+reg.lat.DbL.plot <- ggplot(lat1, aes(x = SL, y = DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.DbL1.plot
+reg.lat.DbL.plot
 
-reg.lat.HL1 <- lm(lat1$HL ~ lat1$SL)
-sd.lat.HL1 <- rstandard(reg.lat.HL1)
-reg.lat.HL1.plot <- ggplot(lat1, aes(x = SL, y = HL)) + 
+reg.lat.HL <- lm(lat1$HL ~ lat1$SL)
+sd.lat.HL <- rstandard(reg.lat.HL)
+reg.lat.HL.plot <- ggplot(lat1, aes(x = SL, y = HL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.HL1.plot
+reg.lat.HL.plot
 
-reg.lat.HD1 <- lm(lat1$HD ~ lat1$SL)
-sd.lat.HD1 <- rstandard(reg.lat.HD1)
-reg.lat.HD1.plot <- ggplot(lat1, aes(x = SL, y = HD)) + 
+reg.lat.HD <- lm(lat1$HD ~ lat1$SL)
+sd.lat.HD <- rstandard(reg.lat.HD)
+reg.lat.HD.plot <- ggplot(lat1, aes(x = SL, y = HD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.HD1.plot
+reg.lat.HD.plot
 
-reg.lat.HW1 <- lm(lat1$HW ~ lat1$SL)
-sd.lat.HW1 <- rstandard(reg.lat.HW1)
-reg.lat.HW1.plot <- ggplot(lat1, aes(x = SL, y = HW)) + 
+reg.lat.HW <- lm(lat1$HW ~ lat1$SL)
+sd.lat.HW <- rstandard(reg.lat.HW)
+reg.lat.HW.plot <- ggplot(lat1, aes(x = SL, y = HW)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.HW1.plot
+reg.lat.HW.plot
 
-reg.lat.SnL1 <- lm(lat1$SnL ~ lat1$SL)
-sd.lat.SnL1 <- rstandard(reg.lat.SnL1)
-reg.lat.SnL1.plot <- ggplot(lat1, aes(x = SL, y = SnL)) + 
+reg.lat.SnL <- lm(lat1$SnL ~ lat1$SL)
+sd.lat.SnL <- rstandard(reg.lat.SnL)
+reg.lat.SnL.plot <- ggplot(lat1, aes(x = SL, y = SnL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.SnL1.plot
+reg.lat.SnL.plot
 
-reg.lat.OL1 <- lm(lat1$OL ~ lat1$SL)
-sd.lat.OL1 <- rstandard(reg.lat.OL1)
-reg.lat.OL1.plot <- ggplot(lat1, aes(x = SL, y = OL)) + 
+reg.lat.OL <- lm(lat1$OL ~ lat1$SL)
+sd.lat.OL <- rstandard(reg.lat.OL)
+reg.lat.OL.plot <- ggplot(lat1, aes(x = SL, y = OL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.lat.OL1.plot
+reg.lat.OL.plot
 
 reg.lat.FLA <- lm(lat1$FLA ~ lat1$SL)
 sd.lat.FLA <- rstandard(reg.lat.FLA)
@@ -235,165 +227,165 @@ reg.lat.FLA.plot
 
 
 
-reg.form.D1 <- lm(form1$D ~ form1$SL)
-sd.form.D1 <- rstandard(reg.form.D1)
-reg.form.D1.plot <- ggplot(form1, aes(x =SL, y = D)) + 
+reg.form.D <- lm(form1$D ~ form1$SL)
+sd.form.D <- rstandard(reg.form.D)
+reg.form.D.plot <- ggplot(form1, aes(x =SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.D1.plot
+reg.form.D.plot
 
-reg.form.P11 <- lm(form1$P1 ~ form1$SL)
-sd.form.P11 <- rstandard(reg.form.P11)
-reg.form.P11.plot <- ggplot(form1, aes(x = SL, y = P1)) + 
+reg.form.P1 <- lm(form1$P1 ~ form1$SL)
+sd.form.P1 <- rstandard(reg.form.P1)
+reg.form.P1.plot <- ggplot(form1, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.P11.plot
+reg.form.P1.plot
 
-reg.form.P2.L1 <- lm(form1$P2.L ~ form1$SL)
-sd.form.P2.L1 <- rstandard(reg.form.P2.L1)
-reg.form.P2.L1.plot <- ggplot(form1, aes(x = SL, y = P2.L)) + 
+reg.form.P2.L <- lm(form1$P2.L ~ form1$SL)
+sd.form.P2.L <- rstandard(reg.form.P2.L)
+reg.form.P2.L.plot <- ggplot(form1, aes(x = SL, y = P2.L)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.P2.L1.plot
+reg.form.P2.L.plot
 
-reg.form.P2.R1 <- lm(form1$P2.R ~ form1$SL)
-sd.form.P2.R1 <- rstandard(reg.form.P2.R1)
-reg.form.P2.R1.plot <- ggplot(form1, aes(x = SL, y = P2.R)) + 
+reg.form.P2.R <- lm(form1$P2.R ~ form1$SL)
+sd.form.P2.R <- rstandard(reg.form.P2.R)
+reg.form.P2.R.plot <- ggplot(form1, aes(x = SL, y = P2.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.P2.R1.plot
+reg.form.P2.R.plot
 
-reg.form.A1 <- lm(form1$A ~ form1$SL)
-sd.form.A1 <- rstandard(reg.form.A1)
-reg.form.A1.plot <- ggplot(form1, aes(x = SL, y = A)) + 
+reg.form.A <- lm(form1$A ~ form1$SL)
+sd.form.A <- rstandard(reg.form.A)
+reg.form.A.plot <- ggplot(form1, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.A1.plot
+reg.form.A.plot
 
-reg.form.P1.R1 <- lm(form1$P1.R ~ form1$SL)
-sd.form.P1.R1 <- rstandard(reg.form.P1.R1)
-reg.form.P1.R1.plot <- ggplot(form1, aes(x = SL, y = P1.R)) + 
+reg.form.P1.R <- lm(form1$P1.R ~ form1$SL)
+sd.form.P1.R <- rstandard(reg.form.P1.R)
+reg.form.P1.R.plot <- ggplot(form1, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.P1.R1.plot
+reg.form.P1.R.plot
 
-reg.form.LLSC1 <- lm(form1$LLSC ~ form1$SL)
-sd.form.LLSC1 <- rstandard(reg.form.LLSC1)
-reg.form.LLSC1.plot <- ggplot(form1, aes(x = SL, y = LLSC)) + 
+reg.form.LLSC <- lm(form1$LLSC ~ form1$SL)
+sd.form.LLSC <- rstandard(reg.form.LLSC)
+reg.form.LLSC.plot <- ggplot(form1, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.LLSC1.plot
+reg.form.LLSC.plot
 
-reg.form.SALL1 <- lm(form1$SALL ~ form1$SL)
-sd.form.SALL1 <- rstandard(reg.form.SALL1)
-reg.form.SALL1.plot <- ggplot(form1, aes(x = SL, y = SALL)) + 
+reg.form.SALL <- lm(form1$SALL ~ form1$SL)
+sd.form.SALL <- rstandard(reg.form.SALL)
+reg.form.SALL.plot <- ggplot(form1, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.SALL1.plot
+reg.form.SALL.plot
 
-reg.form.SBLL1 <- lm(form1$SBLL ~ form1$SL)
-sd.form.SBLL1 <- rstandard(reg.form.SBLL1)
-reg.form.SBLL1.plot <- ggplot(form1, aes(x = SL, y = SBLL)) + 
+reg.form.SBLL <- lm(form1$SBLL ~ form1$SL)
+sd.form.SBLL <- rstandard(reg.form.SBLL)
+reg.form.SBLL.plot <- ggplot(form1, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.SBLL1.plot
+reg.form.SBLL.plot
 
-reg.form.SBDF1 <- lm(form1$SBDF ~ form1$SL)
-sd.form.SBDF1 <- rstandard(reg.form.SBDF1)
-reg.form.SBDF1.plot <- ggplot(form1, aes(x = SL, y = SBDF)) + 
+reg.form.SBDF <- lm(form1$SBDF ~ form1$SL)
+sd.form.SBDF <- rstandard(reg.form.SBDF)
+reg.form.SBDF.plot <- ggplot(form1, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.SBDF1.plot
+reg.form.SBDF.plot
 
-reg.form.BD1 <- lm(form1$BD ~ form1$SL)
-sd.form.BD1 <- rstandard(reg.form.BD1)
-reg.form.BD1.plot <- ggplot(form1, aes(x = SL, y = BD)) + 
+reg.form.BD <- lm(form1$BD ~ form1$SL)
+sd.form.BD <- rstandard(reg.form.BD)
+reg.form.BD.plot <- ggplot(form1, aes(x = SL, y = BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.BD1.plot
+reg.form.BD.plot
 
-reg.form.CPD1 <- lm(form1$CPD ~ form1$SL)
-sd.form.CPD1 <- rstandard(reg.form.CPD1)
-reg.form.CPD1.plot <- ggplot(form1, aes(x = SL, y = CPD)) + 
+reg.form.CPD <- lm(form1$CPD ~ form1$SL)
+sd.form.CPD <- rstandard(reg.form.CPD)
+reg.form.CPD.plot <- ggplot(form1, aes(x = SL, y = CPD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.CPD1.plot
+reg.form.CPD.plot
 
-reg.form.CPL1 <- lm(form1$CPL ~ form1$SL)
-sd.form.CPL1 <- rstandard(reg.form.CPL1)
-reg.form.CPL1.plot <- ggplot(form1, aes(x = SL, y = CPL)) + 
+reg.form.CPL <- lm(form1$CPL ~ form1$SL)
+sd.form.CPL <- rstandard(reg.form.CPL)
+reg.form.CPL.plot <- ggplot(form1, aes(x = SL, y = CPL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.CPL1.plot
+reg.form.CPL.plot
 
-reg.form.PreDL1 <- lm(form1$PreDL ~ form1$SL)
-sd.form.PreDL1 <- rstandard(reg.form.PreDL1)
-reg.form.PreDL1.plot <- ggplot(form1, aes(x = SL, y = PreDL)) + 
+reg.form.PreDL <- lm(form1$PreDL ~ form1$SL)
+sd.form.PreDL <- rstandard(reg.form.PreDL)
+reg.form.PreDL.plot <- ggplot(form1, aes(x = SL, y = PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.PreDL1.plot
+reg.form.PreDL.plot
 
-reg.form.DbL1 <- lm(form1$DbL ~ form1$SL)
-sd.form.DbL1 <- rstandard(reg.form.DbL1)
-reg.form.DbL1.plot <- ggplot(form1, aes(x = SL, y = DbL)) + 
+reg.form.DbL <- lm(form1$DbL ~ form1$SL)
+sd.form.DbL <- rstandard(reg.form.DbL)
+reg.form.DbL.plot <- ggplot(form1, aes(x = SL, y = DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.DbL1.plot
+reg.form.DbL.plot
 
-reg.form.HL1 <- lm(form1$HL ~ form1$SL)
-sd.form.HL1 <- rstandard(reg.form.HL1)
-reg.form.HL1.plot <- ggplot(form1, aes(x = SL, y = HL)) + 
+reg.form.HL <- lm(form1$HL ~ form1$SL)
+sd.form.HL <- rstandard(reg.form.HL)
+reg.form.HL.plot <- ggplot(form1, aes(x = SL, y = HL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.HL1.plot
+reg.form.HL.plot
 
-reg.form.HD1 <- lm(form1$HD ~ form1$SL)
-sd.form.HD1 <- rstandard(reg.form.HD1)
-reg.form.HD1.plot <- ggplot(form1, aes(x = SL, y = HD)) + 
+reg.form.HD <- lm(form1$HD ~ form1$SL)
+sd.form.HD <- rstandard(reg.form.HD)
+reg.form.HD.plot <- ggplot(form1, aes(x = SL, y = HD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.HD1.plot
+reg.form.HD.plot
 
-reg.form.HW1 <- lm(form1$HW ~ form1$SL)
-sd.form.HW1 <- rstandard(reg.form.HW1)
-reg.form.HW1.plot <- ggplot(form1, aes(x = SL, y = HW)) + 
+reg.form.HW <- lm(form1$HW ~ form1$SL)
+sd.form.HW <- rstandard(reg.form.HW)
+reg.form.HW.plot <- ggplot(form1, aes(x = SL, y = HW)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.HW1.plot
+reg.form.HW.plot
 
-reg.form.SnL1 <- lm(form1$SnL ~ form1$SL)
-sd.form.SnL1 <- rstandard(reg.form.SnL1)
-reg.form.SnL1.plot <- ggplot(form1, aes(x = SL, y = SnL)) + 
+reg.form.SnL <- lm(form1$SnL ~ form1$SL)
+sd.form.SnL <- rstandard(reg.form.SnL)
+reg.form.SnL.plot <- ggplot(form1, aes(x = SL, y = SnL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.SnL1.plot
+reg.form.SnL.plot
 
-reg.form.OL1 <- lm(form1$OL ~ form1$SL)
-sd.form.OL1 <- rstandard(reg.form.OL1)
-reg.form.OL1.plot <- ggplot(form1, aes(x = SL, y = OL)) + 
+reg.form.OL <- lm(form1$OL ~ form1$SL)
+sd.form.OL <- rstandard(reg.form.OL)
+reg.form.OL.plot <- ggplot(form1, aes(x = SL, y = OL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
-reg.form.OL1.plot
+reg.form.OL.plot
 
 reg.form.FLA <- lm(form1$FLA ~ form1$SL)
 sd.form.FLA <- rstandard(reg.form.FLA)
@@ -402,217 +394,205 @@ reg.form.FLA.plot <- ggplot(form1, aes(x = SL, y = FLA)) +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
 reg.form.FLA.plot
+
+
 ```
 
-**ALL BUT P2, A, SALL, SBDF, and FLA WERE SIGNIFICANT FOR ONE OR BOTH SPECIES**
 
 
-##### Residuals {.tabset .tabset-fade .tabset-pills}
+## Residuals {.tabset .tabset-fade .tabset-pills}
 
--   STEP TWO: get residuals for each individual for that trait
+-   STEP TWO: get residuals for each individual for traits that were influenced by body size
 
 ```{r echo=FALSE}
-res.lat.D1 <- resid(reg.lat.D1)
+res.lat.D <- resid(reg.lat.D)
 
-res.lat.P11 <- resid(reg.lat.P11)
+res.lat.P1 <- resid(reg.lat.P1)
 
-res.lat.P1.R1 <- resid(reg.lat.P1.R1)
+res.lat.P1.R <- resid(reg.lat.P1.R)
 
-res.lat.LLSC1 <- resid(reg.lat.LLSC1)
+res.lat.LLSC <- resid(reg.lat.LLSC)
 
-res.lat.SBLL1 <- resid(reg.lat.SBLL1)
+res.lat.SBLL <- resid(reg.lat.SBLL)
 
-res.lat.BD1 <- resid(reg.lat.BD1)
+res.lat.BD <- resid(reg.lat.BD)
 
-res.lat.CPD1 <- resid(reg.lat.CPD1)
+res.lat.CPD <- resid(reg.lat.CPD)
 
-res.lat.CPL1 <- resid(reg.lat.CPL1)
+res.lat.CPL <- resid(reg.lat.CPL)
 
-res.lat.PreDL1 <- resid(reg.lat.PreDL1)
+res.lat.PreDL <- resid(reg.lat.PreDL)
 
-res.lat.DbL1 <- resid(reg.lat.DbL1)
+res.lat.DbL <- resid(reg.lat.DbL)
 
-res.lat.HL1 <- resid(reg.lat.HL1)
+res.lat.HL <- resid(reg.lat.HL)
 
-res.lat.HD1 <- resid(reg.lat.HD1)
+res.lat.HD <- resid(reg.lat.HD)
 
-res.lat.HW1 <- resid(reg.lat.HW1)
+res.lat.HW <- resid(reg.lat.HW)
 
-res.lat.SnL1 <- resid(reg.lat.SnL1)
+res.lat.SnL <- resid(reg.lat.SnL)
 
-res.lat.OL1 <- resid(reg.lat.OL1)
+res.lat.OL <- resid(reg.lat.OL)
 
 
-res.form.D1 <- resid(reg.form.D1)
+res.form.D <- resid(reg.form.D)
 
-res.form.P11 <- resid(reg.form.P11)
+res.form.P1 <- resid(reg.form.P1)
 
-res.form.P1.R1 <- resid(reg.form.P1.R1)
+res.form.P1.R <- resid(reg.form.P1.R)
 
-res.form.LLSC1 <- resid(reg.form.LLSC1)
+res.form.LLSC <- resid(reg.form.LLSC)
 
-res.form.SBLL1 <- resid(reg.form.SBLL1)
+res.form.SBLL <- resid(reg.form.SBLL)
 
-res.form.BD1 <- resid(reg.form.BD1)
+res.form.BD <- resid(reg.form.BD)
 
-res.form.CPD1 <- resid(reg.form.CPD1)
+res.form.CPD <- resid(reg.form.CPD)
 
-res.form.CPL1 <- resid(reg.form.CPL1)
+res.form.CPL <- resid(reg.form.CPL)
 
-res.form.PreDL1 <- resid(reg.form.PreDL1)
+res.form.PreDL <- resid(reg.form.PreDL)
 
-res.form.DbL1 <- resid(reg.form.DbL1)
+res.form.DbL <- resid(reg.form.DbL)
 
-res.form.HL1 <- resid(reg.form.HL1)
+res.form.HL <- resid(reg.form.HL)
 
-res.form.HD1 <- resid(reg.form.HD1)
+res.form.HD <- resid(reg.form.HD)
 
-res.form.HW1 <- resid(reg.form.HW1)
+res.form.HW <- resid(reg.form.HW)
 
-res.form.SnL1 <- resid(reg.form.SnL1)
+res.form.SnL <- resid(reg.form.SnL)
 
-res.form.OL1 <- resid(reg.form.OL1)
+res.form.OL <- resid(reg.form.OL)
 
 ```
 
 -   STEP THREE: convert residuals to absolute value
 
 ```{r}
-abs.lat.D1 <- abs(res.lat.D1)
-mean(abs.lat.D1)
+abs.lat.D <- abs(res.lat.D)
+mean(abs.lat.D)
 
-abs.lat.P11 <- abs(res.lat.P11)
-mean(abs.lat.P11)
+abs.lat.P1 <- abs(res.lat.P1)
+mean(abs.lat.P1)
 
-abs.lat.P1.R1 <- abs(res.lat.P1.R1)
-mean(abs.lat.P1.R1)
+abs.lat.P1.R <- abs(res.lat.P1.R)
+mean(abs.lat.P1.R)
 
-abs.lat.LLSC1 <- abs(res.lat.LLSC1)
-mean(abs.lat.LLSC1)
+abs.lat.LLSC <- abs(res.lat.LLSC)
+mean(abs.lat.LLSC)
 
-abs.lat.SBLL1 <- abs(res.lat.SBLL1)
-mean(abs.lat.SBLL1)
+abs.lat.SBLL <- abs(res.lat.SBLL)
+mean(abs.lat.SBLL)
 
-abs.lat.BD1 <- abs(res.lat.BD1)
-mean(abs.lat.BD1)
+abs.lat.BD <- abs(res.lat.BD)
+mean(abs.lat.BD)
 
-abs.lat.CPD1 <- abs(res.lat.CPD1)
-mean(abs.lat.CPD1)
+abs.lat.CPD <- abs(res.lat.CPD)
+mean(abs.lat.CPD)
 
-abs.lat.CPL1 <- abs(res.lat.CPL1)
-mean(abs.lat.CPL1)
+abs.lat.CPL <- abs(res.lat.CPL)
+mean(abs.lat.CPL)
 
-abs.lat.PreDL1 <- abs(res.lat.PreDL1)
-mean(abs.lat.PreDL1)
+abs.lat.PreDL <- abs(res.lat.PreDL)
+mean(abs.lat.PreDL)
 
-abs.lat.DbL1 <- abs(res.lat.DbL1)
-mean(abs.lat.DbL1)
+abs.lat.DbL <- abs(res.lat.DbL)
+mean(abs.lat.DbL)
 
-abs.lat.HL1 <- abs(res.lat.HL1)
-mean(abs.lat.HL1)
+abs.lat.HL <- abs(res.lat.HL)
+mean(abs.lat.HL)
 
-abs.lat.HD1 <- abs(res.lat.HD1)
-mean(abs.lat.HD1)
+abs.lat.HD <- abs(res.lat.HD)
+mean(abs.lat.HD)
 
-abs.lat.HW1 <- abs(res.lat.HW1)
-mean(abs.lat.HW1)
+abs.lat.HW <- abs(res.lat.HW)
+mean(abs.lat.HW)
 
-abs.lat.SnL1 <- abs(res.lat.SnL1)
-mean(abs.lat.SnL1)
+abs.lat.SnL <- abs(res.lat.SnL)
+mean(abs.lat.SnL)
 
-abs.lat.OL1 <- abs(res.lat.OL1)
-mean(abs.lat.OL1)
+abs.lat.OL <- abs(res.lat.OL)
+mean(abs.lat.OL)
 
 
-abs.form.D1 <- abs(res.form.D1)
-mean(abs.form.D1)
+abs.form.D <- abs(res.form.D)
+mean(abs.form.D)
 
-abs.form.P11 <- abs(res.form.P11)
-mean(abs.form.P11)
+abs.form.P1 <- abs(res.form.P1)
+mean(abs.form.P1)
 
-abs.form.P1.R1 <- abs(res.form.P1.R1)
-mean(abs.form.P1.R1)
+abs.form.P1.R <- abs(res.form.P1.R)
+mean(abs.form.P1.R)
 
-abs.form.LLSC1 <- abs(res.form.LLSC1)
-mean(abs.form.LLSC1)
+abs.form.LLSC <- abs(res.form.LLSC)
+mean(abs.form.LLSC)
 
-abs.form.SBLL1 <- abs(res.form.SBLL1)
-mean(abs.form.SBLL1)
+abs.form.SBLL <- abs(res.form.SBLL)
+mean(abs.form.SBLL)
 
-abs.form.BD1 <- abs(res.form.BD1)
-mean(abs.form.BD1)
+abs.form.BD <- abs(res.form.BD)
+mean(abs.form.BD)
 
-abs.form.CPD1 <- abs(res.form.CPD1)
-mean(abs.form.CPD1)
+abs.form.CPD <- abs(res.form.CPD)
+mean(abs.form.CPD)
 
-abs.form.CPL1 <- abs(res.form.CPL1)
-mean(abs.form.CPL1)
+abs.form.CPL <- abs(res.form.CPL)
+mean(abs.form.CPL)
 
-abs.form.PreDL1 <- abs(res.form.PreDL1)
-mean(abs.form.PreDL1)
+abs.form.PreDL <- abs(res.form.PreDL)
+mean(abs.form.PreDL)
 
-abs.form.DbL1 <- abs(res.form.DbL1)
-mean(abs.form.DbL1)
+abs.form.DbL <- abs(res.form.DbL)
+mean(abs.form.DbL)
 
-abs.form.HL1 <- abs(res.form.HL1)
-mean(abs.form.HL1)
+abs.form.HL <- abs(res.form.HL)
+mean(abs.form.HL)
 
-abs.form.HD1 <- abs(res.form.HD1)
-mean(abs.form.HD1)
+abs.form.HD <- abs(res.form.HD)
+mean(abs.form.HD)
 
-abs.form.HW1 <- abs(res.form.HW1)
-mean(abs.form.HW1)
+abs.form.HW <- abs(res.form.HW)
+mean(abs.form.HW)
 
-abs.form.SnL1 <- abs(res.form.SnL1)
-mean(abs.form.SnL1)
+abs.form.SnL <- abs(res.form.SnL)
+mean(abs.form.SnL)
 
-abs.form.OL1 <- abs(res.form.OL1)
-mean(abs.form.OL1)
+abs.form.OL <- abs(res.form.OL)
+mean(abs.form.OL)
 
 
 
 #let's get this into the raw1 data set so that we can plot this more easily
 
-abs.res.D <- append(abs.lat.D1, abs.form.D1)
-abs.res.P1 <- append(abs.lat.P11, abs.form.P11)
-abs.res.P1.R <- append(abs.lat.P1.R1, abs.form.P1.R1)
-abs.res.LLSC<- append(abs.lat.LLSC1, abs.form.LLSC1)
-abs.res.SBLL<- append(abs.lat.SBLL1, abs.form.SBLL1)
-abs.res.BD<- append(abs.lat.BD1, abs.form.BD1)
-abs.res.CPD<- append(abs.lat.CPD1, abs.form.CPD1)
-abs.res.CPL<- append(abs.lat.CPL1, abs.form.CPL1)
-abs.res.PreDL <- append(abs.lat.PreDL1, abs.form.PreDL1)
-abs.res.DbL <- append(abs.lat.DbL1, abs.form.DbL1)
-abs.res.HL<- append(abs.lat.HL1, abs.form.HL1)
-abs.res.HD<- append(abs.lat.HD1, abs.form.HD1)
-abs.res.HW <- append(abs.lat.HW1, abs.form.HW1)
-abs.res.SnL <- append(abs.lat.SnL1, abs.form.SnL1)
-abs.res.OL <- append(abs.lat.OL1, abs.form.OL1)
+abs.res.D <- append(abs.lat.D, abs.form.D)
+abs.res.P1 <- append(abs.lat.P1, abs.form.P1)
+abs.res.P1.R <- append(abs.lat.P1.R, abs.form.P1.R)
+abs.res.LLSC<- append(abs.lat.LLSC, abs.form.LLSC)
+abs.res.SBLL<- append(abs.lat.SBLL, abs.form.SBLL)
+abs.res.BD<- append(abs.lat.BD, abs.form.BD)
+abs.res.CPD<- append(abs.lat.CPD, abs.form.CPD)
+abs.res.CPL<- append(abs.lat.CPL, abs.form.CPL)
+abs.res.PreDL <- append(abs.lat.PreDL, abs.form.PreDL)
+abs.res.DbL <- append(abs.lat.DbL, abs.form.DbL)
+abs.res.HL<- append(abs.lat.HL, abs.form.HL)
+abs.res.HD<- append(abs.lat.HD, abs.form.HD)
+abs.res.HW <- append(abs.lat.HW, abs.form.HW)
+abs.res.SnL <- append(abs.lat.SnL, abs.form.SnL)
+abs.res.OL <- append(abs.lat.OL, abs.form.OL)
 
-raw4 <- cbind(raw2, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
-#because I performed the regression calculations on the raw data, I believe it automatically removes NAs BUT only for that value. So a fish that is excluded from P1 may be included for LLSC. This means that the number of fish at the end in each of the abs. lists is different. It won't let me append it to the original data frame because the number of rows don't match. Will go back and use a dataset with NAs removed (boo) to see if that helps --> yep, that did it
+raw1 <- raw[complete.cases(raw[, 15:37]),] #since the regressions automatically pulled the NAs out, the appended data set does not match the original data set. Will remove NAs in original data set to match. 
 
-#need to put the PCA visualization for residuals here since raw4 doesn't appear until now
-
-PCA2 <- prcomp(raw4[, 33:48], center=TRUE, scale. = TRUE) #includes all 22 traits 
-summary(PCA2)
-loadings1 <- PCA2$rotation
-loadings1[, 1:5]
-
-plot10<- autoplot(PCA2, x=1, y=2, data = raw4, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology trait Residuals") + theme_minimal()
-plot10
-
-plot11<- autoplot(PCA2, x=1, y=2, data = raw4, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
-plot11
-
+raw2 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
 
 ```
 
-##### Residual Comparisons {.tabset .tabset-fade .tabset-pills}
+## Residual Comparisons {.tabset .tabset-fade .tabset-pills}
 
 
 
--   STEP FOUR: plot the mean of the |residuals| for both species, for all traits
+-   STEP FOUR: plot the mean of the |residuals| for both species, for all traits influenced by body size
 
 ```{r}
 
@@ -620,14 +600,14 @@ library(ggbeeswarm)
 library(dplyr)
 
 
-ggplot(raw4, aes(SPP, abs.res.D)) +
+ggplot(raw2, aes(SPP, abs.res.D)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
 
-scatter_violin <- ggplot(data=raw4, aes(x=SPP, y=abs.res.D)) +
+scatter_violin <- ggplot(data=raw2, aes(x=SPP, y=abs.res.D)) +
   geom_violin(trim = FALSE) + 
   stat_summary(
     fun.data = "mean_sdl",  fun.args = list(mult = 1),
@@ -636,7 +616,7 @@ scatter_violin <- ggplot(data=raw4, aes(x=SPP, y=abs.res.D)) +
 
 print(scatter_violin)
 
-scatter_violin1 <- ggplot(data=raw4, aes(x=SPP, y=abs.res.D)) +
+scatter_violin1 <- ggplot(data=raw2, aes(x=SPP, y=abs.res.D)) +
   geom_violin(trim = FALSE) + 
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
@@ -646,85 +626,85 @@ print(scatter_violin1)
 
 
 
-ggplot(raw4, aes(SPP, abs.res.P1)) +
+ggplot(raw2, aes(SPP, abs.res.P)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.P1.R)) +
+ggplot(raw2, aes(SPP, abs.res.P1.R)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
 
-ggplot(raw4, aes(SPP, abs.res.LLSC)) +
+ggplot(raw2, aes(SPP, abs.res.LLSC)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.SBLL)) +
+ggplot(raw2, aes(SPP, abs.res.SBLL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.BD)) +
+ggplot(raw2, aes(SPP, abs.res.BD)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.CPD)) +
+ggplot(raw2, aes(SPP, abs.res.CPD)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.CPL)) +
+ggplot(raw2, aes(SPP, abs.res.CPL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
 
-ggplot(raw4, aes(SPP, abs.res.PreDL)) +
+ggplot(raw2, aes(SPP, abs.res.PreDL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.DbL)) +
+ggplot(raw2, aes(SPP, abs.res.DbL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.HL)) +
+ggplot(raw2, aes(SPP, abs.res.HL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.HD)) +
+ggplot(raw2, aes(SPP, abs.res.HD)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.HW)) +
+ggplot(raw2, aes(SPP, abs.res.HW)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.SnL)) +
+ggplot(raw2, aes(SPP, abs.res.SnL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
-ggplot(raw4, aes(SPP, abs.res.OL)) +
+ggplot(raw2, aes(SPP, abs.res.OL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
@@ -738,10 +718,18 @@ ggplot(raw4, aes(SPP, abs.res.OL)) +
 
 
 
-#### F tests to compare species {.tabset .tabset-fade .tabset-pills}
+# Comparing variation (F & T-tests) {.tabset .tabset-fade .tabset-pills}
 
-    -   will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
-    -   this will only be for the traits that did not have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA) 
+F tests on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F tests on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? Based on the regressions, if the trait was influenced by body size, I will perform a t-test on the absolute value of the residuals. If the trait was not influenced by body size, I will perform an F test of variance on the raw data.
+
+**Quick results summary:** 
+
+
+    -   will do two-tailed and check out the residual means to infer direction; for traits in which we use raw data, a one-tailed f-test will be perfomed in both direction to determine which species is varying more. We will also visulize the variation using a histogram to confirm direction results.
+
+## F tests of variation {.tabset .tabset-fade .tabset-pills} 
+
+This is for traits NOT influenced by body size. 
 
 ```{r, echo=FALSE}
 
@@ -778,75 +766,71 @@ var.flu.asy
 
 
 
-#### T tests to compare species {.tabset .tabset-fade .tabset-pills}
+## T tests on residuals {.tabset .tabset-fade .tabset-pills}
 
-
-   -    will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
-   -    this will be for the traits that *did* have a significant regression compared to SL; will be using the absolute value residuals. 
-    
-
+This will be for traits that WERE influenced by body size. The absolute value of the residuals will be used. 
 
 ```{r, echo=FALSE}
 
 
-ttest.abs.D1 <- t.test(abs.lat.D1, abs.form.D1, alternative = "two.sided")
-ttest.abs.D1
+ttest.abs.D <- t.test(abs.lat.D, abs.form.D, alternative = "two.sided")
+ttest.abs.D
 
 
-ttest.abs.P11 <- t.test(abs.lat.P11, abs.form.P11, alternative = "two.sided")
-ttest.abs.P11
+ttest.abs.P1 <- t.test(abs.lat.P1, abs.form.P1, alternative = "two.sided")
+ttest.abs.P1
 
 
-ttest.abs.P1.R1 <- t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "two.sided")
-ttest.abs.P1.R1
+ttest.abs.P1.R <- t.test(abs.lat.P1.R, abs.form.P1.R, alternative = "two.sided")
+ttest.abs.P1.R
 
 
-ttest.abs.LLSC1 <- t.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "two.sided")
-ttest.abs.LLSC1
+ttest.abs.LLSC <- t.test(abs.lat.LLSC, abs.form.LLSC, alternative = "two.sided")
+ttest.abs.LLSC
 
 
-ttest.abs.SBLL1 <- t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "two.sided")
-ttest.abs.SBLL1
+ttest.abs.SBLL <- t.test(abs.lat.SBLL, abs.form.SBLL, alternative = "two.sided")
+ttest.abs.SBLL
 
 
-ttest.abs.BD1 <- t.test(abs.lat.BD1, abs.form.BD1, alternative = "two.sided")
-ttest.abs.BD1
+ttest.abs.BD <- t.test(abs.lat.BD, abs.form.BD, alternative = "two.sided")
+ttest.abs.BD
 
 
-ttest.abs.CPD1 <- t.test(abs.lat.CPD1, abs.form.CPD1, alternative = "two.sided")
-ttest.abs.CPD1
+ttest.abs.CPD <- t.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
+ttest.abs.CPD
 
 
-ttest.abs.CPL1 <- t.test(abs.lat.CPL1, abs.form.CPL1, alternative = "two.sided")
-ttest.abs.CPL1
+ttest.abs.CPL <- t.test(abs.lat.CPL, abs.form.CPL, alternative = "two.sided")
+ttest.abs.CPL
 
 
-ttest.abs.PreDL1 <- t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "two.sided")
-ttest.abs.PreDL1
+ttest.abs.PreDL <- t.test(abs.lat.PreDL, abs.form.PreDL, alternative = "two.sided")
+ttest.abs.PreDL
 
 
-ttest.abs.DbL1 <- t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "two.sided")
-ttest.abs.DbL1
+ttest.abs.DbL <- t.test(abs.lat.DbL, abs.form.DbL, alternative = "two.sided")
+ttest.abs.DbL
 
 
-ttest.abs.HL1 <- t.test(abs.lat.HL1, abs.form.HL1, alternative = "two.sided")
-ttest.abs.HL1
+ttest.abs.HL <- t.test(abs.lat.HL, abs.form.HL, alternative = "two.sided")
+ttest.abs.HL
 
 
-ttest.abs.HD1 <- t.test(abs.lat.HD1, abs.form.HD1, alternative = "two.sided")
-ttest.abs.HD1
+ttest.abs.HD <- t.test(abs.lat.HD, abs.form.HD, alternative = "two.sided")
+ttest.abs.HD
 
 
-ttest.abs.HW1 <- t.test(abs.lat.HW1, abs.form.HW1, alternative = "two.sided")
-ttest.abs.HW1
+ttest.abs.HW <- t.test(abs.lat.HW, abs.form.HW, alternative = "two.sided")
+ttest.abs.HW
 
 
-ttest.abs.SnL1 <- t.test(abs.lat.SnL1, abs.form.SnL1, alternative = "two.sided")
-ttest.abs.SnL1
+ttest.abs.SnL <- t.test(abs.lat.SnL, abs.form.SnL, alternative = "two.sided")
+ttest.abs.SnL
 
 
-ttest.abs.OL1 <- t.test(abs.lat.OL1, abs.form.OL1, alternative = "two.sided")
-ttest.abs.OL1
+ttest.abs.OL <- t.test(abs.lat.OL, abs.form.OL, alternative = "two.sided")
+ttest.abs.OL
 
 
 
@@ -856,16 +840,16 @@ ttest.abs.OL1
 
 
 
-#### Summary of variance results {.tabset .tabset-fade .tabset-pills}
+## Summary of variance results {.tabset .tabset-fade .tabset-pills}
 
 
 ```{r}
 
-average.table <- matrix(c(ttest.abs.D1$p.value, mean(abs.lat.D1, na.rm = TRUE), mean(abs.form.D1, na.rm = TRUE), ttest.abs.P11$p.value, mean(abs.lat.P11, na.rm = TRUE), mean(abs.form.P11, na.rm = TRUE), var.rig.pel$p.value, mean(lat$P2.R, na.rm = TRUE), mean(form$P2.R, na.rm = TRUE), var.left.pel$p.value, mean(lat$P2.L, na.rm = TRUE), mean(form$P2.L, na.rm = TRUE), var.anal$p.value, mean(lat$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), ttest.abs.P1.R1$p.value, mean(abs.lat.P1.R1, na.rm = TRUE), mean(abs.form.P1.R1, na.rm = TRUE), ttest.abs.LLSC1$p.value, mean(abs.lat.LLSC1, na.rm = TRUE), mean(abs.form.LLSC1, na.rm = TRUE), var.sca.ab.ll$p.value, mean(lat$SALL, na.rm = TRUE), mean(form$SALL, na.rm = TRUE), ttest.abs.SBLL1$p.value, mean(abs.lat.SBLL1, na.rm = TRUE), mean(abs.form.SBLL1, na.rm = TRUE), var.sca.df$p.value, mean(lat$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), ttest.abs.BD1$p.value, mean(abs.lat.BD1, na.rm = TRUE), mean(abs.form.BD1, na.rm = TRUE), ttest.abs.CPD1$p.value, mean(abs.lat.CPD1, na.rm = TRUE), mean(abs.form.CPD1, na.rm = TRUE), ttest.abs.CPL1$p.value, mean(abs.lat.CPL1, na.rm = TRUE), mean(abs.form.CPL1, na.rm = TRUE), ttest.abs.PreDL1$p.value, mean(abs.lat.PreDL1, na.rm = TRUE), mean(abs.form.PreDL1, na.rm = TRUE), ttest.abs.DbL1$p.value, mean(abs.lat.DbL1, na.rm = TRUE), mean(abs.form.DbL1, na.rm = TRUE), ttest.abs.HL1$p.value, mean(abs.lat.HL1, na.rm = TRUE), mean(abs.form.HL1, na.rm = TRUE), ttest.abs.HD1$p.value, mean(abs.lat.HD1, na.rm = TRUE), mean(abs.form.HD1, na.rm = TRUE), ttest.abs.HW1$p.value, mean(abs.lat.HW1, na.rm = TRUE), mean(abs.form.HW1, na.rm = TRUE), ttest.abs.SnL1$p.value, mean(abs.lat.SnL1, na.rm = TRUE), mean(abs.form.SnL1, na.rm = TRUE), ttest.abs.OL1$p.value, mean(abs.lat.OL1, na.rm = TRUE), mean(abs.form.OL1, na.rm = TRUE), var.flu.asy$p.value, mean(lat$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE)), ncol=3, byrow=TRUE)
+average.table <- matrix(c(ttest.abs.D$p.value, mean(abs.lat.D, na.rm = TRUE), mean(abs.form.D, na.rm = TRUE), ttest.abs.P1$p.value, mean(abs.lat.P1, na.rm = TRUE), mean(abs.form.P1, na.rm = TRUE), var.rig.pel$p.value, mean(lat$P2.R, na.rm = TRUE), mean(form$P2.R, na.rm = TRUE), var.left.pel$p.value, mean(lat$P2.L, na.rm = TRUE), mean(form$P2.L, na.rm = TRUE), var.anal$p.value, mean(lat$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), ttest.abs.P1.R$p.value, mean(abs.lat.P1.R, na.rm = TRUE), mean(abs.form.P1.R, na.rm = TRUE), ttest.abs.LLSC$p.value, mean(abs.lat.LLSC, na.rm = TRUE), mean(abs.form.LLSC, na.rm = TRUE), var.sca.ab.ll$p.value, mean(lat$SALL, na.rm = TRUE), mean(form$SALL, na.rm = TRUE), ttest.abs.SBLL$p.value, mean(abs.lat.SBLL, na.rm = TRUE), mean(abs.form.SBLL, na.rm = TRUE), var.sca.df$p.value, mean(lat$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), ttest.abs.BD$p.value, mean(abs.lat.BD, na.rm = TRUE), mean(abs.form.BD, na.rm = TRUE), ttest.abs.CPD$p.value, mean(abs.lat.CPD, na.rm = TRUE), mean(abs.form.CPD, na.rm = TRUE), ttest.abs.CPL$p.value, mean(abs.lat.CPL, na.rm = TRUE), mean(abs.form.CPL, na.rm = TRUE), ttest.abs.PreDL$p.value, mean(abs.lat.PreDL, na.rm = TRUE), mean(abs.form.PreDL, na.rm = TRUE), ttest.abs.DbL$p.value, mean(abs.lat.DbL, na.rm = TRUE), mean(abs.form.DbL, na.rm = TRUE), ttest.abs.HL$p.value, mean(abs.lat.HL, na.rm = TRUE), mean(abs.form.HL, na.rm = TRUE), ttest.abs.HD$p.value, mean(abs.lat.HD, na.rm = TRUE), mean(abs.form.HD, na.rm = TRUE), ttest.abs.HW$p.value, mean(abs.lat.HW, na.rm = TRUE), mean(abs.form.HW, na.rm = TRUE), ttest.abs.SnL$p.value, mean(abs.lat.SnL, na.rm = TRUE), mean(abs.form.SnL, na.rm = TRUE), ttest.abs.OL$p.value, mean(abs.lat.OL, na.rm = TRUE), mean(abs.form.OL, na.rm = TRUE), var.flu.asy$p.value, mean(lat$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE)), ncol=3, byrow=TRUE)
 
 colnames(average.table)<- c('p-value for variance', 'lat mean', 'form mean')
 
-rownames(average.table) <- c('dorsal rays', 'L pect rays', 'R pelvic rays*', 'L pelvic rays*', 'Anal rays', 'R pect rays*', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor*', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng', 'fluct. asymmetries')
+rownames(average.table) <- c('dorsal rays', 'L pect rays', 'R pelvic rays', 'L pelvic rays', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head length', 'head depth', 'head width', 'snout leng', 'orbital leng', 'fluct. asymmetries')
 
 average.table
 
@@ -873,8 +857,7 @@ average.table
 ```
 
 
-***Visualizing the significant ones"***
-
+## Visualization of significant results {.tabset .tabset-fade .tabset-pills
 
 ```{r}
 
@@ -886,17 +869,17 @@ plot_multi_histogram <- function(df, feature, label_column) {
     plt + guides(fill=guide_legend(title=label_column))
 }
 
-plot_multi_histogram(raw4, "abs.res.P1.R", "SPP")
+plot_multi_histogram(raw2, "abs.res.P1.R", "SPP")
 
-plot_multi_histogram(raw4, "abs.res.SBLL", "SPP")
+plot_multi_histogram(raw2, "abs.res.SBLL", "SPP")
 
-plot_multi_histogram(raw4, "abs.res.DbL", "SPP")
+plot_multi_histogram(raw2, "abs.res.DbL", "SPP")
 
-plot_multi_histogram(raw4, "abs.res.HL", "SPP")
+plot_multi_histogram(raw2, "abs.res.HL", "SPP")
 
-plot_multi_histogram(raw4, "FLA", "SPP")
+plot_multi_histogram(raw2, "FLA", "SPP")
 
-plot_multi_histogram(raw4, "A", "SPP")
+plot_multi_histogram(raw2, "A", "SPP")
 
 
 ```
@@ -904,12 +887,235 @@ plot_multi_histogram(raw4, "A", "SPP")
 
 
 
-### ANOVA {.tabset .tabset-fade .tabset-pills}
+# ANOVA {.tabset .tabset-fade .tabset-pills}
 
-Will run a nested ANOVA on the residuals (and raw data that isn't affected by body size?) with location as a nested effect to see if variation is partitioned more within populations or among populations. 
+Will run an ANOVA on the residuals with location and species as fixed effects. This will show me if morphology depends on the species, the location, and if the location and species interact to determine morphology. 
 
+I will first run this using the zones as the location factor. Zones (1-4) represent the latitude range with equivalent sample sizes in each, since the collections were not equally representative of all latitudes, and I wanted to avoid a sampling bias when randomly selecting samples. Zone 1 corresponds to the southern most latitude range, and zone 4 corresponds to the northern most latitude range.
+
+I will then run the same analysis using basin as the location faction. Since fish are physically isolated to the river basins they occupy, the genetic variation is also limited to that basin. Thus it is possible for fish within the same basin to be more similar due to genetic/physical constraints. (will also do with watershed just to see)
+
+Lastly I will run ANOVAs with both zones and basins but with standardized residuals. This would allow me to compare overall variation across traits (at least those that are depended on body size) rather than just one trait at a time. Not 100% sure if this is useful (or correct to do), but thought it would be interesting. 
+
+## Quartiles {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
+
+A.D <- aov(abs.res.D ~ SPP*QUARTILE, data=raw2)
+summary(A.D)
+
+A.P1 <- aov(abs.res.P1 ~ SPP*QUARTILE, data=raw2)
+summary(A.P1)
+
+A.P1.R <- aov(abs.res.P1.R ~ SPP*QUARTILE, data=raw2)
+summary(A.P1.R)
+
+A.LLSC <- aov(abs.res.LLSC ~ SPP*QUARTILE, data=raw2)
+summary(A.LLSC)
+
+A.SBLL <- aov(abs.res.SBLL ~ SPP*QUARTILE, data=raw2)
+summary(A.SBLL)
+
+A.BD <- aov(abs.res.BD ~ SPP*QUARTILE, data=raw2)
+summary(A.BD)
+
+A.CPD <- aov(abs.res.CPD ~ SPP*QUARTILE, data=raw2)
+summary(A.CPD)
+
+A.CPL <- aov(abs.res.CPL ~ SPP*QUARTILE, data=raw2)
+summary(A.CPL)
+
+A.PreDL <- aov(abs.res.PreDL ~ SPP*QUARTILE, data=raw2)
+summary(A.PreDL)
+
+A.DbL <- aov(abs.res.DbL ~ SPP*QUARTILE, data=raw2)
+summary(A.DbL)
+
+A.HL <- aov(abs.res.HL ~ SPP*QUARTILE, data=raw2)
+summary(A.HL)
+
+A.HD <- aov(abs.res.HD ~ SPP*QUARTILE, data=raw2)
+summary(A.HD)
+
+A.HW <- aov(abs.res.HW ~ SPP*QUARTILE, data=raw2)
+summary(A.HW)
+
+A.SnL <- aov(abs.res.SnL ~ SPP*QUARTILE, data=raw2)
+summary(A.SnL)
+
+A.OL <- aov(abs.res.OL ~ SPP*QUARTILE, data=raw2)
+summary(A.OL)
+
+A.A <- aov(A ~ SPP*QUARTILE, data=raw2)
+summary(A.A)
+
+A.SALL <- aov(SALL ~ SPP*QUARTILE, data=raw2)
+summary(A.SALL)
+
+A.SBDF <- aov(SBDF ~ SPP*QUARTILE, data=raw2)
+summary(A.SBDF)
+
+A.FLA <- aov(FLA ~ SPP*QUARTILE, data=raw2)
+summary(A.FLA)
+
+#visualizing significant results
+
+library(ggplot2)
+
+ggplot(raw2, aes(x=factor(QUARTILE), y=FLA, fill=SPP)) + geom_boxplot()
+
+
+ggplot(raw2, aes(x=factor(QUARTILE), y=abs.res.D, fill=SPP)) +
+  geom_boxplot()
+
+
+ggplot(raw2, aes(x=factor(QUARTILE), y=abs.res.P1.R, fill=SPP)) +
+  geom_boxplot()
+
+```
+
+
+## Basins {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+
+A1.D <- aov(abs.res.D ~ SPP*BASIN, data=raw2)
+summary(A.D)
+
+A1.P1 <- aov(abs.res.P1 ~ SPP*BASIN, data=raw2)
+summary(A.P1)
+
+A1.P1.R <- aov(abs.res.P1.R ~ SPP*BASIN, data=raw2)
+summary(A.P1.R)
+
+A1.LLSC <- aov(abs.res.LLSC ~ SPP*BASIN, data=raw2)
+summary(A.LLSC)
+
+A1.SBLL <- aov(abs.res.SBLL ~ SPP*BASIN, data=raw2)
+summary(A.SBLL)
+
+A1.BD <- aov(abs.res.BD ~ SPP*BASIN, data=raw2)
+summary(A.BD)
+
+A1.CPD <- aov(abs.res.CPD ~ SPP*BASIN, data=raw2)
+summary(A.CPD)
+
+A1.CPL <- aov(abs.res.CPL ~ SPP*BASIN, data=raw2)
+summary(A.CPL)
+
+A1.PreDL <- aov(abs.res.PreDL ~ SPP*BASIN, data=raw2)
+summary(A.PreDL)
+
+A1.DbL <- aov(abs.res.DbL ~ SPP*BASIN, data=raw2)
+summary(A.DbL)
+
+A1.HL <- aov(abs.res.HL ~ SPP*BASIN, data=raw2)
+summary(A.HL)
+
+A1.HD <- aov(abs.res.HD ~ SPP*BASIN, data=raw2)
+summary(A.HD)
+
+A1.HW <- aov(abs.res.HW ~ SPP*BASIN, data=raw2)
+summary(A.HW)
+
+A1.SnL <- aov(abs.res.SnL ~ SPP*BASIN, data=raw2)
+summary(A.SnL)
+
+A1.OL <- aov(abs.res.OL ~ SPP*BASIN, data=raw2)
+summary(A.OL)
+
+A1.A <- aov(A ~ SPP*BASIN, data=raw2)
+summary(A.A)
+
+A1.SALL <- aov(SALL ~ SPP*BASIN, data=raw2)
+summary(A.SALL)
+
+A1.SBDF <- aov(SBDF ~ SPP*BASIN, data=raw2)
+summary(A.SBDF)
+
+A1.FLA <- aov(FLA ~ SPP*BASIN, data=raw2)
+summary(A.FLA)
+
+#visualizing significant results
+
+
+
+```
+
+
+## Watersheds {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+
+A2.D <- aov(abs.res.D ~ SPP*WATERSHED, data=raw2)
+summary(A.D)
+
+A2.P1 <- aov(abs.res.P1 ~ SPP*WATERSHED, data=raw2)
+summary(A.P1)
+
+A2.P1.R <- aov(abs.res.P1.R ~ SPP*WATERSHED, data=raw2)
+summary(A.P1.R)
+
+A2.LLSC <- aov(abs.res.LLSC ~ SPP*WATERSHED, data=raw2)
+summary(A.LLSC)
+
+A2.SBLL <- aov(abs.res.SBLL ~ SPP*WATERSHED, data=raw2)
+summary(A.SBLL)
+
+A2.BD <- aov(abs.res.BD ~ SPP*WATERSHED, data=raw2)
+summary(A.BD)
+
+A2.CPD <- aov(abs.res.CPD ~ SPP*WATERSHED, data=raw2)
+summary(A.CPD)
+
+A2.CPL <- aov(abs.res.CPL ~ SPP*WATERSHED, data=raw2)
+summary(A.CPL)
+
+A2.PreDL <- aov(abs.res.PreDL ~ SPP*WATERSHED, data=raw2)
+summary(A.PreDL)
+
+A2.DbL <- aov(abs.res.DbL ~ SPP*WATERSHED, data=raw2)
+summary(A.DbL)
+
+A2.HL <- aov(abs.res.HL ~ SPP*WATERSHED, data=raw2)
+summary(A.HL)
+
+A2.HD <- aov(abs.res.HD ~ SPP*WATERSHED, data=raw2)
+summary(A.HD)
+
+A2.HW <- aov(abs.res.HW ~ SPP*WATERSHED, data=raw2)
+summary(A.HW)
+
+A2.SnL <- aov(abs.res.SnL ~ SPP*WATERSHED, data=raw2)
+summary(A.SnL)
+
+A2.OL <- aov(abs.res.OL ~ SPP*WATERSHED, data=raw2)
+summary(A.OL)
+
+A2.A <- aov(A ~ SPP*WATERSHED, data=raw2)
+summary(A.A)
+
+A2.SALL <- aov(SALL ~ SPP*WATERSHED, data=raw2)
+summary(A.SALL)
+
+A2.SBDF <- aov(SBDF ~ SPP*WATERSHED, data=raw2)
+summary(A.SBDF)
+
+A2.FLA <- aov(FLA ~ SPP*WATERSHED, data=raw2)
+summary(A.FLA)
+
+#visualizing significant results
+
+
+
+```
+
+
+
+## Standardized {.tabset .tabset-fade .tabset-pills}
+
+
+
 sd.res.D <- append(sd.lat.D1, sd.form.D1)
 sd.res.P1 <- append(sd.lat.P11, sd.form.P11)
 sd.res.P1.R <- append(sd.lat.P1.R1, sd.form.P1.R1)
@@ -926,158 +1132,72 @@ sd.res.HW <- append(sd.lat.HW1, sd.form.HW1)
 sd.res.SnL <- append(sd.lat.SnL1, sd.form.SnL1)
 sd.res.OL <- append(sd.lat.OL1, sd.form.OL1)
 
-raw5 <- cbind(raw4, sd.res.D, sd.res.P1, sd.res.P1.R, sd.res.LLSC, sd.res.SBLL, sd.res.BD, sd.res.CPD, sd.res.CPL, sd.res.PreDL, sd.res.DbL, sd.res.HL, sd.res.HD, sd.res.HW, sd.res.SnL, sd.res.OL)
+raw3 <- cbind(raw2, sd.res.D, sd.res.P1, sd.res.P1.R, sd.res.LLSC, sd.res.SBLL, sd.res.BD, sd.res.CPD, sd.res.CPL, sd.res.PreDL, sd.res.DbL, sd.res.HL, sd.res.HD, sd.res.HW, sd.res.SnL, sd.res.OL)
 
 
 library(dplyr)
-raw5a <- raw5 %>%
+raw3a <- raw3 %>%
   select(49:63) %>%
   abs()
 
-raw5a <- cbind(raw5, raw5a)
+raw3a <- cbind(raw3, raw3a)
 
-raw5b <- cbind(raw5a[1:32], stack(raw5a[49:78])) 
-raw5b$abs_sd = abs(raw5b$values)
+raw3b <- cbind(raw3a[1:32], stack(raw3a[49:78])) 
+raw3b$abs_sd = abs(raw3b$values)
 
-lat.raw5 <- raw5b[raw5b$SPP == "p.latipinna",]
+lat.raw3 <- raw3b[raw3b$SPP == "p.latipinna",]
 
-form.raw5 <- raw5b[raw5b$SPP == "p.formosa",]
+form.raw3 <- raw3b[raw3b$SPP == "p.formosa",]
 
-A2.lat <- aov(abs_sd~QUARTILE, data=lat.raw5)
-summary(A2.lat)
+######QUARTILES#####
 
-A2.form <- aov(abs_sd~QUARTILE, data=form.raw5)
-summary(A2.form)
+A3.lat <- aov(abs_sd~QUARTILE, data=lat.raw3)
+summary(A3.lat)
 
-#between species
-
-A2 <- aov(abs_sd~QUARTILE*SPP, data=raw5b)
-summary(A2)
-
-
-
-
-#BELOW: I compiled all the residual scores into each quartile (so all residuals for all traits in Q1, ex) and then ran the anovas below. BUT the residuals are not unitless--so I need to standardize them. Will try this again above with standardized residuals
-library(curl)
-
-df <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/ANOVA_res-data.csv")
-
-df <- read.csv(df, header = TRUE, sep = ",", stringsAsFactors = TRUE)
-
-head(df)
-
-lat.df <- df[df$Spp == "lat",]
-head(lat.df)
-
-form.df <- df[df$Spp == "form",]
-head(form.df)
-
-#within species
-
-A.lat <- aov(X.U.FEFF.Residuals~Location, data=lat.df)
-summary(A.lat)
-
-A.form <- aov(X.U.FEFF.Residuals~Location, data=form.df)
-summary(A.form)
+A3.form <- aov(abs_sd~QUARTILE, data=form.raw3)
+summary(A3.form)
 
 #between species
 
-A <- aov(X.U.FEFF.Residuals~Location*Spp, data=df)
-summary(A)
+A3 <- aov(abs_sd~QUARTILE*SPP, data=raw3b)
+summary(A3)
 
 
-#runs on the assumption that each subgroup has a normal distribution, check for normality among location?
-#raw.q1 <- raw1[raw1$QUARTILE == "Q1",]
-#raw.q2 <- raw1[raw1$QUARTILE == "Q2",]
-#raw.q3 <- raw1[raw1$QUARTILE == "Q3",]
-#raw.q4 <- raw1[raw1$QUARTILE == "Q4",]
+######BASINS#####
 
-#ks.test(raw.q1$CPL, "pnorm", mean=mean(raw.q1$CPL), sd=sd(raw.q1$CPL)) #NOT SIG (NORMAL)
+A4.lat <- aov(abs_sd~BASIN, data=lat.raw3)
+summary(A4.lat)
 
-#seems to give me a 'ties' error with NA as the p value. When looking up the error most people stated this test was useless, but that the alternatives were also useless, so idk what to do...
+A4.form <- aov(abs_sd~BASIN, data=form.raw3)
+summary(A4.form)
 
+#between species
 
-nest <- aov(raw4$abs.res.D ~ raw4$SPP / factor(raw4$QUARTILE))
-summary(nest)
-
-A.D <- aov(abs.res.D ~ SPP*QUARTILE, data=raw4)
-summary(A.D)
-
-A.P1 <- aov(abs.res.P1 ~ SPP*QUARTILE, data=raw4)
-summary(A.P1)
-
-A.P1.R <- aov(abs.res.P1.R ~ SPP*QUARTILE, data=raw4)
-summary(A.P1.R)
-
-A.LLSC <- aov(abs.res.LLSC ~ SPP*QUARTILE, data=raw4)
-summary(A.LLSC)
-
-A.SBLL <- aov(abs.res.SBLL ~ SPP*QUARTILE, data=raw4)
-summary(A.SBLL)
-
-A.BD <- aov(abs.res.BD ~ SPP*QUARTILE, data=raw4)
-summary(A.BD)
-
-A.CPD <- aov(abs.res.CPD ~ SPP*QUARTILE, data=raw4)
-summary(A.CPD)
-
-A.CPL <- aov(abs.res.CPL ~ SPP*QUARTILE, data=raw4)
-summary(A.CPL)
-
-A.PreDL <- aov(abs.res.PreDL ~ SPP*QUARTILE, data=raw4)
-summary(A.PreDL)
-
-A.DbL <- aov(abs.res.DbL ~ SPP*QUARTILE, data=raw4)
-summary(A.DbL)
-
-A.HL <- aov(abs.res.HL ~ SPP*QUARTILE, data=raw4)
-summary(A.HL)
-
-A.HD <- aov(abs.res.HD ~ SPP*QUARTILE, data=raw4)
-summary(A.HD)
-
-A.HW <- aov(abs.res.HW ~ SPP*QUARTILE, data=raw4)
-summary(A.HW)
-
-A.SnL <- aov(abs.res.SnL ~ SPP*QUARTILE, data=raw4)
-summary(A.SnL)
-
-A.OL <- aov(abs.res.OL ~ SPP*QUARTILE, data=raw4)
-summary(A.OL)
-
-A.A <- aov(A ~ SPP*QUARTILE, data=raw4)
-summary(A.A)
-
-A.SALL <- aov(SALL ~ SPP*QUARTILE, data=raw4)
-summary(A.SALL)
-
-A.SBDF <- aov(SBDF ~ SPP*QUARTILE, data=raw4)
-summary(A.SBDF)
-
-A.FLA <- aov(FLA ~ SPP*QUARTILE, data=raw4)
-summary(A.FLA)
-
-ggplot(raw4, aes(x=factor(QUARTILE), y=FLA, fill=SPP)) + geom_boxplot()
+A4 <- aov(abs_sd~BASIN*SPP, data=raw3b)
+summary(A4)
 
 
-library(ggplot2)
+#####WATERSHEDS#####
+A5.lat <- aov(abs_sd~WATERSHED, data=lat.raw3)
+summary(A5.lat)
 
+A5.form <- aov(abs_sd~WATERSHED, data=form.raw3)
+summary(A5.form)
 
-ggplot(raw4, aes(x=factor(QUARTILE), y=abs.res.D, fill=SPP)) +
-  geom_boxplot()
+#between species
 
-nest2 <- aov(raw4$abs.res.P1.R ~ raw4$SPP / factor(raw4$QUARTILE))
-summary(nest2)
-
-
-ggplot(raw4, aes(x=factor(QUARTILE), y=abs.res.P1.R, fill=SPP)) +
-  geom_boxplot()
-
-```
+A5 <- aov(abs_sd~WATERSHED*SPP, data=raw3b)
+summary(A5)
 
 
 
-### PCA analysis {.tabset .tabset-fade .tabset-pills}
+
+
+
+
+# PCA analysis {.tabset .tabset-fade .tabset-pills}
+
+LOGAN: CHECK THAT EACH VARIABLES IS NEAR NORMALLY DISTRIBUTED. IF NOT, LOG TRANSFORM BEFORE PCA. ALSO CHECK THAT PCA CALCULATES Z SCORES AND PLOTS BASED ON THAT; IF NOT CONVERT TO Z SCORES THEN RUN PCA.
 
 In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **116 Sailfin and 186 Amazon**. 
 
@@ -1108,50 +1228,9 @@ In this analysis, I will compare the principle components after centering and sc
 
 -   summary of PCs
 
-```{r, echo=FALSE}
+{r, echo=FALSE}
 
-#keeps giving an error about infinite or missing values, even when I do na.omit. Will try with a dataframe that already omits NAs
-
-raw2 <- raw1[complete.cases(raw1[, 10:31]),] #that worked!
-
-#also want the FLA to be in there so gonna try to move the column to 31
-
-moveme <- function (invec, movecommand) {
-  movecommand <- lapply(strsplit(strsplit(movecommand, ";")[[1]], 
-                                 ",|\\s+"), function(x) x[x != ""])
-  movelist <- lapply(movecommand, function(x) {
-    Where <- x[which(x %in% c("before", "after", "first", 
-                              "last")):length(x)]
-    ToMove <- setdiff(x, Where)
-    list(ToMove, Where)
-  })
-  myVec <- invec
-  for (i in seq_along(movelist)) {
-    temp <- setdiff(myVec, movelist[[i]][[1]])
-    A <- movelist[[i]][[2]][1]
-    if (A %in% c("before", "after")) {
-      ba <- movelist[[i]][[2]][2]
-      if (A == "before") {
-        after <- match(ba, temp) - 1
-      }
-      else if (A == "after") {
-        after <- match(ba, temp)
-      }
-    }
-    else if (A == "first") {
-      after <- 0
-    }
-    else if (A == "last") {
-      after <- length(myVec)
-    }
-    myVec <- append(temp, values = movelist[[i]][[1]], after = after)
-  }
-  myVec
-}
-
-raw3 <- raw2[moveme(names(raw2), "FLA before SPP")] #is useful, but not sure if I want it in the PCA, especially if I already use the pect counts
-
-PCA <- prcomp(raw2[, 10:31], center=TRUE, scale. = TRUE) #includes all 22 traits 
+PCA <- prcomp(raw1[, 10:31], center=TRUE, scale. = TRUE) #includes all 22 traits 
 summary(PCA)
 loadings <- PCA$rotation
 loadings[, 1:5]
@@ -1160,11 +1239,11 @@ loadings[, 1:5]
 VM_PCA <- varimax(PCA$rotation)
 summary(VM_PCA)
 
-```
+
 
 -   visualization of PCA
 
-```{r, echo=FALSE}
+{r, echo=FALSE}
 
 library(AMR)
 library(ggplot2)
@@ -1195,37 +1274,57 @@ evplot <- function(ev)
 ev <- PCA$sdev^2
 evplot(ev) #according to Kaiser-Guttman criteron, we can use the first 4 PCs, even though the broken stick model shows only the first above the red bar plot... not 100% confident I know what this means, but pretty sure PC1 is body size 
 
-plot6<- autoplot(PCA, data = raw2, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot6<- autoplot(PCA, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
 plot6
 
-plot6.1<- autoplot(PCA, data = raw2, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot6.1<- autoplot(PCA, data = raw1, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
 plot6.1
 
-#raw.lat <- raw1[raw1$SPP == "p.latipinna",] no idea what these were for
-#raw.form <- raw1[raw1$SPP == "p.formosa",]
 
-plot7<- autoplot(PCA, data = raw2, colour='COUNTY.ST', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot7<- autoplot(PCA, data = raw1, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
 plot7
-#don't think this is actually useful. Would this be telling me that populations would be different?
+
+plot7A<- autoplot(PCA, data = raw1, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot7A
+
+plot7B<- autoplot(PCA, data = raw1, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot7B
 
 
-#Let's try this was PC2 and 3, since 1 is mostly size anyways.
-
-plot8<- autoplot(PCA, x=2, y=3, data = raw2, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot8<- autoplot(PCA, x=2, y=3, data = raw1, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
 plot8
 
-plot8.1<- autoplot(PCA, x=2, y=3, data = raw2, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot8.1<- autoplot(PCA, x=2, y=3, data = raw1, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
 plot8.1
 
 
-plot9<- autoplot(PCA, x=2, y=3, data = raw2, colour='COUNTY.ST', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot9<- autoplot(PCA, x=2, y=3, data = raw1, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
 plot9
 
+plot9A<- autoplot(PCA, x=2, y=3, data = raw1, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot9A
+
+plot9B<- autoplot(PCA, x=2, y=3, data = raw1, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot9B
+
+
+##### PCA FOR RESITUDALS ######
+# not sure this is useful, but will have it here just in case
+
+PCA2 <- prcomp(raw2[, 33:48], center=TRUE, scale. = TRUE) #includes all 22 traits 
+summary(PCA2)
+loadings1 <- PCA2$rotation
+loadings1[, 1:5]
+
+plot10<- autoplot(PCA2, x=1, y=2, data = raw2, colour='SPP', loadings=TRUE, loadings.colour='navyblue', loadings.label=TRUE, loadings.label.colour='navyblue', loadings.label.size=5, loadings.label.vjust= 1, loadings.label.hjust= 1.2, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology trait Residuals") + theme_minimal()
+plot10
+
+plot11<- autoplot(PCA2, x=1, y=2, data = raw2, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot11
 
 
 
 
-```
 
 *Variable chart:*
 
