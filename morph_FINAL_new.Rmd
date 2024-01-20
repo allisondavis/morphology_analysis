@@ -10,11 +10,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# *Morphological variation of amazon and sailfin mollies* {.tabset .tabset-fade .tabset-pills}
+**Morphological variation of amazon and sailfin mollies** {.tabset .tabset-fade .tabset-pills}
 
 In this study, I am looking at various populations of amazon and sailfin mollies across their native/introduced range to assess morphological variation both within and among the species. I am using the Pickle fish collections for my samples.
 
-*Data collection* 
+# Initial steps {.tabset .tabset-fade .tabset-pills}
+
+## Data collection {.tabset .tabset-fade .tabset-pills}
+
 
 ```{r, echo=FALSE}
 library(curl)
@@ -41,14 +44,122 @@ mex <- raw1[raw1$SPP == "p.mexicana",]
 ```
 
 
-## Correcting for body size (residuals) {.tabset .tabset-fade .tabset-pills}
+## Checking normality {.tabset .tabset-fade .tabset-pills}
+
+I will use Shapiro-wilke, histograms, and QQ plots to determine what traits are normal. These will only be performed on continuous variables, as discrete variables are not normal by nature. 
+
+**Conclusions:** literally all of them are NOT normal... will log transform them for the PCA (I guess), but will perform non-parametric tests for the comparisons (Levene's test instead of F-test, Mann Whitney U instead of T-test, Kruskal Wallis H Test instead of ANOVA).
+
+
+### SW Test {.tabset .tabset-fade .tabset-pills}
+```{r}
+
+shapiro.test(raw1$SL)
+
+shapiro.test(raw1$BD)
+
+shapiro.test(raw1$CPD)
+
+shapiro.test(raw1$CPL)
+
+shapiro.test(raw1$PreDL)
+
+shapiro.test(raw1$DbL)
+
+shapiro.test(raw1$HL)
+
+shapiro.test(raw1$HD)
+
+shapiro.test(raw1$HW)
+
+shapiro.test(raw1$SnL)
+
+shapiro.test(raw1$OL)
+
+
+
+
+```
+
+
+### Histograms {.tabset .tabset-fade .tabset-pills}
+```{r}
+
+hist(raw1$SL)
+
+hist(raw1$BD)
+
+hist(raw1$CPD)
+
+hist(raw1$CPL)
+
+hist(raw1$PreDL)
+
+hist(raw1$DbL)
+
+hist(raw1$HL)
+
+hist(raw1$HD)
+
+hist(raw1$HW)
+
+hist(raw1$SnL)
+
+hist(raw1$OL)
+
+
+```
+
+
+### QQ plots {.tabset .tabset-fade .tabset-pills}
+```{r}
+
+qqnorm(raw1$SL)
+qqline(raw1$SL)
+
+qqnorm(raw1$BD)
+qqline(raw1$BD)
+
+qqnorm(raw1$CPD)
+qqline(raw1$CPD)
+
+qqnorm(raw1$CPL)
+qqline(raw1$CPL)
+
+qqnorm(raw1$PreDL)
+qqline(raw1$PreDL)
+
+qqnorm(raw1$DbL)
+qqline(raw1$DbL)
+
+qqnorm(raw1$HL)
+qqline(raw1$HL)
+
+qqnorm(raw1$HD)
+qqline(raw1$HD)
+
+qqnorm(raw1$HW)
+qqline(raw1$HW)
+
+qqnorm(raw1$SnL)
+qqline(raw1$SnL)
+
+qqnorm(raw1$OL)
+qqline(raw1$OL)
+
+
+
+```
+
+
+# Correcting for body size (residuals) {.tabset .tabset-fade .tabset-pills}
 
 Since amazons are in general bigger than sailfin, we don't want any results to be due to this difference in body size bias. Therefore, we will see what traits are influenced by body size (regressions) and correct for body size when necessary (absolute value of residuals). We can then use the residuals when comparing between species for traits that are influenced by body size, and raw data for traits that are not influenced by body size. I will also calculate standardized residuals to compare residuals across traits in later analyses.
 
 **Quick results summary:** traits *not* influenced by body size are left & right pelvic, anal, scales below lateral line and fluctuating asymmetry; all other traits influenced by body size. 
 
 
-### Regressions {.tabset .tabset-fade .tabset-pills}
+## Regressions {.tabset .tabset-fade .tabset-pills}
 
 -   STEP ONE: plot trait vs body size
 
@@ -573,9 +684,9 @@ reg.mex.FLA.plot
 
 
 
-### Residuals {.tabset .tabset-fade .tabset-pills}
+## Residuals {.tabset .tabset-fade .tabset-pills}
 
--   STEP TWO: get residuals for each individual for traits that were influenced by body size
+-   **STEP TWO:** get residuals for each individual for traits that were influenced by body size
 
 ```{r echo=FALSE}
 
@@ -588,9 +699,7 @@ res.lat.P1.R <- resid(reg.lat.P1.R)
 
 res.lat.LLSC <- resid(reg.lat.LLSC)
 
-res.lat.SALL <- resid(reg.lat.SALL)
-
-res.lat.SBLL <- resid(reg.lat.SBLL)
+res.lat.SBLL <- resid(reg.lat.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
 
 res.lat.BD <- resid(reg.lat.BD)
 
@@ -622,9 +731,7 @@ res.form.P1.R <- resid(reg.form.P1.R)
 
 res.form.LLSC <- resid(reg.form.LLSC)
 
-res.form.SALL <- resid(reg.form.SALL)
-
-res.form.SBLL <- resid(reg.form.SBLL)
+res.form.SBLL <- resid(reg.form.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
 
 res.form.BD <- resid(reg.form.BD)
 
@@ -656,8 +763,6 @@ res.mex.P1.R <- resid(reg.mex.P1.R)
 
 res.mex.LLSC <- resid(reg.mex.LLSC)
 
-res.mex.SALL <- resid(reg.mex.SALL)
-
 res.mex.SBLL <- resid(reg.mex.SBLL)
 
 res.mex.BD <- resid(reg.mex.BD)
@@ -683,7 +788,7 @@ res.mex.OL <- resid(reg.mex.OL)
 
 ```
 
--   STEP THREE: convert residuals to absolute value
+-   **STEP THREE:** convert residuals to absolute value
 
 ```{r}
 
@@ -700,9 +805,6 @@ mean(abs.lat.P1.R)
 
 abs.lat.LLSC <- abs(res.lat.LLSC)
 mean(abs.lat.LLSC)
-
-abs.lat.SALL <- abs(res.lat.SALL)
-mean(abs.lat.SALL)
 
 abs.lat.SBLL <- abs(res.lat.SBLL)
 mean(abs.lat.SBLL)
@@ -752,9 +854,6 @@ mean(abs.form.P1.R)
 abs.form.LLSC <- abs(res.form.LLSC)
 mean(abs.form.LLSC)
 
-abs.form.SALL <- abs(res.form.SALL)
-mean(abs.form.SALL)
-
 abs.form.SBLL <- abs(res.form.SBLL)
 mean(abs.form.SBLL)
 
@@ -802,9 +901,6 @@ mean(abs.mex.P1.R)
 abs.mex.LLSC <- abs(res.mex.LLSC)
 mean(abs.mex.LLSC)
 
-abs.mex.SALL <- abs(res.mex.SALL)
-mean(abs.mex.SALL)
-
 abs.mex.SBLL <- abs(res.mex.SBLL)
 mean(abs.mex.SBLL)
 
@@ -845,7 +941,6 @@ abs.res.D <- c(abs.lat.D, abs.form.D, abs.mex.D)
 abs.res.P1 <- c(abs.lat.P1, abs.form.P1, abs.mex.P1)
 abs.res.P1.R <- c(abs.lat.P1.R, abs.form.P1.R, abs.mex.P1.R)
 abs.res.LLSC<- c(abs.lat.LLSC, abs.form.LLSC, abs.mex.LLSC)
-abs.res.SALL<- c(abs.lat.SALL, abs.form.SALL, abs.mex.SALL)
 abs.res.SBLL<- c(abs.lat.SBLL, abs.form.SBLL, abs.mex.SBLL)
 abs.res.BD<- c(abs.lat.BD, abs.form.BD, abs.mex.BD)
 abs.res.CPD<- c(abs.lat.CPD, abs.form.CPD, abs.mex.CPD)
@@ -859,15 +954,15 @@ abs.res.SnL <- c(abs.lat.SnL, abs.form.SnL, abs.mex.SnL)
 abs.res.OL <- c(abs.lat.OL, abs.form.OL, abs.mex.OL)
 
 
-raw2 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SALL, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
+raw2 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
 
 ```
 
-### Residual Comparisons {.tabset .tabset-fade .tabset-pills}
+## Residual Comparisons {.tabset .tabset-fade .tabset-pills}
 
 
 
--   STEP FOUR: plot the mean of the |residuals| for both species, for all traits influenced by body size
+-   **STEP FOUR:** plot the mean of the |residuals| for both species, for all traits influenced by body size
 
 ```{r}
 
@@ -914,12 +1009,6 @@ ggplot(raw2, aes(SPP, abs.res.P1.R)) +
   stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
 
 ggplot(raw2, aes(SPP, abs.res.LLSC)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
-
-ggplot(raw2, aes(SPP, abs.res.SALL)) +
   geom_point(alpha=0.3) +
   stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
                width=0.03, colour="red", alpha=0.7) +
@@ -999,139 +1088,100 @@ ggplot(raw2, aes(SPP, abs.res.OL)) +
 
 
 
-## Comparing variation (F & T-tests) {.tabset .tabset-fade .tabset-pills}
+# Comparing variation (Levene and KW tests) {.tabset .tabset-fade .tabset-pills}
 
-F tests on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F tests on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? Based on the regressions, if the trait was influenced by body size, I will perform a t-test on the absolute value of the residuals. If the trait was not influenced by body size, I will perform an F test of variance on the raw data.
+*(note: previously did F-test and T-test, but none of the traits are normal so I will redo using non-parametic tests. I moved old analysis to 'morphology-analysis_final' for records sake).*
 
-**Quick results summary:** For the F-tests on raw data, none of the traits were significantly different (P2L/R, A, SBDF, FLA). For the t-tests on residuals, the only significant traits are right pectoral (lat>form), scales below lateral line (form>lat), dorsal base length (lat>form), head length (form>lat), and ocular length (lat>form).
+Levene's test on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, LT on residuals is like variance of the variance. Instead, I have to do a Mann-Whitney U test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? Based on the regressions, if the trait was influenced by body size, I will perform a MWU on the absolute value of the residuals. If the trait was not influenced by body size, I will perform an LT of variance on the raw data.
+
+**Quick results summary:** For the Levene's test on raw data, none of the traits were significantly different (P2L/R, A, SBDF, FLA). For the MWU tests on residuals, the only significant traits are left pectoral (), right pectoral (lat>form), scales above lateral line (), scales below lateral line (form>lat), and head length ().
 
 
     -   will do two-tailed and check out the residual means to infer direction; for traits in which we use raw data, a one-tailed f-test will be perfomed in both direction to determine which species is varying more. We will also visulize the variation using a histogram to confirm direction results.
+    
+    
+## Levene's tests {.tabset .tabset-fade .tabset-pills}
 
-### F tests of variation {.tabset .tabset-fade .tabset-pills} 
+Will create a dataset of just amazons and sailfins, as this is my main comparison. I will do a test with the mexicana and the sailfins/amazons from Tampico later.
 
-This is for traits NOT influenced by body size. 
+general formula: leveneTest(dependent~independent, dataframe)
+  For me, I am interested in if the variance of a trait (dependent) differs between two species (independent), so it will be leveneTest(trait~spp, df).
 
-```{r, echo=FALSE}
+Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
+
+```{r}
+raw3 <- raw2[raw2$SPP !="p.mexicana", ]
 
 
-var.left.pel <- var.test(lat$P2.L, form$P2.L, alternative = "two.sided")
-var.left.pel
+library(car)
 
-var.rig.pel <- var.test(lat$P2.R, form$P2.R, alternative = "two.sided")
-var.rig.pel
+(LT_P2L <- leveneTest(P2.L~SPP, data=raw3)) #gives nothing since it's all the same value
 
-var.anal <- var.test(lat$A, form$A, alternative = "two.sided")
-var.anal
+(LT_P2R <- leveneTest(P2.R~SPP, data=raw3)) #same as above
 
-var.sca.df <- var.test(lat$SBDF, form$SBDF, alternative = "two.sided")
-var.sca.df
+(LT_A <- leveneTest(A~SPP, data=raw3)) 
 
-var.flu.asy <- var.test(lat$FLA, form$FLA, alternative = "two.sided")
-var.flu.asy
+(LT_SALL <- leveneTest(SALL~SPP, data=raw3))
+
+(LT_SBLL <- leveneTest(SBLL~SPP, data=raw3))
+
+(LT_SBDF <- leveneTest(SBDF~SPP, data=raw3))
+
+(LT_FLA <- leveneTest(FLA~SPP, data=raw3))
+
+
+
+```
+
+## Mann Whitney U tests {.tabset .tabset-fade .tabset-pills}
+
+This will be performed on traits that **DID** vary with SL.
+
+```{r}
+
+(MW_D <- wilcox.test(abs.res.D~SPP, data=raw3, conf.int=T))
+
+(MW_P1 <- wilcox.test(abs.res.P1~SPP, data=raw3, conf.int=T))
+
+(MW_P1R <- wilcox.test(abs.res.P1.R~SPP, data=raw3, conf.int=T))
+
+(MW_LLSC <- wilcox.test(abs.res.LLSC~SPP, data=raw3, conf.int=T))
+
+(MW_BD <- wilcox.test(abs.res.BD~SPP, data=raw3, conf.int=T))
+
+(MW_CPD <- wilcox.test(abs.res.CPD~SPP, data=raw3, conf.int=T))
+
+(MW_CPL <- wilcox.test(abs.res.CPL~SPP, data=raw3, conf.int=T))
+
+(MW_PreDL <- wilcox.test(abs.res.PreDL~SPP, data=raw3, conf.int=T))
+
+(MW_DbL <- wilcox.test(abs.res.DbL~SPP, data=raw3, conf.int=T))
+
+(MW_HL <- wilcox.test(abs.res.HL~SPP, data=raw3, conf.int=T))
+
+(MW_HD <- wilcox.test(abs.res.HD~SPP, data=raw3, conf.int=T))
+
+(MW_HW <- wilcox.test(abs.res.HW~SPP, data=raw3, conf.int=T))
+
+(MW_SnL <- wilcox.test(abs.res.SnL~SPP, data=raw3, conf.int=T))
+
+(MW_OL <- wilcox.test(abs.res.OL~SPP, data=raw3, conf.int=T))
 
 
 
 ```
 
 
-
-
-
-
-<br><br><br><br>
-
-
-
-
-### T tests on residuals {.tabset .tabset-fade .tabset-pills}
-
-This will be for traits that WERE influenced by body size. The absolute value of the residuals will be used. 
-
-```{r, echo=FALSE}
-
-
-ttest.abs.D <- t.test(abs.lat.D, abs.form.D, alternative = "two.sided")
-ttest.abs.D
-
-
-ttest.abs.P1 <- t.test(abs.lat.P1, abs.form.P1, alternative = "two.sided")
-ttest.abs.P1
-
-
-ttest.abs.P1.R <- t.test(abs.lat.P1.R, abs.form.P1.R, alternative = "two.sided")
-ttest.abs.P1.R
-
-
-ttest.abs.LLSC <- t.test(abs.lat.LLSC, abs.form.LLSC, alternative = "two.sided")
-ttest.abs.LLSC
-
-ttest.abs.SALL <- t.test(abs.lat.SALL, abs.form.SALL, alternative = "two.sided")
-ttest.abs.SALL
-
-
-ttest.abs.SBLL <- t.test(abs.lat.SBLL, abs.form.SBLL, alternative = "two.sided")
-ttest.abs.SBLL
-
-
-ttest.abs.BD <- t.test(abs.lat.BD, abs.form.BD, alternative = "two.sided")
-ttest.abs.BD
-
-
-ttest.abs.CPD <- t.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
-ttest.abs.CPD
-
-
-ttest.abs.CPL <- t.test(abs.lat.CPL, abs.form.CPL, alternative = "two.sided")
-ttest.abs.CPL
-
-
-ttest.abs.PreDL <- t.test(abs.lat.PreDL, abs.form.PreDL, alternative = "two.sided")
-ttest.abs.PreDL
-
-
-ttest.abs.DbL <- t.test(abs.lat.DbL, abs.form.DbL, alternative = "two.sided")
-ttest.abs.DbL
-
-
-ttest.abs.HL <- t.test(abs.lat.HL, abs.form.HL, alternative = "two.sided")
-ttest.abs.HL
-
-
-ttest.abs.HD <- t.test(abs.lat.HD, abs.form.HD, alternative = "two.sided")
-ttest.abs.HD
-
-
-ttest.abs.HW <- t.test(abs.lat.HW, abs.form.HW, alternative = "two.sided")
-ttest.abs.HW
-
-
-ttest.abs.SnL <- t.test(abs.lat.SnL, abs.form.SnL, alternative = "two.sided")
-ttest.abs.SnL
-
-
-ttest.abs.OL <- t.test(abs.lat.OL, abs.form.OL, alternative = "two.sided")
-ttest.abs.OL
-
-
-
-
-
-```
-
-
-
-
-### Summary of variance results {.tabset .tabset-fade .tabset-pills}
+## Summary of variance results {.tabset .tabset-fade .tabset-pills}
 
 
 ```{r}
 
-average.table <- matrix(c(ttest.abs.D$p.value, mean(abs.lat.D, na.rm = TRUE), mean(abs.form.D, na.rm = TRUE), ttest.abs.P1$p.value, mean(abs.lat.P1, na.rm = TRUE), mean(abs.form.P1, na.rm = TRUE), var.rig.pel$p.value, mean(lat$P2.R, na.rm = TRUE), mean(form$P2.R, na.rm = TRUE), var.left.pel$p.value, mean(lat$P2.L, na.rm = TRUE), mean(form$P2.L, na.rm = TRUE), var.anal$p.value, mean(lat$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), ttest.abs.P1.R$p.value, mean(abs.lat.P1.R, na.rm = TRUE), mean(abs.form.P1.R, na.rm = TRUE), ttest.abs.LLSC$p.value, mean(abs.lat.LLSC, na.rm = TRUE), mean(abs.form.LLSC, na.rm = TRUE), ttest.abs.SALL$p.value, mean(abs.lat.SALL, na.rm = TRUE), mean(abs.form.SALL, na.rm = TRUE), ttest.abs.SBLL$p.value, mean(abs.lat.SBLL, na.rm = TRUE), mean(abs.form.SBLL, na.rm = TRUE), var.sca.df$p.value, mean(lat$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), ttest.abs.BD$p.value, mean(abs.lat.BD, na.rm = TRUE), mean(abs.form.BD, na.rm = TRUE), ttest.abs.CPD$p.value, mean(abs.lat.CPD, na.rm = TRUE), mean(abs.form.CPD, na.rm = TRUE), ttest.abs.CPL$p.value, mean(abs.lat.CPL, na.rm = TRUE), mean(abs.form.CPL, na.rm = TRUE), ttest.abs.PreDL$p.value, mean(abs.lat.PreDL, na.rm = TRUE), mean(abs.form.PreDL, na.rm = TRUE), ttest.abs.DbL$p.value, mean(abs.lat.DbL, na.rm = TRUE), mean(abs.form.DbL, na.rm = TRUE), ttest.abs.HL$p.value, mean(abs.lat.HL, na.rm = TRUE), mean(abs.form.HL, na.rm = TRUE), ttest.abs.HD$p.value, mean(abs.lat.HD, na.rm = TRUE), mean(abs.form.HD, na.rm = TRUE), ttest.abs.HW$p.value, mean(abs.lat.HW, na.rm = TRUE), mean(abs.form.HW, na.rm = TRUE), ttest.abs.SnL$p.value, mean(abs.lat.SnL, na.rm = TRUE), mean(abs.form.SnL, na.rm = TRUE), ttest.abs.OL$p.value, mean(abs.lat.OL, na.rm = TRUE), mean(abs.form.OL, na.rm = TRUE), var.flu.asy$p.value, mean(lat$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE)), ncol=3, byrow=TRUE)
+average.table <- matrix(c(MW_D$p.value, mean(abs.lat.D), mean(abs.form.D), MW_P1$p.value, mean(abs.lat.P1), mean(abs.form.P1), LT_P2R$p.value, mean(lat$P2.R), mean(form$P2.R), LT_P2L$p.value, mean(lat$P2.L), mean(form$P2.L), LT_A$p.value, mean(lat$A), mean(form$A), MW_P1R$p.value, mean(abs.lat.P1.R), mean(abs.form.P1.R), MW_LLSC$p.value, mean(abs.lat.LLSC), mean(abs.form.LLSC), LT_SALL$p.value, mean(lat$SALL), mean(form$SALL), LT_SBLL$p.value, mean(lat$SBLL), mean(form$SBLL), LT_SBDF$p.value, mean(lat$SBDF), mean(form$SBDF), MW_BD$p.value, mean(abs.lat.BD), mean(abs.form.BD), MW_CPD$p.value, mean(abs.lat.CPD), mean(abs.form.CPD), MW_CPL$p.value, mean(abs.lat.CPL), mean(abs.form.CPL), MW_PreDL$p.value, mean(abs.lat.PreDL), mean(abs.form.PreDL), MW_DbL$p.value, mean(abs.lat.DbL), mean(abs.form.DbL), MW_HL$p.value, mean(abs.lat.HL), mean(abs.form.HL), MW_HD$p.value, mean(abs.lat.HD), mean(abs.form.HD), MW_HW$p.value, mean(abs.lat.HW), mean(abs.form.HW), MW_SnL$p.value, mean(abs.lat.SnL), mean(abs.form.SnL), MW_OL$p.value, mean(abs.lat.OL), mean(abs.form.OL), LT_FLA$p.value, mean(lat$FLA), mean(form$FLA)), ncol=3, byrow=TRUE)
 
 colnames(average.table)<- c('p-value for variance', 'lat mean', 'form mean')
 
-rownames(average.table) <- c('dorsal rays', 'L pect rays', 'R pelvic rays', 'L pelvic rays', 'Anal rays', 'R pect rays', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head length', 'head depth', 'head width', 'snout leng', 'orbital leng', 'fluct. asymmetries')
+rownames(average.table) <- c('dorsal rays', 'L pect rays**', 'R pelvic rays', 'L pelvic rays', 'Anal rays', 'R pect rays**', 'lat line scales', 'scales above LL**', 'scales below LL**', 'scales before dor', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head length**', 'head depth', 'head width', 'snout leng', 'orbital leng', 'fluct. asymmetries')
 
 average.table
 
@@ -1139,7 +1189,7 @@ average.table
 ```
 
 
-### Visualization of significant results {.tabset .tabset-fade .tabset-pills}
+## Visualization of significant results {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 
@@ -1151,18 +1201,18 @@ plot_multi_histogram <- function(df, feature, label_column) {
     plt + guides(fill=guide_legend(title=label_column))
 }
 
-raw3 <- raw2[raw2$SPP !="p.mexicana", ]
 
+plot_multi_histogram(raw3, "abs.res.P1", "SPP")
 
 plot_multi_histogram(raw3, "abs.res.P1.R", "SPP")
 
-plot_multi_histogram(raw3, "abs.res.SBLL", "SPP")
+plot_multi_histogram(raw3, "abs.res.SALL", "SPP")
 
-plot_multi_histogram(raw3, "abs.res.DbL", "SPP")
+plot_multi_histogram(raw3, "abs.res.SBLL", "SPP")
 
 plot_multi_histogram(raw3, "abs.res.HL", "SPP")
 
-plot_multi_histogram(raw3, "abs.res.OL", "SPP")
+
 
 
 
@@ -1171,7 +1221,9 @@ plot_multi_histogram(raw3, "abs.res.OL", "SPP")
 
 
 
-## ANOVA {.tabset .tabset-fade .tabset-pills}
+
+
+# ANOVA {.tabset .tabset-fade .tabset-pills}
 
 Will run an ANOVA on the residuals with location and species as fixed effects. This will show me if morphology depends on the species, the location, and if the location and species interact to determine morphology. 
 
@@ -1181,7 +1233,7 @@ I will then run the same analysis using basin as the location factor. Since fish
 
 Lastly I will run ANOVAs with both zones and basins but with standardized residuals. This would allow me to compare overall variation across traits (at least those that are depended on body size) rather than just one trait at a time. Not 100% sure if this is useful (or correct to do), but thought it would be interesting. 
 
-### Zones {.tabset .tabset-fade .tabset-pills}
+## Zones {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 library(ggplot2)
@@ -1285,7 +1337,7 @@ ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.OL, fill=SPP)) +
 ```
 
 
-### Basins {.tabset .tabset-fade .tabset-pills}
+## Basins {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 
@@ -1383,7 +1435,7 @@ ggplot(raw3, aes(x=factor(BASIN), y=abs.res.OL, fill=SPP)) +
 ```
 
 
-### Watersheds {.tabset .tabset-fade .tabset-pills}
+## Watersheds {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 
@@ -1478,7 +1530,7 @@ ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.OL, fill=SPP)) +
 
 
 
-### Standardized {.tabset .tabset-fade .tabset-pills}
+## Standardized {.tabset .tabset-fade .tabset-pills}
 
 The ANOVAs above focus on differences of particular traits as a factor of species and location. If we want to get an idea of variation in general as a factor of species and location, we can standardize the residuals (essentially unitless z-scores of residuals).
 
@@ -1563,7 +1615,7 @@ ggplot(raw5, aes(x=factor(WATERSHED), y=values, fill=SPP)) +
 
 
 
-## PCA analysis {.tabset .tabset-fade .tabset-pills}
+# PCA analysis {.tabset .tabset-fade .tabset-pills}
 
 LOGAN: CHECK THAT EACH VARIABLES IS NEAR NORMALLY DISTRIBUTED. IF NOT, LOG TRANSFORM BEFORE PCA. ALSO CHECK THAT PCA CALCULATES Z SCORES AND PLOTS BASED ON THAT; IF NOT CONVERT TO Z SCORES THEN RUN PCA.
 
