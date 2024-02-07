@@ -969,169 +969,81 @@ ggplot(raw4, aes(SPP, abs.res.OL)) +
 
 
 
-#### F tests to compare species {.tabset .tabset-fade .tabset-pills}
+##
 
-    -   will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
-    -   this will only be for the traits that did not have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA) 
-
-```{r, echo=FALSE}
-
-
-var.left.pel <- var.test(lat$P2.L, form$P2.L, alternative = "two.sided")
-var.left.pel
-
-var.rig.pel <- var.test(lat$P2.R, form$P2.R, alternative = "two.sided")
-var.rig.pel
-
-var.anal <- var.test(lat$A, form$A, alternative = "two.sided")
-var.anal
-
-var.sca.ab.ll <- var.test(lat$SALL, form$SALL, alternative = "two.sided")
-var.sca.ab.ll
-
-var.sca.df <- var.test(lat$SBDF, form$SBDF, alternative = "two.sided")
-var.sca.df
-
-var.flu.asy <- var.test(lat$FLA, form$FLA, alternative = "two.sided")
-var.flu.asy
+### NONPARAMETRIC TESTS--DID THIS BECAUSE SHIT WASN'T NORMAL BUT MIKE SAID JUST TO TRANSFORM.
 
 
 
-```
+## Levene's tests {.tabset .tabset-fade .tabset-pills}
+
+Will create a dataset of just amazons and sailfins, as this is my main comparison. I will do a test with the mexicana and the sailfins/amazons from Tampico later.
+
+general formula: leveneTest(dependent\~independent, dataframe) For me, I am interested in if the variance of a trait (dependent) differs between two species (independent), so it will be leveneTest(trait\~spp, df).
+
+Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
+
+```{r}
+raw3 <- raw2[raw2$SPP !="p.mexicana", ]
 
 
+library(car)
 
+(LT_P2L <- leveneTest(P2.L~SPP, data=raw3)) #gives nothing since it's all the same value
 
+(LT_P2R <- leveneTest(P2.R~SPP, data=raw3)) #same as above
 
+(LT_A <- leveneTest(A~SPP, data=raw3)) 
 
-<br><br><br><br>
+(LT_SALL <- leveneTest(SALL~SPP, data=raw3))
 
+(LT_SBLL <- leveneTest(SBLL~SPP, data=raw3))
 
+(LT_SBDF <- leveneTest(SBDF~SPP, data=raw3))
 
-
-#### T tests to compare species {.tabset .tabset-fade .tabset-pills}
-
-
-   -    will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
-   -    this will be for the traits that *did* have a significant regression compared to SL; will be using the absolute value residuals. 
-    
-
-
-```{r, echo=FALSE}
-
-
-ttest.abs.D1 <- t.test(abs.lat.D1, abs.form.D1, alternative = "two.sided")
-ttest.abs.D1
-
-
-ttest.abs.P11 <- t.test(abs.lat.P11, abs.form.P11, alternative = "two.sided")
-ttest.abs.P11
-
-
-ttest.abs.P1.R1 <- t.test(abs.lat.P1.R1, abs.form.P1.R1, alternative = "two.sided")
-ttest.abs.P1.R1
-
-
-ttest.abs.LLSC1 <- t.test(abs.lat.LLSC1, abs.form.LLSC1, alternative = "two.sided")
-ttest.abs.LLSC1
-
-
-ttest.abs.SBLL1 <- t.test(abs.lat.SBLL1, abs.form.SBLL1, alternative = "two.sided")
-ttest.abs.SBLL1
-
-
-ttest.abs.BD1 <- t.test(abs.lat.BD1, abs.form.BD1, alternative = "two.sided")
-ttest.abs.BD1
-
-
-ttest.abs.CPD1 <- t.test(abs.lat.CPD1, abs.form.CPD1, alternative = "two.sided")
-ttest.abs.CPD1
-
-
-ttest.abs.CPL1 <- t.test(abs.lat.CPL1, abs.form.CPL1, alternative = "two.sided")
-ttest.abs.CPL1
-
-
-ttest.abs.PreDL1 <- t.test(abs.lat.PreDL1, abs.form.PreDL1, alternative = "two.sided")
-ttest.abs.PreDL1
-
-
-ttest.abs.DbL1 <- t.test(abs.lat.DbL1, abs.form.DbL1, alternative = "two.sided")
-ttest.abs.DbL1
-
-
-ttest.abs.HL1 <- t.test(abs.lat.HL1, abs.form.HL1, alternative = "two.sided")
-ttest.abs.HL1
-
-
-ttest.abs.HD1 <- t.test(abs.lat.HD1, abs.form.HD1, alternative = "two.sided")
-ttest.abs.HD1
-
-
-ttest.abs.HW1 <- t.test(abs.lat.HW1, abs.form.HW1, alternative = "two.sided")
-ttest.abs.HW1
-
-
-ttest.abs.SnL1 <- t.test(abs.lat.SnL1, abs.form.SnL1, alternative = "two.sided")
-ttest.abs.SnL1
-
-
-ttest.abs.OL1 <- t.test(abs.lat.OL1, abs.form.OL1, alternative = "two.sided")
-ttest.abs.OL1
-
+(LT_FLA <- leveneTest(FLA~SPP, data=raw3))
 
 
 
 ```
 
+## Mann Whitney U tests {.tabset .tabset-fade .tabset-pills}
 
-
-
-#### Summary of variance results {.tabset .tabset-fade .tabset-pills}
-
+This will be performed on traits that **DID** vary with SL.
 
 ```{r}
 
-average.table <- matrix(c(ttest.abs.D1$p.value, mean(abs.lat.D1, na.rm = TRUE), mean(abs.form.D1, na.rm = TRUE), ttest.abs.P11$p.value, mean(abs.lat.P11, na.rm = TRUE), mean(abs.form.P11, na.rm = TRUE), var.rig.pel$p.value, mean(lat$P2.R, na.rm = TRUE), mean(form$P2.R, na.rm = TRUE), var.left.pel$p.value, mean(lat$P2.L, na.rm = TRUE), mean(form$P2.L, na.rm = TRUE), var.anal$p.value, mean(lat$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), ttest.abs.P1.R1$p.value, mean(abs.lat.P1.R1, na.rm = TRUE), mean(abs.form.P1.R1, na.rm = TRUE), ttest.abs.LLSC1$p.value, mean(abs.lat.LLSC1, na.rm = TRUE), mean(abs.form.LLSC1, na.rm = TRUE), var.sca.ab.ll$p.value, mean(lat$SALL, na.rm = TRUE), mean(form$SALL, na.rm = TRUE), ttest.abs.SBLL1$p.value, mean(abs.lat.SBLL1, na.rm = TRUE), mean(abs.form.SBLL1, na.rm = TRUE), var.sca.df$p.value, mean(lat$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), ttest.abs.BD1$p.value, mean(abs.lat.BD1, na.rm = TRUE), mean(abs.form.BD1, na.rm = TRUE), ttest.abs.CPD1$p.value, mean(abs.lat.CPD1, na.rm = TRUE), mean(abs.form.CPD1, na.rm = TRUE), ttest.abs.CPL1$p.value, mean(abs.lat.CPL1, na.rm = TRUE), mean(abs.form.CPL1, na.rm = TRUE), ttest.abs.PreDL1$p.value, mean(abs.lat.PreDL1, na.rm = TRUE), mean(abs.form.PreDL1, na.rm = TRUE), ttest.abs.DbL1$p.value, mean(abs.lat.DbL1, na.rm = TRUE), mean(abs.form.DbL1, na.rm = TRUE), ttest.abs.HL1$p.value, mean(abs.lat.HL1, na.rm = TRUE), mean(abs.form.HL1, na.rm = TRUE), ttest.abs.HD1$p.value, mean(abs.lat.HD1, na.rm = TRUE), mean(abs.form.HD1, na.rm = TRUE), ttest.abs.HW1$p.value, mean(abs.lat.HW1, na.rm = TRUE), mean(abs.form.HW1, na.rm = TRUE), ttest.abs.SnL1$p.value, mean(abs.lat.SnL1, na.rm = TRUE), mean(abs.form.SnL1, na.rm = TRUE), ttest.abs.OL1$p.value, mean(abs.lat.OL1, na.rm = TRUE), mean(abs.form.OL1, na.rm = TRUE), var.flu.asy$p.value, mean(lat$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE)), ncol=3, byrow=TRUE)
+(MW_D <- wilcox.test(abs.res.D~SPP, data=raw3, conf.int=T))
 
-colnames(average.table)<- c('p-value for variance', 'lat mean', 'form mean')
+(MW_P1 <- wilcox.test(abs.res.P1~SPP, data=raw3, conf.int=T))
 
-rownames(average.table) <- c('dorsal rays', 'L pect rays', 'R pelvic rays*', 'L pelvic rays*', 'Anal rays', 'R pect rays*', 'lat line scales', 'scales above LL', 'scales below LL', 'scales before dor*', 'body dep', 'peduncle dep', 'peduncle leng', 'pre-dorsal', 'dorsal base', 'head lengtt', 'head depth', 'head width', 'snout leng', 'orbital leng', 'fluct. asymmetries')
+(MW_P1R <- wilcox.test(abs.res.P1.R~SPP, data=raw3, conf.int=T))
 
-average.table
+(MW_LLSC <- wilcox.test(abs.res.LLSC~SPP, data=raw3, conf.int=T))
 
+(MW_BD <- wilcox.test(abs.res.BD~SPP, data=raw3, conf.int=T))
 
-```
+(MW_CPD <- wilcox.test(abs.res.CPD~SPP, data=raw3, conf.int=T))
 
+(MW_CPL <- wilcox.test(abs.res.CPL~SPP, data=raw3, conf.int=T))
 
-***Visualizing the significant ones"***
+(MW_PreDL <- wilcox.test(abs.res.PreDL~SPP, data=raw3, conf.int=T))
 
+(MW_DbL <- wilcox.test(abs.res.DbL~SPP, data=raw3, conf.int=T))
 
-```{r}
+(MW_HL <- wilcox.test(abs.res.HL~SPP, data=raw3, conf.int=T))
 
-plot_multi_histogram <- function(df, feature, label_column) {
-    plt <- ggplot(df, aes(x=eval(parse(text=feature)), fill=eval(parse(text=label_column)))) +
-    geom_histogram(bins=10, alpha=0.4, position="identity", aes(y = ..density..), color="black") +
-    geom_density(alpha=0.2)  +
-    labs(x=feature, y = "Density")
-    plt + guides(fill=guide_legend(title=label_column))
-}
+(MW_HD <- wilcox.test(abs.res.HD~SPP, data=raw3, conf.int=T))
 
-plot_multi_histogram(raw4, "abs.res.P1.R", "SPP")
+(MW_HW <- wilcox.test(abs.res.HW~SPP, data=raw3, conf.int=T))
 
-plot_multi_histogram(raw4, "abs.res.SBLL", "SPP")
+(MW_SnL <- wilcox.test(abs.res.SnL~SPP, data=raw3, conf.int=T))
 
-plot_multi_histogram(raw4, "abs.res.DbL", "SPP")
+(MW_OL <- wilcox.test(abs.res.OL~SPP, data=raw3, conf.int=T))
 
-plot_multi_histogram(raw4, "abs.res.HL", "SPP")
-
-plot_multi_histogram(raw4, "FLA", "SPP")
-
-plot_multi_histogram(raw4, "A", "SPP")
 
 
 ```
-
 
 
 
