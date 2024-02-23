@@ -49,7 +49,7 @@ raw1b <- raw1[-c(252), ] #this takes out the monster fish too
 
 I will use Shapiro-wilke, histograms, and QQ plots to determine what traits are normal. These will only be performed on continuous variables, as discrete variables are not normal by nature.
 
-**Conclusions:** literally all of them are NOT normal... will log transform them and run parametric tests (t-test, F-test, ANOVA). Not sure what to do with the discrete variables...[Logan said to use non-parametric OR a glmer with poisson distribution]
+**Conclusions:** literally all of them are NOT normal... will log transform them and double check normality. Had to square-root three traits () because still not normal with log transform. 
 
 ##### SW Test 
 
@@ -228,6 +228,54 @@ qqline(raw1$OL_log)
 
 ```
 
+
+Need to try other transformations for body depth, predorsal length, and dorsal base length. Will try squareroot or cuberoot to see what gets them normal. Cubed got them closest to normal (bd still not normal but other two are).
+
+```{r}
+#raw1$sqR_BD ='^'(raw1$BD,1/2)
+#raw1$sqR_PreDL ='^'(raw1$PreDL,1/2)
+#raw1$sqR_DbL ='^'(raw1$DbL,1/2)
+
+#shapiro.test(raw1$sqR_BD) #didn't work
+#shapiro.test(raw1$sqR_PreDL)#worked
+#shapiro.test(raw1$sqR_DbL)#worked
+
+#qqnorm(raw1$sqR_BD)
+#qqline(raw1$sqR_BD)
+
+#qqnorm(raw1$sqR_PreDL)
+#qqline(raw1$sqR_PreDL)
+
+#qqnorm(raw1$sqR_DbL)
+#qqline(raw1$sqR_PreDL)
+
+#cubed root
+raw1$cbR_BD ='^'(raw1$BD,1/3)
+raw1$cbR_PreDL ='^'(raw1$PreDL,1/3)
+raw1$cbR_DbL ='^'(raw1$DbL,1/3)
+
+shapiro.test(raw1$cbR_BD) #didn't work, but closest to normal
+shapiro.test(raw1$cbR_PreDL)#worked
+shapiro.test(raw1$cbR_DbL)#worked
+
+qqnorm(raw1$cbR_BD)
+qqline(raw1$cbR_BD)
+
+qqnorm(raw1$cbR_PreDL)
+qqline(raw1$cbR_PreDL)
+
+qqnorm(raw1$cbR_DbL)
+qqline(raw1$cbR_PreDL)
+
+#raw1 <- raw1[-c(48:50)]
+#need to cube root SL to use in regressions
+
+raw1$cbR_SL ='^'(raw1$SL,1/3)
+
+
+
+```
+
 ## Correcting for body size (residuals) 
 
 ### SL correction {.tabset .tabset-fade .tabset-pills}
@@ -338,9 +386,9 @@ reg.lat.SBDF.plot <- ggplot(lat, aes(x = SL, y = SBDF)) +
   stat_cor(label.y = 10)
 reg.lat.SBDF.plot
 
-reg.lat.BD <- lm(lat$BD_log ~ lat$SL_log)
+reg.lat.BD <- lm(lat$cbR_BD ~ lat$cbR_SL)
 sd.lat.BD <- rstandard(reg.lat.BD)
-reg.lat.BD.plot <- ggplot(lat, aes(x = SL_log, y = BD_log)) + 
+reg.lat.BD.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
@@ -362,17 +410,17 @@ reg.lat.CPL.plot <- ggplot(lat, aes(x = SL_log, y = CPL_log)) +
   stat_cor(label.y = 10)
 reg.lat.CPL.plot
 
-reg.lat.PreDL <- lm(lat$PreDL_log ~ lat$SL_log)
+reg.lat.PreDL <- lm(lat$cbR_PreDL ~ lat$cbR_SL)
 sd.lat.PreDL <- rstandard(reg.lat.PreDL)
-reg.lat.PreDL.plot <- ggplot(lat, aes(x = SL_log, y = PreDL_log)) + 
+reg.lat.PreDL.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
 reg.lat.PreDL.plot
 
-reg.lat.DbL <- lm(lat$DbL_log ~ lat$SL_log)
+reg.lat.DbL <- lm(lat$cbR_DbL ~ lat$cbR_SL)
 sd.lat.DbL <- rstandard(reg.lat.DbL)
-reg.lat.DbL.plot <- ggplot(lat, aes(x = SL_log, y = DbL_log)) + 
+reg.lat.DbL.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
@@ -508,9 +556,9 @@ reg.form.SBDF.plot <- ggplot(form, aes(x = SL, y = SBDF)) +
   stat_cor(label.y = 10)
 reg.form.SBDF.plot
 
-reg.form.BD <- lm(form$BD_log ~ form$SL_log)
+reg.form.BD <- lm(form$cbR_BD ~ form$cbR_SL)
 sd.form.BD <- rstandard(reg.form.BD)
-reg.form.BD.plot <- ggplot(form, aes(x = SL_log, y = BD_log)) + 
+reg.form.BD.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
@@ -532,17 +580,17 @@ reg.form.CPL.plot <- ggplot(form, aes(x = SL_log, y = CPL_log)) +
   stat_cor(label.y = 10)
 reg.form.CPL.plot
 
-reg.form.PreDL <- lm(form$PreDL_log ~ form$SL_log)
+reg.form.PreDL <- lm(form$cbR_PreDL ~ form$cbR_SL)
 sd.form.PreDL <- rstandard(reg.form.PreDL)
-reg.form.PreDL.plot <- ggplot(form, aes(x = SL_log, y = PreDL_log)) + 
+reg.form.PreDL.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
 reg.form.PreDL.plot
 
-reg.form.DbL <- lm(form$DbL_log ~ form$SL_log)
+reg.form.DbL <- lm(form$cbR_DbL ~ form$cbR_SL)
 sd.form.DbL <- rstandard(reg.form.DbL)
-reg.form.DbL.plot <- ggplot(form, aes(x = SL_log, y = DbL_log)) + 
+reg.form.DbL.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
@@ -679,9 +727,9 @@ reg.mex.SBDF.plot <- ggplot(mex, aes(x = SL, y = SBDF)) +
   stat_cor(label.y = 10)
 reg.mex.SBDF.plot
 
-reg.mex.BD <- lm(mex$BD_log ~ mex$SL_log)
+reg.mex.BD <- lm(mex$cbR_BD ~ mex$cbR_SL)
 sd.mex.BD <- rstandard(reg.mex.BD)
-reg.mex.BD.plot <- ggplot(mex, aes(x = SL_log, y = BD_log)) + 
+reg.mex.BD.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
@@ -703,17 +751,17 @@ reg.mex.CPL.plot <- ggplot(mex, aes(x = SL_log, y = CPL_log)) +
   stat_cor(label.y = 10)
 reg.mex.CPL.plot
 
-reg.mex.PreDL <- lm(mex$PreDL_log ~ mex$SL_log)
+reg.mex.PreDL <- lm(mex$cbR_PreDL ~ mex$cbR_SL)
 sd.mex.PreDL <- rstandard(reg.mex.PreDL)
-reg.mex.PreDL.plot <- ggplot(mex, aes(x = SL_log, y = PreDL_log)) + 
+reg.mex.PreDL.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
 reg.mex.PreDL.plot
 
-reg.mex.DbL <- lm(mex$DbL_log ~ mex$SL_log)
+reg.mex.DbL <- lm(mex$cbR_DbL ~ mex$cbR_SL)
 sd.mex.DbL <- rstandard(reg.mex.DbL)
-reg.mex.DbL.plot <- ggplot(mex, aes(x = SL_log, y = DbL_log)) + 
+reg.mex.DbL.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
@@ -1173,9 +1221,9 @@ ggplot(raw2, aes(SPP, abs.res.OL)) +
 
 ### Variance tests {.tabset .tabset-fade .tabset-pills}
 
-t-test for residuals, continuous
-f-test for raw, continuous
-all discrete will go through glmer/non parametric with either residuals or raw
+  (1) t-test for residuals, continuous (do an f-test too, might be cool)
+  (2) residual discrete will go through glmer
+  (3) raw discrete will go through f-test (no idea how to do this otherwise), and results will be compared to visualizations to check for discrepencies. 
 
 *(note: did non-parametric instead of transforming, but Mike said to transform, so I copied that work to the 'morphology-analysis-final' Rmd).*
 
@@ -1186,57 +1234,14 @@ F-test on residuals doesn't make much sense; the residuals themselves are repres
 ```         
 -   will do two-tailed and check out the residual means to infer direction; for traits in which we use raw data, a one-tailed f-test will be perfomed in both direction to determine which species is varying more. We will also visulize the variation using a histogram to confirm direction results.
 ```
-
-#### F tests to compare species 
-
-ALL OF THESE ARE DISCRETE SO I DON'T THINK I DO ANY F TESTS
-
-This will only be for the traits that did **not** have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA); none of these traits were transformed, so just doing raw for now.
-
-
-
-
-var.left.pel <- var.test(lat$P2.L, form$P2.L, alternative = "two.sided")
-var.left.pel
-
-var.rig.pel <- var.test(lat$P2.R, form$P2.R, alternative = "two.sided")
-var.rig.pel
-
-var.anal <- var.test(lat$A, form$A, alternative = "two.sided")
-var.anal
-
-var.sca.ab.ll <- var.test(lat$SALL, form$SALL, alternative = "two.sided")
-var.sca.ab.ll
-
-var.sca.df <- var.test(lat$SBDF, form$SBDF, alternative = "two.sided")
-var.sca.df
-
-var.flu.asy <- var.test(lat$FLA, form$FLA, alternative = "two.sided")
-var.flu.asy
-
-
-
-
-
-
-
-
-
-<br><br><br><br>
-
-
-
-
-#### T tests to compare species 
-
-CONTINUOUS RESIDUALS
+#### (1) Continuous, residuals
 
 
    -    will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
    -    this will be for the traits that *did* have a significant regression compared to SL; will be using the absolute value residuals. 
-   -    For continuous traits, we will be using the log transformed data.
+   -    For continuous traits, we will be using the transformed data.
     
-
+##### T-tests
 
 ```{r, echo=FALSE}
 
@@ -1285,16 +1290,186 @@ ttest.abs.OL
 
 ```
 
+##### F-tests
+
+Gonna try F-tests for funsies. Would be interesting if both are varying, but in different ways (amazon with identical variance around best fit, whereas lat with more variation around best fit for example).
+
+```{r, echo=FALSE}
+
+
+Ftest.abs.BD <- var.test(abs.lat.BD, abs.form.BD, alternative = "two.sided")
+Ftest.abs.BD
+
+
+ftest.abs.CPD <- var.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
+Ftest.abs.CPD
+
+
+Ftest.abs.CPL <- var.test(abs.lat.CPL, abs.form.CPL, alternative = "two.sided")
+Ftest.abs.CPL
+
+
+Ftest.abs.PreDL <- var.test(abs.lat.PreDL, abs.form.PreDL, alternative = "two.sided")
+Ftest.abs.PreDL
+
+
+Ftest.abs.DbL <- var.test(abs.lat.DbL, abs.form.DbL, alternative = "two.sided")
+Ftest.abs.DbL
+
+
+Ftest.abs.HL <- var.test(abs.lat.HL, abs.form.HL, alternative = "two.sided")
+Ftest.abs.HL
+
+
+Ftest.abs.HD <- var.test(abs.lat.HD, abs.form.HD, alternative = "two.sided")
+Ftest.abs.HD
+
+
+Ftest.abs.HW <- var.test(abs.lat.HW, abs.form.HW, alternative = "two.sided")
+Ftest.abs.HW
+
+
+Ftest.abs.SnL <- var.test(abs.lat.SnL, abs.form.SnL, alternative = "two.sided")
+Ftest.abs.SnL
+
+
+Ftest.abs.OL <- var.test(abs.lat.OL, abs.form.OL, alternative = "two.sided")
+Ftest.abs.OL
 
 
 
-#### Levene's test
 
-Since the count data can't do parametric, I will do non-parametric tests. Logan mentioned a glmer with poisson distribution but I don't think this will answer the question of a difference in variance between the species. The linear model will instead tell me how much species effects differences in the trait?? I guess?
+```
 
-I will use Levene's test as a non-parametric F-test, to check out differences in variance in raw data.
+***
 
-I will use Mann Whitney U test as a non-parametric t-test, to check out differences in variance in residual data.
+#### (2) Discrete, residuals
+
+Logan suggested doing a glm with poisson distribution (because it is count data) for these relationships. I originally performed Mann Whitney U tests, so will also include that. Overall, results don't differ even though exact values are slightly different.
+
+##### GLMs
+
+```{r}
+glm_D <- glm(abs.res.D~SPP, data=raw3, family = poisson)
+print(summary(glm_D), show.residuals=TRUE)
+
+glm_P1 <- glm(abs.res.P1~SPP, data=raw3, family = poisson)
+print(summary(glm_P1), show.residuals=TRUE)
+
+glm_P1.R <- glm(abs.res.P1.R~SPP, data=raw3, family = poisson)
+print(summary(glm_P1.R), show.residuals=TRUE)
+
+glm_LLSC <- glm(abs.res.LLSC~SPP, data=raw3, family = poisson)
+print(summary(glm_LLSC), show.residuals=TRUE)
+
+```
+
+
+##### Mann Whitney U tests
+
+This will be performed on traits that **DID** vary with SL.
+
+```{r}
+
+(MW_D <- wilcox.test(abs.res.D~SPP, data=raw3, conf.int=T))
+
+(MW_P1 <- wilcox.test(abs.res.P1~SPP, data=raw3, conf.int=T))
+
+(MW_P1R <- wilcox.test(abs.res.P1.R~SPP, data=raw3, conf.int=T))
+
+(MW_LLSC <- wilcox.test(abs.res.LLSC~SPP, data=raw3, conf.int=T))
+
+
+```
+
+##### Variance of residuals
+
+I did notice that the deviance residual information was out of whack (median not super close to zero in many cases, the max and min VERY different). In the EXTRAS rscript, I ran a DHARMa test to see what the issue was, and apparently they fail the levene's test for homogeneity of variance. This indicates that while the AVERAGE variance is not different between the two species, there could be a different in how the species are varying, which may be interesting (similar to the F-tests of the continuous residuals). Will run some levene's test for these discrete residuals, just to see. 
+
+```{r}
+(L_D <- leveneTest(abs.res.D~SPP, data=raw3))
+
+(L_P1 <- leveneTest(abs.res.P1~SPP, data=raw3))
+
+(L_P1R <- leveneTest(abs.res.P1.R~SPP, data=raw3))
+
+(L_LLSC <- leveneTest(abs.res.LLSC~SPP, data=raw3))
+
+```
+
+
+***
+
+#### (3) Discrete, raw
+
+EVEN THOUGH THESE ARE DISCRETE, NO IDEA WHAT ELSE TO DO WITH THEM (glmm on raw data will just compare means). Did both F-test and Levene's test. Get the same overall results, albeit slightly different values. Might go with Levene's since it is good with non-normal data. 
+
+This will only be for the traits that did **not** have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA); none of these traits were transformed, so just doing raw for now.
+
+##### F-tests
+
+```{r}
+var.left.pel <- var.test(lat$P2.L, form$P2.L, alternative = "two.sided")
+var.left.pel
+
+ggplot(raw2, aes(SPP, P2.L)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.rig.pel <- var.test(lat$P2.R, form$P2.R, alternative = "two.sided")
+var.rig.pel
+
+ggplot(raw2, aes(SPP, P2.R)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.anal <- var.test(lat$A, form$A, alternative = "two.sided")
+var.anal
+
+ggplot(raw2, aes(SPP, A)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.sca.ab.ll <- var.test(lat$SALL, form$SALL, alternative = "two.sided")
+var.sca.ab.ll
+
+ggplot(raw2, aes(SPP, SALL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.sca.df <- var.test(lat$SBDF, form$SBDF, alternative = "two.sided")
+var.sca.df
+
+ggplot(raw2, aes(SPP, SBDF)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.flu.asy <- var.test(lat$FLA, form$FLA, alternative = "two.sided")
+var.flu.asy
+
+ggplot(raw2, aes(SPP, FLA)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+```
+
+***
+
+
+##### Levene's test
 
 
 Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
@@ -1324,28 +1499,14 @@ library(carData)
 
 ```
 
-#### Mann Whitney U tests
 
-This will be performed on traits that **DID** vary with SL.
-
-```{r}
-
-(MW_D <- wilcox.test(abs.res.D~SPP, data=raw3, conf.int=T))
-
-(MW_P1 <- wilcox.test(abs.res.P1~SPP, data=raw3, conf.int=T))
-
-(MW_P1R <- wilcox.test(abs.res.P1.R~SPP, data=raw3, conf.int=T))
-
-(MW_LLSC <- wilcox.test(abs.res.LLSC~SPP, data=raw3, conf.int=T))
-
-
-```
 
 
 
 
 ### Summary of variance results 
 
+WHY WON'T THIS TABLE WORK!!!!!!!!       
 
 
 average.table <- matrix(c(MW_D$p.value, mean(abs.lat.D, na.rm = TRUE), mean(abs.form.D, na.rm = TRUE), MW_P1$p.value, mean(abs.lat.P1, na.rm = TRUE), mean(abs.form.P1, na.rm = TRUE), LT_P2R$"Pr(>F)", mean(lat$P2.R, na.rm = TRUE), mean(form$P2.R, na.rm = TRUE), LT_P2R$"Pr(>F)", mean(lat$P2.L, na.rm = TRUE), mean(form$P2.L, na.rm = TRUE), LT_A$"Pr(>F)", mean(lat$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), MW_P1R$p.value, mean(abs.lat.P1.R, na.rm = TRUE), mean(abs.form.P1.R, na.rm = TRUE), MW_LLSC$p.value, mean(abs.lat.LLSC, na.rm = TRUE), mean(abs.form.LLSC, na.rm = TRUE), LT_SALL$"Pr(>F)", mean(lat$SALL, na.rm = TRUE), mean(form$SALL, na.rm = TRUE), LT_SBLL$"Pr(>F)", mean(abs.lat.SBLL, na.rm = TRUE), mean(abs.form.SBLL, na.rm = TRUE), LT_SBDF$"Pr(>F)", mean(lat$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), ttest.abs.BD$p.value, mean(abs.lat.BD, na.rm = TRUE), mean(abs.form.BD, na.rm = TRUE), ttest.abs.CPD$p.value, mean(abs.lat.CPD, na.rm = TRUE), mean(abs.form.CPD, na.rm = TRUE), ttest.abs.CPL$p.value, mean(abs.lat.CPL, na.rm = TRUE), mean(abs.form.CPL, na.rm = TRUE), ttest.abs.PreDL$p.value, mean(abs.lat.PreDL, na.rm = TRUE), mean(abs.form.PreDL, na.rm = TRUE), ttest.abs.DbL$p.value, mean(abs.lat.DbL, na.rm = TRUE), mean(abs.form.DbL, na.rm = TRUE), ttest.abs.HL$p.value, mean(abs.lat.HL, na.rm = TRUE), mean(abs.form.HL, na.rm = TRUE), ttest.abs.HD$p.value, mean(abs.lat.HD, na.rm = TRUE), mean(abs.form.HD, na.rm = TRUE), ttest.abs.HW$p.value, mean(abs.lat.HW, na.rm = TRUE), mean(abs.form.HW, na.rm = TRUE), ttest.abs.SnL$p.value, mean(abs.lat.SnL, na.rm = TRUE), mean(abs.form.SnL, na.rm = TRUE), ttest.abs.OL$p.value, mean(abs.lat.OL, na.rm = TRUE), mean(abs.form.OL, na.rm = TRUE), LT_FLA$"Pr(>F)", mean(lat$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE)), ncol=3, byrow=TRUE)
@@ -1390,7 +1551,7 @@ plot_multi_histogram(raw3, "abs.res.P1.R", "SPP")
 
 
 
-## ANOVA 
+## Location effects
 
 Will run an ANOVA on the residuals with location and species as fixed effects. This will show me if morphology depends on the species, the location, and if the location and species interact to determine morphology. CANNOT DO WITH COUNT DATA--may have to run a glmer with zero-tuncated negative binomial/quasi-poisson distribution instead (think this will tell me if species, location, and interaction affect the trait...). Will only work with the residuals, because comparing the means of the residuals indicates differences in variation. **Would I not just use Levene's and MWU again but include spp and zone/basin/watershed?**
 
@@ -2252,7 +2413,7 @@ ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.OL, fill=SPP)) +
 
 ```
 
-### Standardized
+#### Standardized
 
 DON'T KNOW IF THIS IS USEFUL
 
@@ -2338,6 +2499,258 @@ ggplot(raw5, aes(x=factor(WATERSHED), y=values, fill=SPP)) +
 
 
 
+### GLMMs
+
+Will run mixed models with zones/basins/watersheds as random effect. This will account for any variation seen at these levels and show us if there are any consistent species differences. Can only do this with residuals. 
+
+#### Zones
+
+```{r}
+
+MM.D <- glmer(abs.res.D ~ SPP + (1|QUARTILE), data=raw3, family = poisson)
+summary(MM.D)
+
+MM.P1 <- glmer(abs.res.P1 ~ SPP+ (1|QUARTILE), data=raw3, family = poisson)
+summary(MM.P1)
+
+MM.P1.R <- glmer(abs.res.P1.R ~ SPP+ (1|QUARTILE), data=raw3, family = poisson)
+summary(MM.P1.R)
+
+MM.LLSC <- glmer(abs.res.LLSC ~ SPP+ (1|QUARTILE), data=raw3, family = poisson)
+summary(MM.LLSC)
+
+
+MM.SBLL <- glmer(abs.res.SBLL ~ SPP+ (1|QUARTILE), data=raw3, family = poisson)
+summary(MM.SBLL)
+
+
+MM.BD <- glmer(abs.res.BD ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.BD)
+
+
+MM.CPD <- glmer(abs.res.CPD ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.CPD)
+
+
+MM.CPL <- glmer(abs.res.CPL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.CPL)
+
+MM.PreDL <- glmer(abs.res.PreDL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.PreDL)
+
+MM.DbL <- glmer(abs.res.DbL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.DbL)
+
+MM.HL <- glmer(abs.res.HL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.HL)
+
+MM.HD <- glmer(abs.res.HD ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.HD)
+
+MM.HW <- glmer(abs.res.HW ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.HW)
+
+MM.SnL <- glmer(abs.res.SnL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.SnL)
+
+MM.OL <- glmer(abs.res.OL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.OL)
+
+
+
+```
+
+
+
+#### Watershed nested in Basin
+
+```{r}
+
+MM1.D <- glmer(abs.res.D ~ SPP + (1|BASIN/WATERSHED), data=raw3, family = poisson)
+summary(MM1.D)
+
+MM1.P1 <- glmer(abs.res.P1 ~ SPP+ (1|BASIN/WATERSHED), data=raw3, family = poisson)
+summary(MM1.P1)
+
+MM1.P1.R <- glmer(abs.res.P1.R ~ SPP+ (1|BASIN/WATERSHED), data=raw3, family = poisson)
+summary(MM1.P1.R)
+
+MM1.LLSC <- glmer(abs.res.LLSC ~ SPP+ (1|BASIN/WATERSHED), data=raw3, family = poisson)
+summary(MM1.LLSC)
+
+MM1.SBLL <- glmer(abs.res.SBLL ~ SPP+ (1|BASIN/WATERSHED), data=raw3, family = poisson)
+summary(MM1.SBLL)
+
+MM1.BD <- glmer(abs.res.BD ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.BD)
+
+MM1.CPD <- glmer(abs.res.CPD ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.CPD)
+
+MM1.CPL <- glmer(abs.res.CPL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.CPL)
+
+MM1.PreDL <- glmer(abs.res.PreDL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.PreDL)
+
+MM1.DbL <- glmer(abs.res.DbL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.DbL)
+
+MM1.HL <- glmer(abs.res.HL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.HL)
+
+MM1.HD <- glmer(abs.res.HD ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.HD)
+
+MM1.HW <- glmer(abs.res.HW ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.HW)
+
+MM1.SnL <- glmer(abs.res.SnL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.SnL)
+
+MM1.OL <- glmer(abs.res.OL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.OL)
+
+
+```
+
+
+***
+
+### Levene's w/ Basin?
+
+Not sure if this is correct, but might try Levene's test with zone/basin/watershed as an additional independent factor? This is for the traits that did NOT vary with body length.
+
+
+#### Zones
+
+```{r}
+(LT2_P2L <- leveneTest(P2.L~SPP*QUARTILE, data=raw3)) #gives nothing since it's all the same value
+
+(LT2_P2R <- leveneTest(P2.R~SPP*QUARTILE, data=raw3)) #same as above
+
+(LT2_A <- leveneTest(A~SPP*QUARTILE, data=raw3)) 
+
+(LT2_SALL <- leveneTest(SALL~SPP*QUARTILE, data=raw3))
+
+(LT2_SBLL <- leveneTest(SBLL~SPP*QUARTILE, data=raw3))
+
+(LT2_SBDF <- leveneTest(SBDF~SPP*QUARTILE, data=raw3))
+
+(LT2_FLA <- leveneTest(FLA~SPP*QUARTILE, data=raw3))
+
+```
+
+#### Basins
+
+```{r}
+(LT2_P2L <- leveneTest(P2.L~SPP*BASIN, data=raw3)) #gives nothing since it's all the same value
+
+(LT2_P2R <- leveneTest(P2.R~SPP*BASIN, data=raw3)) #same as above
+
+(LT2_A <- leveneTest(A~SPP*BASIN, data=raw3)) 
+
+(LT2_SALL <- leveneTest(SALL~SPP*BASIN, data=raw3))
+
+(LT2_SBLL <- leveneTest(SBLL~SPP*BASIN, data=raw3))
+
+(LT2_SBDF <- leveneTest(SBDF~SPP*BASIN, data=raw3))
+
+(LT2_FLA <- leveneTest(FLA~SPP*BASIN, data=raw3))
+
+```
+
+
+#### Watersheds
+
+```{r}
+(LT2_P2L <- leveneTest(P2.L~SPP*WATERSHED, data=raw3)) #gives nothing since it's all the same value
+
+(LT2_P2R <- leveneTest(P2.R~SPP*WATERSHED, data=raw3)) #same as above
+
+(LT2_A <- leveneTest(A~SPP*WATERSHED, data=raw3)) 
+
+(LT2_SALL <- leveneTest(SALL~SPP*WATERSHED, data=raw3))
+
+(LT2_SBLL <- leveneTest(SBLL~SPP*WATERSHED, data=raw3))
+
+(LT2_SBDF <- leveneTest(SBDF~SPP*WATERSHED, data=raw3))
+
+(LT2_FLA <- leveneTest(FLA~SPP*WATERSHED, data=raw3))
+
+```
+
+
+***
+
+### ICCs
+
+I'm hoping I can do this, but thought another interesting way of testing this would be to calculate and intraclass correlation coefficient--so looking at between-group variance compared to total variance, to see if variation is driven more from within or between group (if there is any at all...). I know lots of examples specify repeated measures, but I think the function below lets me specify that I only have one measurement per subject. I'm going to do this with raw data below, but will also repeat it with PCA scores in the PCA section, so that things are standardized for length. Since I'm interested in variation across populations, I think I would perform this within each sex; I am not sure how I would test this between sexes AND populations for each trait. Maybe I could then compare the icc scores?
+
+
+```{r}
+library(irr)
+
+lat_D <- lat3$D
+lat_P1 <- lat3$P1
+lat_P2.R <- lat3$P2.R
+lat_P2.L <- lat3$P2.L
+lat_A <- lat3$A
+lat_P1.R <- lat3$P1.R
+lat_LLSC <- lat3$LLSC
+lat_SALL <- lat3$SALL
+lat_SBLL <- lat3$SBLL
+lat_SBDF <- lat3$SBDF
+lat_SL <- lat3$SL
+lat_BD <- lat3$BD
+lat_CPD <- lat3$CPD
+lat_CPL <- lat3$CPL
+lat_PreDL <- lat3$PreDL
+lat_DbL <- lat3$DbL
+lat_HL <- lat3$HL
+lat_HD <- lat3$HD
+lat_HW <- lat3$HW
+lat_SnL <- lat3$SnL
+lat_OL <- lat3$OL
+lat_FLA <- lat3$FLA
+
+
+
+form_D <- form3$D
+form_P1 <- form3$P1
+form_P2.R <- form3$P2.R
+form_P2.L <- form3$P2.L
+form_A <- form3$A
+form_P1.R <- form3$P1.R
+form_LLSC <- form3$LLSC
+form_SALL <- form3$SALL
+form_SBLL <- form3$SBLL
+form_SBDF <- form3$SBDF
+form_SL <- form3$SL
+form_BD <- form3$BD
+form_CPD <- form3$CPD
+form_CPL <- form3$CPL
+form_PreDL <- form3$PreDL
+form_DbL <- form3$DbL
+form_HL <- form3$HL
+form_HD <- form3$HD
+form_HW <- form3$HW
+form_SnL <- form3$SnL
+form_OL <- form3$OL
+form_FLA <- form3$FLA
+
+(icc_L.D <- ICC(data = lat3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.D <- ICC(data = lat3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+
+
+
+```
+
+
+
+
 ## PCA analysis 
 
 ### PCA {.tabset .tabset-fade .tabset-pills}
@@ -2356,9 +2769,17 @@ In this analysis, I will compare the principle components after centering and sc
 
 ```{r}
 
-raw1a <- subset(raw1, select = -c(16:18) )
+raw1a <- subset(raw1, select = -c(17:18) )
 
-PCA <- prcomp(raw1a[, 15:32], center=TRUE, scale. = TRUE) #includes all but pelvic traits, since they are the same in all species
+#PCA <- prcomp(raw1a[, 15:32], center=TRUE, scale. = TRUE) #includes all but pelvic traits, since they are the same in all species WILL SCALE/CENTER DATA ON MY OWN, LOGAN SAID IT IS NOT ALWAYS DOING IT FOR YOU EVEN WHEN YOU SPECIFY
+
+
+z.scores <- scale(raw1a[, 15:32], center = TRUE, scale = TRUE)
+
+raw1a <- cbind(raw1a, z.scores)
+
+PCA <- prcomp(raw1a[, 45:62])
+
 summary(PCA)
 
 (loadings <- PCA$rotation[, 1:5])
