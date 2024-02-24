@@ -1,0 +1,1261 @@
+---
+title: "morph-locations-final"
+author: "Allison Davis Connelly"
+date: "2024-02-24"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 6
+    toc_float:
+      collapsed: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Location effects
+
+Will run an ANOVA on the residuals with location and species as fixed effects. This will show me if morphology depends on the species, the location, and if the location and species interact to determine morphology. CANNOT DO WITH COUNT DATA--may have to run a glmer with zero-tuncated negative binomial/quasi-poisson distribution instead (think this will tell me if species, location, and interaction affect the trait...). Will only work with the residuals, because comparing the means of the residuals indicates differences in variation. **Would I not just use Levene's and MWU again but include spp and zone/basin/watershed?**
+
+Leaving the anovas for count data in rn until I figure out what to do.
+
+I will first run this using the zones as the location factor. Zones (1-4) represent the latitude range with equivalent sample sizes in each, since the collections were not equally representative of all latitudes, and I wanted to avoid a sampling bias when randomly selecting samples. Zone 1 corresponds to the southern most latitude range, and zone 4 corresponds to the northern most latitude range.
+
+I will then run the same analysis using basin as the location factor. Since fish are physically isolated to the river basins they occupy, the genetic variation is also limited to that basin. Thus it is possible for fish within the same basin to be more similar due to genetic/physical constraints. (will also do with watershed just to see).
+
+Lastly I will run ANOVAs with both zones and basins but with standardized residuals. This would allow me to compare overall variation across traits (at least those that are depended on body size) rather than just one trait at a time. Not 100% sure if this is useful (or correct to do), but thought it would be interesting.
+
+### ANOVAs {.tabset .tabset-fade .tabset-pills}
+
+#### Amazon
+
+##### Zones 
+
+```{r}
+library(ggplot2)
+
+lat3 <- raw2[raw2$SPP == "p.latipinna", ]
+
+form3 <- raw2[raw2$SPP == "p.latipinna", ]
+
+A.D <- aov(abs.res.D ~ QUARTILE, data=form3)
+summary(A.D)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.D)) +
+  geom_boxplot()
+
+
+A.P1 <- aov(abs.res.P1 ~ QUARTILE, data=form3)
+summary(A.P1)
+
+A.P1.R <- aov(abs.res.P1.R ~ QUARTILE, data=form3)
+summary(A.P1.R)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.P1.R)) +
+  geom_boxplot()
+
+
+A.LLSC <- aov(abs.res.LLSC ~ QUARTILE, data=form3)
+summary(A.LLSC)
+
+
+A.SBLL <- aov(abs.res.SBLL ~ QUARTILE, data=form3)
+summary(A.SBLL)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.SBLL)) +
+  geom_boxplot()
+
+
+A.BD <- aov(abs.res.BD ~ QUARTILE, data=form3)
+summary(A.BD)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.BD)) +
+  geom_boxplot()
+
+
+A.CPD <- aov(abs.res.CPD ~ QUARTILE, data=form3)
+summary(A.CPD)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.CPD)) +
+  geom_boxplot()
+
+
+A.CPL <- aov(abs.res.CPL ~ QUARTILE, data=form3)
+summary(A.CPL)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.CPL)) +
+  geom_boxplot()
+
+
+A.PreDL <- aov(abs.res.PreDL ~ QUARTILE, data=form3)
+summary(A.PreDL)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.PreDL)) +
+  geom_boxplot()
+
+
+A.DbL <- aov(abs.res.DbL ~ QUARTILE, data=form3)
+summary(A.DbL)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.DbL)) +
+  geom_boxplot()
+
+
+A.HL <- aov(abs.res.HL ~ QUARTILE, data=form3)
+summary(A.HL)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.HL)) +
+  geom_boxplot()
+
+
+A.HD <- aov(abs.res.HD ~ QUARTILE, data=form3)
+summary(A.HD)
+
+A.HW <- aov(abs.res.HW ~ QUARTILE, data=form3)
+summary(A.HW)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.HW)) +
+  geom_boxplot()
+
+
+A.SnL <- aov(abs.res.SnL ~ QUARTILE, data=form3)
+summary(A.SnL)
+
+A.OL <- aov(abs.res.OL ~ QUARTILE, data=form3)
+summary(A.OL)
+
+ggplot(form3, aes(x=factor(QUARTILE), y=abs.res.OL)) +
+  geom_boxplot()
+
+
+```
+
+##### Basins 
+
+```{r}
+
+A1.D <- aov(abs.res.D ~ BASIN, data=form3)
+summary(A1.D)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.D)) +
+  geom_boxplot()
+
+
+A1.P1 <- aov(abs.res.P1 ~ BASIN, data=form3)
+summary(A1.P1)
+
+A1.P1.R <- aov(abs.res.P1.R ~ BASIN, data=form3)
+summary(A1.P1.R)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.P1.R)) +
+  geom_boxplot()
+
+A1.LLSC <- aov(abs.res.LLSC ~ BASIN, data=form3)
+summary(A1.LLSC)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.LLSC)) +
+  geom_boxplot()
+
+
+
+A1.SBLL <- aov(abs.res.SBLL ~ BASIN, data=form3)
+summary(A1.SBLL)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.SBLL)) +
+  geom_boxplot()
+
+A1.BD <- aov(abs.res.BD ~ BASIN, data=form3)
+summary(A1.BD)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.BD)) +
+  geom_boxplot()
+
+A1.CPD <- aov(abs.res.CPD ~ BASIN, data=form3)
+summary(A1.CPD)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.CPD)) +
+  geom_boxplot()
+
+A1.CPL <- aov(abs.res.CPL ~ BASIN, data=form3)
+summary(A1.CPL)
+
+A1.PreDL <- aov(abs.res.PreDL ~ BASIN, data=form3)
+summary(A1.PreDL)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.PreDL)) +
+  geom_boxplot()
+
+A1.DbL <- aov(abs.res.DbL ~ BASIN, data=form3)
+summary(A1.DbL)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.DbL)) +
+  geom_boxplot()
+
+A1.HL <- aov(abs.res.HL ~ BASIN, data=form3)
+summary(A1.HL)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.HL)) +
+  geom_boxplot()
+
+A1.HD <- aov(abs.res.HD ~ BASIN, data=form3)
+summary(A1.HD)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.HD)) +
+  geom_boxplot()
+
+A1.HW <- aov(abs.res.HW ~ BASIN, data=form3)
+summary(A1.HW)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.HW)) +
+  geom_boxplot()
+
+A1.SnL <- aov(abs.res.SnL ~ BASIN, data=form3)
+summary(A1.SnL)
+
+A1.OL <- aov(abs.res.OL ~ BASIN, data=form3)
+summary(A1.OL)
+
+ggplot(form3, aes(x=factor(BASIN), y=abs.res.OL)) +
+  geom_boxplot()
+
+
+
+
+```
+
+##### Watersheds 
+
+```{r}
+
+A2.D <- aov(abs.res.D ~ WATERSHED, data=form3)
+summary(A2.D)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.D)) +
+  geom_boxplot()
+
+A2.P1 <- aov(abs.res.P1 ~ WATERSHED, data=form3)
+summary(A2.P1)
+
+A2.P1.R <- aov(abs.res.P1.R ~ WATERSHED, data=form3)
+summary(A2.P1.R)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.P1.R)) +
+  geom_boxplot()
+
+A2.LLSC <- aov(abs.res.LLSC ~ WATERSHED, data=form3)
+summary(A2.LLSC)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.LLSC)) +
+  geom_boxplot()
+
+
+
+A2.SBLL <- aov(abs.res.SBLL ~ WATERSHED, data=form3)
+summary(A2.SBLL)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.SBLL)) +
+  geom_boxplot()
+
+A2.BD <- aov(abs.res.BD ~ WATERSHED, data=form3)
+summary(A2.BD)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.BD)) +
+  geom_boxplot()
+
+A2.CPD <- aov(abs.res.CPD ~ WATERSHED, data=form3)
+summary(A2.CPD)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.CPD)) +
+  geom_boxplot()
+
+A2.CPL <- aov(abs.res.CPL ~ WATERSHED, data=form3)
+summary(A2.CPL)
+
+A2.PreDL <- aov(abs.res.PreDL ~ WATERSHED, data=form3)
+summary(A2.PreDL)
+
+A2.DbL <- aov(abs.res.DbL ~ WATERSHED, data=form3)
+summary(A2.DbL)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.DbL)) +
+  geom_boxplot()
+
+A2.HL <- aov(abs.res.HL ~ WATERSHED, data=form3)
+summary(A2.HL)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.HL)) +
+  geom_boxplot()
+
+A2.HD <- aov(abs.res.HD ~ WATERSHED, data=form3)
+summary(A2.HD)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.HD)) +
+  geom_boxplot()
+
+A2.HW <- aov(abs.res.HW ~ WATERSHED, data=form3)
+summary(A2.HW)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.HW)) +
+  geom_boxplot()
+
+A2.SnL <- aov(abs.res.SnL ~ WATERSHED, data=form3)
+summary(A2.SnL)
+
+A2.OL <- aov(abs.res.OL ~ WATERSHED, data=form3)
+summary(A2.OL)
+
+ggplot(form3, aes(x=factor(WATERSHED), y=abs.res.OL)) +
+  geom_boxplot()
+
+
+
+
+```
+
+#### Sailfin
+
+
+##### Zones 
+
+```{r}
+library(ggplot2)
+
+A.D <- aov(abs.res.D ~ QUARTILE, data=lat3)
+summary(A.D)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.D)) +
+  geom_boxplot()
+
+
+A.P1 <- aov(abs.res.P1 ~ QUARTILE, data=lat3)
+summary(A.P1)
+
+A.P1.R <- aov(abs.res.P1.R ~ QUARTILE, data=lat3)
+summary(A.P1.R)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.P1.R)) +
+  geom_boxplot()
+
+
+A.LLSC <- aov(abs.res.LLSC ~ QUARTILE, data=lat3)
+summary(A.LLSC)
+
+
+A.SBLL <- aov(abs.res.SBLL ~ QUARTILE, data=lat3)
+summary(A.SBLL)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.SBLL)) +
+  geom_boxplot()
+
+
+A.BD <- aov(abs.res.BD ~ QUARTILE, data=lat3)
+summary(A.BD)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.BD)) +
+  geom_boxplot()
+
+
+A.CPD <- aov(abs.res.CPD ~ QUARTILE, data=lat3)
+summary(A.CPD)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.CPD)) +
+  geom_boxplot()
+
+
+A.CPL <- aov(abs.res.CPL ~ QUARTILE, data=lat3)
+summary(A.CPL)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.CPL)) +
+  geom_boxplot()
+
+
+A.PreDL <- aov(abs.res.PreDL ~ QUARTILE, data=lat3)
+summary(A.PreDL)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.PreDL)) +
+  geom_boxplot()
+
+
+A.DbL <- aov(abs.res.DbL ~ QUARTILE, data=lat3)
+summary(A.DbL)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.DbL)) +
+  geom_boxplot()
+
+
+A.HL <- aov(abs.res.HL ~ QUARTILE, data=lat3)
+summary(A.HL)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.HL)) +
+  geom_boxplot()
+
+
+A.HD <- aov(abs.res.HD ~ QUARTILE, data=lat3)
+summary(A.HD)
+
+A.HW <- aov(abs.res.HW ~ QUARTILE, data=lat3)
+summary(A.HW)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.HW)) +
+  geom_boxplot()
+
+
+A.SnL <- aov(abs.res.SnL ~ QUARTILE, data=lat3)
+summary(A.SnL)
+
+A.OL <- aov(abs.res.OL ~ QUARTILE, data=lat3)
+summary(A.OL)
+
+ggplot(lat3, aes(x=factor(QUARTILE), y=abs.res.OL)) +
+  geom_boxplot()
+
+
+```
+
+##### Basins 
+
+```{r}
+
+A1.D <- aov(abs.res.D ~ BASIN, data=lat3)
+summary(A1.D)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.D)) +
+  geom_boxplot()
+
+
+A1.P1 <- aov(abs.res.P1 ~ BASIN, data=lat3)
+summary(A1.P1)
+
+A1.P1.R <- aov(abs.res.P1.R ~ BASIN, data=lat3)
+summary(A1.P1.R)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.P1.R)) +
+  geom_boxplot()
+
+A1.LLSC <- aov(abs.res.LLSC ~ BASIN, data=lat3)
+summary(A1.LLSC)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.LLSC)) +
+  geom_boxplot()
+
+
+
+A1.SBLL <- aov(abs.res.SBLL ~ BASIN, data=lat3)
+summary(A1.SBLL)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.SBLL)) +
+  geom_boxplot()
+
+A1.BD <- aov(abs.res.BD ~ BASIN, data=lat3)
+summary(A1.BD)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.BD)) +
+  geom_boxplot()
+
+A1.CPD <- aov(abs.res.CPD ~ BASIN, data=lat3)
+summary(A1.CPD)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.CPD)) +
+  geom_boxplot()
+
+A1.CPL <- aov(abs.res.CPL ~ BASIN, data=lat3)
+summary(A1.CPL)
+
+A1.PreDL <- aov(abs.res.PreDL ~ BASIN, data=lat3)
+summary(A1.PreDL)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.PreDL)) +
+  geom_boxplot()
+
+A1.DbL <- aov(abs.res.DbL ~ BASIN, data=lat3)
+summary(A1.DbL)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.DbL)) +
+  geom_boxplot()
+
+A1.HL <- aov(abs.res.HL ~ BASIN, data=lat3)
+summary(A1.HL)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.HL)) +
+  geom_boxplot()
+
+A1.HD <- aov(abs.res.HD ~ BASIN, data=lat3)
+summary(A1.HD)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.HD)) +
+  geom_boxplot()
+
+A1.HW <- aov(abs.res.HW ~ BASIN, data=lat3)
+summary(A1.HW)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.HW)) +
+  geom_boxplot()
+
+A1.SnL <- aov(abs.res.SnL ~ BASIN, data=lat3)
+summary(A1.SnL)
+
+A1.OL <- aov(abs.res.OL ~ BASIN, data=lat3)
+summary(A1.OL)
+
+ggplot(lat3, aes(x=factor(BASIN), y=abs.res.OL)) +
+  geom_boxplot()
+
+
+
+
+```
+
+##### Watersheds 
+
+```{r}
+
+A2.D <- aov(abs.res.D ~ WATERSHED, data=lat3)
+summary(A2.D)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.D)) +
+  geom_boxplot()
+
+A2.P1 <- aov(abs.res.P1 ~ WATERSHED, data=lat3)
+summary(A2.P1)
+
+A2.P1.R <- aov(abs.res.P1.R ~ WATERSHED, data=lat3)
+summary(A2.P1.R)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.P1.R)) +
+  geom_boxplot()
+
+A2.LLSC <- aov(abs.res.LLSC ~ WATERSHED, data=lat3)
+summary(A2.LLSC)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.LLSC)) +
+  geom_boxplot()
+
+
+
+A2.SBLL <- aov(abs.res.SBLL ~ WATERSHED, data=lat3)
+summary(A2.SBLL)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.SBLL)) +
+  geom_boxplot()
+
+A2.BD <- aov(abs.res.BD ~ WATERSHED, data=lat3)
+summary(A2.BD)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.BD)) +
+  geom_boxplot()
+
+A2.CPD <- aov(abs.res.CPD ~ WATERSHED, data=lat3)
+summary(A2.CPD)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.CPD)) +
+  geom_boxplot()
+
+A2.CPL <- aov(abs.res.CPL ~ WATERSHED, data=lat3)
+summary(A2.CPL)
+
+A2.PreDL <- aov(abs.res.PreDL ~ WATERSHED, data=lat3)
+summary(A2.PreDL)
+
+A2.DbL <- aov(abs.res.DbL ~ WATERSHED, data=lat3)
+summary(A2.DbL)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.DbL)) +
+  geom_boxplot()
+
+A2.HL <- aov(abs.res.HL ~ WATERSHED, data=lat3)
+summary(A2.HL)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.HL)) +
+  geom_boxplot()
+
+A2.HD <- aov(abs.res.HD ~ WATERSHED, data=lat3)
+summary(A2.HD)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.HD)) +
+  geom_boxplot()
+
+A2.HW <- aov(abs.res.HW ~ WATERSHED, data=lat3)
+summary(A2.HW)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.HW)) +
+  geom_boxplot()
+
+A2.SnL <- aov(abs.res.SnL ~ WATERSHED, data=lat3)
+summary(A2.SnL)
+
+A2.OL <- aov(abs.res.OL ~ WATERSHED, data=lat3)
+summary(A2.OL)
+
+ggplot(lat3, aes(x=factor(WATERSHED), y=abs.res.OL)) +
+  geom_boxplot()
+
+
+
+
+```
+
+#### Both
+
+##### Zones 
+
+```{r}
+library(ggplot2)
+
+A.D <- aov(abs.res.D ~ SPP*QUARTILE, data=raw3)
+summary(A.D)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.D, fill=SPP)) +
+  geom_boxplot()
+
+
+A.P1 <- aov(abs.res.P1 ~ SPP*QUARTILE, data=raw3)
+summary(A.P1)
+
+A.P1.R <- aov(abs.res.P1.R ~ SPP*QUARTILE, data=raw3)
+summary(A.P1.R)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.P1.R, fill=SPP)) +
+  geom_boxplot()
+
+
+A.LLSC <- aov(abs.res.LLSC ~ SPP*QUARTILE, data=raw3)
+summary(A.LLSC)
+
+
+A.SBLL <- aov(abs.res.SBLL ~ SPP*QUARTILE, data=raw3)
+summary(A.SBLL)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.SBLL, fill=SPP)) +
+  geom_boxplot()
+
+
+A.BD <- aov(abs.res.BD ~ SPP*QUARTILE, data=raw3)
+summary(A.BD)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.BD, fill=SPP)) +
+  geom_boxplot()
+
+
+A.CPD <- aov(abs.res.CPD ~ SPP*QUARTILE, data=raw3)
+summary(A.CPD)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.CPD, fill=SPP)) +
+  geom_boxplot()
+
+
+A.CPL <- aov(abs.res.CPL ~ SPP*QUARTILE, data=raw3)
+summary(A.CPL)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.CPL, fill=SPP)) +
+  geom_boxplot()
+
+
+A.PreDL <- aov(abs.res.PreDL ~ SPP*QUARTILE, data=raw3)
+summary(A.PreDL)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.PreDL, fill=SPP)) +
+  geom_boxplot()
+
+
+A.DbL <- aov(abs.res.DbL ~ SPP*QUARTILE, data=raw3)
+summary(A.DbL)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.DbL, fill=SPP)) +
+  geom_boxplot()
+
+
+A.HL <- aov(abs.res.HL ~ SPP*QUARTILE, data=raw3)
+summary(A.HL)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.HL, fill=SPP)) +
+  geom_boxplot()
+
+
+A.HD <- aov(abs.res.HD ~ SPP*QUARTILE, data=raw3)
+summary(A.HD)
+
+A.HW <- aov(abs.res.HW ~ SPP*QUARTILE, data=raw3)
+summary(A.HW)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.HW, fill=SPP)) +
+  geom_boxplot()
+
+
+A.SnL <- aov(abs.res.SnL ~ SPP*QUARTILE, data=raw3)
+summary(A.SnL)
+
+A.OL <- aov(abs.res.OL ~ SPP*QUARTILE, data=raw3)
+summary(A.OL)
+
+ggplot(raw3, aes(x=factor(QUARTILE), y=abs.res.OL, fill=SPP)) +
+  geom_boxplot()
+
+
+```
+
+##### Basins 
+
+```{r}
+
+A1.D <- aov(abs.res.D ~ SPP*BASIN, data=raw3)
+summary(A1.D)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.D, fill=SPP)) +
+  geom_boxplot()
+
+
+A1.P1 <- aov(abs.res.P1 ~ SPP*BASIN, data=raw3)
+summary(A1.P1)
+
+A1.P1.R <- aov(abs.res.P1.R ~ SPP*BASIN, data=raw3)
+summary(A1.P1.R)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.P1.R, fill=SPP)) +
+  geom_boxplot()
+
+A1.LLSC <- aov(abs.res.LLSC ~ SPP*BASIN, data=raw3)
+summary(A1.LLSC)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.LLSC, fill=SPP)) +
+  geom_boxplot()
+
+
+
+A1.SBLL <- aov(abs.res.SBLL ~ SPP*BASIN, data=raw3)
+summary(A1.SBLL)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.SBLL, fill=SPP)) +
+  geom_boxplot()
+
+A1.BD <- aov(abs.res.BD ~ SPP*BASIN, data=raw3)
+summary(A1.BD)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.BD, fill=SPP)) +
+  geom_boxplot()
+
+A1.CPD <- aov(abs.res.CPD ~ SPP*BASIN, data=raw3)
+summary(A1.CPD)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.CPD, fill=SPP)) +
+  geom_boxplot()
+
+A1.CPL <- aov(abs.res.CPL ~ SPP*BASIN, data=raw3)
+summary(A1.CPL)
+
+A1.PreDL <- aov(abs.res.PreDL ~ SPP*BASIN, data=raw3)
+summary(A1.PreDL)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.PreDL, fill=SPP)) +
+  geom_boxplot()
+
+A1.DbL <- aov(abs.res.DbL ~ SPP*BASIN, data=raw3)
+summary(A1.DbL)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.DbL, fill=SPP)) +
+  geom_boxplot()
+
+A1.HL <- aov(abs.res.HL ~ SPP*BASIN, data=raw3)
+summary(A1.HL)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.HL, fill=SPP)) +
+  geom_boxplot()
+
+A1.HD <- aov(abs.res.HD ~ SPP*BASIN, data=raw3)
+summary(A1.HD)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.HD, fill=SPP)) +
+  geom_boxplot()
+
+A1.HW <- aov(abs.res.HW ~ SPP*BASIN, data=raw3)
+summary(A1.HW)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.HW, fill=SPP)) +
+  geom_boxplot()
+
+A1.SnL <- aov(abs.res.SnL ~ SPP*BASIN, data=raw3)
+summary(A1.SnL)
+
+A1.OL <- aov(abs.res.OL ~ SPP*BASIN, data=raw3)
+summary(A1.OL)
+
+ggplot(raw3, aes(x=factor(BASIN), y=abs.res.OL, fill=SPP)) +
+  geom_boxplot()
+
+
+
+
+```
+
+##### Watersheds 
+
+```{r}
+
+A2.D <- aov(abs.res.D ~ SPP*WATERSHED, data=raw3)
+summary(A2.D)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.D, fill=SPP)) +
+  geom_boxplot()
+
+A2.P1 <- aov(abs.res.P1 ~ SPP*WATERSHED, data=raw3)
+summary(A2.P1)
+
+A2.P1.R <- aov(abs.res.P1.R ~ SPP*WATERSHED, data=raw3)
+summary(A2.P1.R)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.P1.R, fill=SPP)) +
+  geom_boxplot()
+
+A2.LLSC <- aov(abs.res.LLSC ~ SPP*WATERSHED, data=raw3)
+summary(A2.LLSC)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.LLSC, fill=SPP)) +
+  geom_boxplot()
+
+
+
+A2.SBLL <- aov(abs.res.SBLL ~ SPP*WATERSHED, data=raw3)
+summary(A2.SBLL)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.SBLL, fill=SPP)) +
+  geom_boxplot()
+
+A2.BD <- aov(abs.res.BD ~ SPP*WATERSHED, data=raw3)
+summary(A2.BD)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.BD, fill=SPP)) +
+  geom_boxplot()
+
+A2.CPD <- aov(abs.res.CPD ~ SPP*WATERSHED, data=raw3)
+summary(A2.CPD)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.CPD, fill=SPP)) +
+  geom_boxplot()
+
+A2.CPL <- aov(abs.res.CPL ~ SPP*WATERSHED, data=raw3)
+summary(A2.CPL)
+
+A2.PreDL <- aov(abs.res.PreDL ~ SPP*WATERSHED, data=raw3)
+summary(A2.PreDL)
+
+A2.DbL <- aov(abs.res.DbL ~ SPP*WATERSHED, data=raw3)
+summary(A2.DbL)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.DbL, fill=SPP)) +
+  geom_boxplot()
+
+A2.HL <- aov(abs.res.HL ~ SPP*WATERSHED, data=raw3)
+summary(A2.HL)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.HL, fill=SPP)) +
+  geom_boxplot()
+
+A2.HD <- aov(abs.res.HD ~ SPP*WATERSHED, data=raw3)
+summary(A2.HD)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.HD, fill=SPP)) +
+  geom_boxplot()
+
+A2.HW <- aov(abs.res.HW ~ SPP*WATERSHED, data=raw3)
+summary(A2.HW)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.HW, fill=SPP)) +
+  geom_boxplot()
+
+A2.SnL <- aov(abs.res.SnL ~ SPP*WATERSHED, data=raw3)
+summary(A2.SnL)
+
+A2.OL <- aov(abs.res.OL ~ SPP*WATERSHED, data=raw3)
+summary(A2.OL)
+
+ggplot(raw3, aes(x=factor(WATERSHED), y=abs.res.OL, fill=SPP)) +
+  geom_boxplot()
+
+
+
+
+```
+
+#### Standardized
+
+DON'T KNOW IF THIS IS USEFUL
+
+The ANOVAs above focus on differences of particular traits as a factor of species and location. If we want to get an idea of variation in general as a factor of species and location, we can standardize the residuals (essentially unitless z-scores of residuals).
+
+```{r}
+
+sd.res.D <- append(abs(sd.lat.D), abs(sd.form.D))
+sd.res.P1 <- append(abs(sd.lat.P1), abs(sd.form.P1))
+sd.res.P1.R <- append(abs(sd.lat.P1.R), abs(sd.form.P1.R))
+sd.res.LLSC<- append(abs(sd.lat.LLSC), abs(sd.form.LLSC))
+sd.res.SBLL<- append(abs(sd.lat.SBLL), abs(sd.form.SBLL))
+sd.res.BD<- append(abs(sd.lat.BD), abs(sd.form.BD))
+sd.res.CPD<- append(abs(sd.lat.CPD), abs(sd.form.CPD))
+sd.res.CPL<- append(abs(sd.lat.CPL), abs(sd.form.CPL))
+sd.res.PreDL <- append(abs(sd.lat.PreDL), abs(sd.form.PreDL))
+sd.res.DbL <- append(abs(sd.lat.DbL), abs(sd.form.DbL))
+sd.res.HL<- append(abs(sd.lat.HL), abs(sd.form.HL))
+sd.res.HD<- append(abs(sd.lat.HD), abs(sd.form.HD))
+sd.res.HW <- append(abs(sd.lat.HW), abs(sd.form.HW))
+sd.res.SnL <- append(abs(sd.lat.SnL), abs(sd.form.SnL))
+sd.res.OL <- append(abs(sd.lat.OL), abs(sd.form.OL))
+
+
+raw4 <- cbind(raw3, sd.res.D, sd.res.P1, sd.res.P1.R, sd.res.LLSC, sd.res.SBLL, sd.res.BD, sd.res.CPD, sd.res.CPL, sd.res.PreDL, sd.res.DbL, sd.res.HL, sd.res.HD, sd.res.HW, sd.res.SnL, sd.res.OL)
+
+raw5 <- cbind(raw4[1:14], stack(raw4[53:68])) 
+
+lat.raw5 <- raw5[raw5$SPP == "p.latipinna",]
+
+form.raw5 <- raw5[raw5$SPP == "p.formosa",]
+
+######ZONES#####
+
+A3.lat <- aov(values~QUARTILE, data=lat.raw5)
+summary(A3.lat)
+
+A3.form <- aov(values~QUARTILE, data=form.raw5)
+summary(A3.form)
+
+#between species
+
+A3 <- aov(values~QUARTILE*SPP, data=raw5)
+summary(A3)
+
+ggplot(raw5, aes(x=factor(QUARTILE), y=values, fill=SPP)) +
+  geom_boxplot()
+
+######BASINS#####
+
+A4.lat <- aov(values~BASIN, data=lat.raw5)
+summary(A4.lat)
+
+A4.form <- aov(values~BASIN, data=form.raw5)
+summary(A4.form)
+
+#between species
+
+A4 <- aov(values~BASIN*SPP, data=raw5)
+summary(A4)
+
+ggplot(raw5, aes(x=factor(BASIN), y=values, fill=SPP)) +
+  geom_boxplot()
+
+#####WATERSHEDS#####
+A5.lat <- aov(values~WATERSHED, data=lat.raw5)
+summary(A5.lat)
+
+A5.form <- aov(values~WATERSHED, data=form.raw5)
+summary(A5.form)
+
+#between species
+
+A5 <- aov(values~WATERSHED*SPP, data=raw5)
+summary(A5)
+
+ggplot(raw5, aes(x=factor(WATERSHED), y=values, fill=SPP)) +
+  geom_boxplot()
+
+
+
+```
+
+
+
+### GLMMs
+
+Will run mixed models with zones/basins/watersheds as random effect. This will account for any variation seen at these levels and show us if there are any consistent species differences. Can only do this with residuals. 
+
+#### Zones
+
+```{r}
+library(lme4)
+library(lmerTest)
+
+
+MM.D <- glmer(abs.res.D ~ SPP + (1|QUARTILE), data=raw3)#originally had family=poisson, since this is count data, but because this was the residuals of count data, the values were non-integers and poisson only deals with integers. 
+summary(MM.D)
+
+MM.P1 <- glmer(abs.res.P1 ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.P1)
+
+MM.P1.R <- glmer(abs.res.P1.R ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.P1.R)
+
+MM.LLSC <- glmer(abs.res.LLSC ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.LLSC)
+
+
+MM.SBLL <- glmer(abs.res.SBLL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.SBLL)
+
+
+MM.BD <- glmer(abs.res.BD ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.BD)
+
+
+MM.CPD <- glmer(abs.res.CPD ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.CPD)
+
+
+MM.CPL <- glmer(abs.res.CPL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.CPL)
+
+MM.PreDL <- glmer(abs.res.PreDL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.PreDL)
+
+MM.DbL <- glmer(abs.res.DbL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.DbL)
+
+MM.HL <- glmer(abs.res.HL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.HL)
+
+MM.HD <- glmer(abs.res.HD ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.HD)
+
+MM.HW <- glmer(abs.res.HW ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.HW)
+
+MM.SnL <- glmer(abs.res.SnL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.SnL)
+
+MM.OL <- glmer(abs.res.OL ~ SPP+ (1|QUARTILE), data=raw3)
+summary(MM.OL)
+
+
+
+```
+
+
+
+#### Watershed nested in Basin
+
+```{r}
+
+MM1.D <- glmer(abs.res.D ~ SPP + (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.D)
+
+MM1.P1 <- glmer(abs.res.P1 ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.P1)
+
+MM1.P1.R <- glmer(abs.res.P1.R ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.P1.R)
+
+MM1.LLSC <- glmer(abs.res.LLSC ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.LLSC)
+
+MM1.SBLL <- glmer(abs.res.SBLL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.SBLL)
+
+MM1.BD <- glmer(abs.res.BD ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.BD)
+
+MM1.CPD <- glmer(abs.res.CPD ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.CPD)
+
+MM1.CPL <- glmer(abs.res.CPL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.CPL)
+
+MM1.PreDL <- glmer(abs.res.PreDL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.PreDL)
+
+MM1.DbL <- glmer(abs.res.DbL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.DbL)
+
+MM1.HL <- glmer(abs.res.HL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.HL)
+
+MM1.HD <- glmer(abs.res.HD ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.HD)
+
+MM1.HW <- glmer(abs.res.HW ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.HW)
+
+MM1.SnL <- glmer(abs.res.SnL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.SnL)
+
+MM1.OL <- glmer(abs.res.OL ~ SPP+ (1|BASIN/WATERSHED), data=raw3)
+summary(MM1.OL)
+
+
+```
+
+
+***
+
+### Levene's w/ Basin?
+
+Not sure if this is correct, but might try Levene's test with zone/basin/watershed as an additional independent factor? This is for the traits that did NOT vary with body length.
+
+
+#### Zones
+
+```{r}
+(LT2_P2L <- leveneTest(P2.L~SPP*QUARTILE, data=raw3)) #gives nothing since it's all the same value
+
+(LT2_P2R <- leveneTest(P2.R~SPP*QUARTILE, data=raw3)) #same as above
+
+(LT2_A <- leveneTest(A~SPP*QUARTILE, data=raw3)) 
+
+(LT2_SALL <- leveneTest(SALL~SPP*QUARTILE, data=raw3))
+
+(LT2_SBLL <- leveneTest(SBLL~SPP*QUARTILE, data=raw3))
+
+(LT2_SBDF <- leveneTest(SBDF~SPP*QUARTILE, data=raw3))
+
+(LT2_FLA <- leveneTest(FLA~SPP*QUARTILE, data=raw3))
+
+```
+
+#### Basins
+
+```{r}
+(LT2_P2L <- leveneTest(P2.L~SPP*BASIN, data=raw3)) #gives nothing since it's all the same value
+
+(LT2_P2R <- leveneTest(P2.R~SPP*BASIN, data=raw3)) #same as above
+
+(LT2_A <- leveneTest(A~SPP*BASIN, data=raw3)) 
+
+(LT2_SALL <- leveneTest(SALL~SPP*BASIN, data=raw3))
+
+(LT2_SBLL <- leveneTest(SBLL~SPP*BASIN, data=raw3))
+
+(LT2_SBDF <- leveneTest(SBDF~SPP*BASIN, data=raw3))
+
+(LT2_FLA <- leveneTest(FLA~SPP*BASIN, data=raw3))
+
+```
+
+
+#### Watersheds
+
+```{r}
+(LT2_P2L <- leveneTest(P2.L~SPP*WATERSHED, data=raw3)) #gives nothing since it's all the same value
+
+(LT2_P2R <- leveneTest(P2.R~SPP*WATERSHED, data=raw3)) #same as above
+
+(LT2_A <- leveneTest(A~SPP*WATERSHED, data=raw3)) 
+
+(LT2_SALL <- leveneTest(SALL~SPP*WATERSHED, data=raw3))
+
+(LT2_SBLL <- leveneTest(SBLL~SPP*WATERSHED, data=raw3))
+
+(LT2_SBDF <- leveneTest(SBDF~SPP*WATERSHED, data=raw3))
+
+(LT2_FLA <- leveneTest(FLA~SPP*WATERSHED, data=raw3))
+
+```
+
+
+***
+
+### iccs
+
+I'm hoping I can do this, but thought another interesting way of testing this would be to calculate and intraclass correlation coefficient--so looking at between-group variance compared to total variance, to see if variation is driven more from within or between group (if there is any at all...). I know lots of examples specify repeated measures, but I think the function below lets me specify that I only have one measurement per subject. I'm going to do this with raw data below, but will also repeat it with PCA scores in the PCA section, so that things are standardized for length. Since I'm interested in variation across populations, I think I would perform this within each sex; I am not sure how I would test this between sexes AND populations for each trait. Maybe I could then compare the icc scores?
+
+
+```{r}
+library(irr)
+
+(icc_L.D <- icc(data = lat3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.P1 <- icc(data = lat3$P1, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.P2.R <- icc(data = lat3$P2.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.P2.L <- icc(data = lat3$P2.L, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.A <- icc(data = lat3$A, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.P1.R <- icc(data = lat3$P1.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.LLSC <- icc(data = lat3$LLSC, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SALL <- icc(data = lat3$SALL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SBLL <- icc(data = lat3$SBLL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SBDF <- icc(data = lat3$SBDF, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SL <- icc(data = lat3$SL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.BD <- icc(data = lat3$BD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.CPD <- icc(data = lat3$CPD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.CPL <- icc(data = lat3$CPL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.PreDL <- icc(data = lat3$PreDL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.DbL <- icc(data = lat3$DbL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.HL <- icc(data = lat3$HL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.HD <- icc(data = lat3$HD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.HW <- icc(data = lat3$HW, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SnL <- icc(data = lat3$SnL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.OL <- icc(data = lat3$OL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.FLA <- icc(data = lat3$FLA, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+
+
+#### AMAZONS ####
+
+(icc_F.D <- icc(data = form3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P1 <- icc(data = form3$P1, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P2.R <- icc(data = form3$P2.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P2.L <- icc(data = form3$P2.L, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.A <- icc(data = form3$A, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P1.R <- icc(data = form3$P1.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.LLSC <- icc(data = form3$LLSC, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SALL <- icc(data = form3$SALL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SBLL <- icc(data = form3$SBLL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SBDF <- icc(data = form3$SBDF, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SL <- icc(data = form3$SL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.BD <- icc(data = form3$BD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.CPD <- icc(data = form3$CPD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.CPL <- icc(data = form3$CPL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.PreDL <- icc(data = form3$PreDL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.DbL <- icc(data = form3$DbL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.HL <- icc(data = form3$HL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.HD <- icc(data = form3$HD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.HW <- icc(data = form3$HW, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SnL <- icc(data = form3$SnL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.OL <- icc(data = form3$OL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.FLA <- icc(data = form3$FLA, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+
+#### BETWEEN SPECIES ####
+
+(icc_F2.FLA <- icc(data = raw3$FLA, id = raw3$SPP, grouping= raw3$BASINS, model = "twoway", type = "agreement", unit = "single", r0 = 1))
+
+
+
+
+
+```

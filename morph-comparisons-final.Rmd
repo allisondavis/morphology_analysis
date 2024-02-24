@@ -1,0 +1,2487 @@
+---
+title: "morph_FINAL_new"
+author: "Allison Davis Connelly"
+date: "12/22/2023"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 6
+    toc_float:
+      collapsed: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Morphological variation of amazon and sailfin mollies**
+
+In this study, I am looking at various populations of amazon and sailfin mollies across their native/introduced range to assess morphological variation both within and among the species. I am using the Pickle fish collections for my samples.
+
+# All data
+
+I will use all data first to see the trends, then filter for confirmed adult sizes (see "Filtered").
+
+## Initial steps 
+
+Data collection 
+
+```{r, echo=FALSE}
+library(curl)
+
+raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/master/adavis_morphology_raw-data_NEAR-FINAL.csv")
+
+raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+                                                                                                           
+raw1 <- raw[, -25] #removed total length, since I'm not really using it and don't want an NAs here to remove specimen
+raw1 <- raw1[complete.cases(raw1[, 15:36]),] #issues with binding data later, so making a df without NAs now to see if it helps
+
+raw1b <- raw1[-c(252), ] #this takes out the monster fish too
+
+
+
+```
+
+### Checking normality 
+
+#### Checking normality {.tabset .tabset-fade .tabset-pills}
+
+I will use Shapiro-wilke, histograms, and QQ plots to determine what traits are normal. These will only be performed on continuous variables, as discrete variables are not normal by nature.
+
+**Conclusions:** literally all of them are NOT normal... will log transform them and double check normality. Had to square-root three traits () because still not normal with log transform. 
+
+##### SW Test 
+
+```{r}
+
+shapiro.test(raw1$SL)
+
+shapiro.test(raw1$BD)
+
+shapiro.test(raw1$CPD)
+
+shapiro.test(raw1$CPL)
+
+shapiro.test(raw1$PreDL)
+
+shapiro.test(raw1$DbL)
+
+shapiro.test(raw1$HL)
+
+shapiro.test(raw1$HD)
+
+shapiro.test(raw1$HW)
+
+shapiro.test(raw1$SnL)
+
+shapiro.test(raw1$OL)
+
+
+
+
+```
+
+##### Histograms 
+
+```{r}
+
+hist(raw1$SL)
+
+hist(raw1$BD)
+
+hist(raw1$CPD)
+
+hist(raw1$CPL)
+
+hist(raw1$PreDL)
+
+hist(raw1$DbL)
+
+hist(raw1$HL)
+
+hist(raw1$HD)
+
+hist(raw1$HW)
+
+hist(raw1$SnL)
+
+hist(raw1$OL)
+
+
+```
+
+##### QQ plots 
+
+```{r}
+
+qqnorm(raw1$SL)
+qqline(raw1$SL)
+
+qqnorm(raw1$BD)
+qqline(raw1$BD)
+
+qqnorm(raw1$CPD)
+qqline(raw1$CPD)
+
+qqnorm(raw1$CPL)
+qqline(raw1$CPL)
+
+qqnorm(raw1$PreDL)
+qqline(raw1$PreDL)
+
+qqnorm(raw1$DbL)
+qqline(raw1$DbL)
+
+qqnorm(raw1$HL)
+qqline(raw1$HL)
+
+qqnorm(raw1$HD)
+qqline(raw1$HD)
+
+qqnorm(raw1$HW)
+qqline(raw1$HW)
+
+qqnorm(raw1$SnL)
+qqline(raw1$SnL)
+
+qqnorm(raw1$OL)
+qqline(raw1$OL)
+
+
+
+```
+
+
+
+
+
+
+#### Log transformations
+
+Since all of the continuous characters were not normal, I will log transform them, and proceed with the transformed data in all analyses.
+
+```{r}
+raw1[paste0(names(raw1), '_log')] <- log(raw1[, 26:35], 10)
+#for some reason did the log of the whole data frame instead of those specific columns, so I will just remove the unnecessary columns instead of spending time on what went wrong.
+
+raw1 <- raw1[-c(37:60)]
+raw1 <- raw1[-c(48)]
+
+#double checking normality with a SW test and QQ plot
+
+shapiro.test(raw1$SL_log)
+
+shapiro.test(raw1$BD_log)
+
+shapiro.test(raw1$CPD_log)
+
+shapiro.test(raw1$CPL_log)
+
+shapiro.test(raw1$PreDL_log)
+
+shapiro.test(raw1$DbL_log)
+
+shapiro.test(raw1$HL_log)
+
+shapiro.test(raw1$HD_log)
+
+shapiro.test(raw1$HW_log)
+
+shapiro.test(raw1$SnL_log)
+
+shapiro.test(raw1$OL_log)
+
+qqnorm(raw1$SL_log)
+qqline(raw1$SL_log)
+
+qqnorm(raw1$BD_log)
+qqline(raw1$BD_log)
+
+qqnorm(raw1$CPD_log)
+qqline(raw1$CPD_log)
+
+qqnorm(raw1$CPL_log)
+qqline(raw1$CPL_log)
+
+qqnorm(raw1$PreDL_log)
+qqline(raw1$PreDL_log)
+
+qqnorm(raw1$DbL_log)
+qqline(raw1$DbL_log)
+
+qqnorm(raw1$HL_log)
+qqline(raw1$HL_log)
+
+qqnorm(raw1$HD_log)
+qqline(raw1$HD_log)
+
+qqnorm(raw1$HW_log)
+qqline(raw1$HW_log)
+
+qqnorm(raw1$SnL_log)
+qqline(raw1$SnL_log)
+
+qqnorm(raw1$OL_log)
+qqline(raw1$OL_log)
+
+
+```
+
+
+Need to try other transformations for body depth, predorsal length, and dorsal base length. Will try squareroot or cuberoot to see what gets them normal. Cubed got them closest to normal (bd still not normal but other two are).
+
+```{r}
+#raw1$sqR_BD ='^'(raw1$BD,1/2)
+#raw1$sqR_PreDL ='^'(raw1$PreDL,1/2)
+#raw1$sqR_DbL ='^'(raw1$DbL,1/2)
+
+#shapiro.test(raw1$sqR_BD) #didn't work
+#shapiro.test(raw1$sqR_PreDL)#worked
+#shapiro.test(raw1$sqR_DbL)#worked
+
+#qqnorm(raw1$sqR_BD)
+#qqline(raw1$sqR_BD)
+
+#qqnorm(raw1$sqR_PreDL)
+#qqline(raw1$sqR_PreDL)
+
+#qqnorm(raw1$sqR_DbL)
+#qqline(raw1$sqR_PreDL)
+
+#cubed root
+raw1$cbR_BD ='^'(raw1$BD,1/3)
+raw1$cbR_PreDL ='^'(raw1$PreDL,1/3)
+raw1$cbR_DbL ='^'(raw1$DbL,1/3)
+
+shapiro.test(raw1$cbR_BD) #didn't work, but closest to normal
+shapiro.test(raw1$cbR_PreDL)#worked
+shapiro.test(raw1$cbR_DbL)#worked
+
+qqnorm(raw1$cbR_BD)
+qqline(raw1$cbR_BD)
+
+qqnorm(raw1$cbR_PreDL)
+qqline(raw1$cbR_PreDL)
+
+qqnorm(raw1$cbR_DbL)
+qqline(raw1$cbR_PreDL)
+
+#raw1 <- raw1[-c(48:50)]
+#need to cube root SL to use in regressions
+
+raw1$cbR_SL ='^'(raw1$SL,1/3)
+
+
+
+```
+
+## Correcting for body size (residuals) 
+
+### SL correction {.tabset .tabset-fade .tabset-pills}
+
+Since amazons are in general bigger than sailfin, we don't want any results to be due to this difference in body size bias. Therefore, we will see what traits are influenced by body size (regressions) and correct for body size when necessary (absolute value of residuals). We can then use the residuals when comparing between species for traits that are influenced by body size, and raw/transformed data for traits that are not influenced by body size. I will also calculate standardized residuals to compare residuals across traits in later analyses.
+
+**Quick results summary:** traits *not* influenced by body size are left & right pelvic, anal, scales above and below lateral line (except in mexicana), scales before dorsal fin and fluctuating asymmetry; all other traits influenced by body size.
+
+#### Regressions 
+
+-   STEP ONE: plot trait vs body size
+
+```{r}
+
+library(ggplot2)
+library(ggpubr)
+
+
+
+lat <- raw1[raw1$SPP == "p.latipinna",]
+
+
+form <- raw1[raw1$SPP == "p.formosa",]
+
+
+mex <- raw1[raw1$SPP == "p.mexicana",]
+
+
+
+##### LAT #####
+reg.lat.D <- lm(lat$D ~ lat$SL)
+sd.lat.D <- rstandard(reg.lat.D)
+reg.lat.D.plot <- ggplot(lat, aes(x = SL, y = D)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.D.plot
+
+reg.lat.P1 <- lm(lat$P1 ~ lat$SL)
+sd.lat.P1 <- rstandard(reg.lat.P1)
+reg.lat.P1.plot <- ggplot(lat, aes(x = SL, y = P1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P1.plot
+
+reg.lat.P2.L <- lm(lat$P2.L ~ lat$SL)
+sd.lat.P2.L <- rstandard(reg.lat.P2.L)
+reg.lat.P2.L.plot <- ggplot(lat, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P2.L.plot
+
+reg.lat.P2.R <- lm(lat$P2.R ~ lat$SL)
+sd.lat.P2.R <- rstandard(reg.lat.P2.R)
+reg.lat.P2.R.plot <- ggplot(lat, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P2.R.plot
+
+reg.lat.A <- lm(lat$A ~ lat$SL)
+sd.lat.A <- rstandard(reg.lat.A)
+reg.lat.A.plot <- ggplot(lat, aes(x = SL, y = A)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.A.plot
+
+reg.lat.P1.R <- lm(lat$P1.R ~ lat$SL)
+sd.lat.P1.R <- rstandard(reg.lat.P1.R)
+reg.lat.P1.R.plot <- ggplot(lat, aes(x = SL, y = P1.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P1.R.plot
+
+reg.lat.LLSC <- lm(lat$LLSC ~ lat$SL)
+sd.lat.LLSC <- rstandard(reg.lat.LLSC)
+reg.lat.LLSC.plot <- ggplot(lat, aes(x = SL, y = LLSC)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.LLSC.plot
+
+reg.lat.SALL <- lm(lat$SALL ~ lat$SL)
+sd.lat.SALL <- rstandard(reg.lat.SALL)
+reg.lat.SALL.plot <- ggplot(lat, aes(x = SL, y = SALL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SALL.plot
+
+reg.lat.SBLL <- lm(lat$SBLL ~ lat$SL)
+sd.lat.SBLL <- rstandard(reg.lat.SBLL)
+reg.lat.SBLL.plot <- ggplot(lat, aes(x = SL, y = SBLL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SBLL.plot
+
+reg.lat.SBDF <- lm(lat$SBDF ~ lat$SL)
+sd.lat.SBDF <- rstandard(reg.lat.SBDF)
+reg.lat.SBDF.plot <- ggplot(lat, aes(x = SL, y = SBDF)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SBDF.plot
+
+reg.lat.BD <- lm(lat$cbR_BD ~ lat$cbR_SL)
+sd.lat.BD <- rstandard(reg.lat.BD)
+reg.lat.BD.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_BD)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.BD.plot
+
+reg.lat.CPD <- lm(lat$CPD_log ~ lat$SL_log)
+sd.lat.CPD <- rstandard(reg.lat.CPD)
+reg.lat.CPD.plot <- ggplot(lat, aes(x = SL_log, y = CPD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.CPD.plot
+
+reg.lat.CPL <- lm(lat$CPL_log ~ lat$SL_log)
+sd.lat.CPL <- rstandard(reg.lat.CPL)
+reg.lat.CPL.plot <- ggplot(lat, aes(x = SL_log, y = CPL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.CPL.plot
+
+reg.lat.PreDL <- lm(lat$cbR_PreDL ~ lat$cbR_SL)
+sd.lat.PreDL <- rstandard(reg.lat.PreDL)
+reg.lat.PreDL.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_PreDL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.PreDL.plot
+
+reg.lat.DbL <- lm(lat$cbR_DbL ~ lat$cbR_SL)
+sd.lat.DbL <- rstandard(reg.lat.DbL)
+reg.lat.DbL.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_DbL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.DbL.plot
+
+reg.lat.HL <- lm(lat$HL_log ~ lat$SL_log)
+sd.lat.HL <- rstandard(reg.lat.HL)
+reg.lat.HL.plot <- ggplot(lat, aes(x = SL_log, y = HL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.HL.plot
+
+reg.lat.HD <- lm(lat$HD_log ~ lat$SL_log)
+sd.lat.HD <- rstandard(reg.lat.HD)
+reg.lat.HD.plot <- ggplot(lat, aes(x = SL_log, y = HD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.HD.plot
+
+reg.lat.HW <- lm(lat$HW_log ~ lat$SL_log)
+sd.lat.HW <- rstandard(reg.lat.HW)
+reg.lat.HW.plot <- ggplot(lat, aes(x = SL_log, y = HW_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.HW.plot
+
+reg.lat.SnL <- lm(lat$SnL_log ~ lat$SL_log)
+sd.lat.SnL <- rstandard(reg.lat.SnL)
+reg.lat.SnL.plot <- ggplot(lat, aes(x = SL_log, y = SnL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.SnL.plot
+
+reg.lat.OL <- lm(lat$OL_log ~ lat$SL_log)
+sd.lat.OL <- rstandard(reg.lat.OL)
+reg.lat.OL.plot <- ggplot(lat, aes(x = SL_log, y = OL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.OL.plot
+
+reg.lat.FLA <- lm(lat$FLA ~ lat$SL)
+sd.lat.FLA <- rstandard(reg.lat.FLA)
+reg.lat.FLA.plot <- ggplot(lat, aes(x = SL, y = FLA)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.FLA.plot
+
+##### FORM #####
+
+reg.form.D <- lm(form$D ~ form$SL)
+sd.form.D <- rstandard(reg.form.D)
+reg.form.D.plot <- ggplot(form, aes(x =SL, y = D)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.D.plot
+
+reg.form.P1 <- lm(form$P1 ~ form$SL)
+sd.form.P1 <- rstandard(reg.form.P1)
+reg.form.P1.plot <- ggplot(form, aes(x = SL, y = P1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P1.plot
+
+reg.form.P2.L <- lm(form$P2.L ~ form$SL)
+sd.form.P2.L <- rstandard(reg.form.P2.L)
+reg.form.P2.L.plot <- ggplot(form, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P2.L.plot
+
+reg.form.P2.R <- lm(form$P2.R ~ form$SL)
+sd.form.P2.R <- rstandard(reg.form.P2.R)
+reg.form.P2.R.plot <- ggplot(form, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P2.R.plot
+
+reg.form.A <- lm(form$A ~ form$SL)
+sd.form.A <- rstandard(reg.form.A)
+reg.form.A.plot <- ggplot(form, aes(x = SL, y = A)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.A.plot
+
+reg.form.P1.R <- lm(form$P1.R ~ form$SL)
+sd.form.P1.R <- rstandard(reg.form.P1.R)
+reg.form.P1.R.plot <- ggplot(form, aes(x = SL, y = P1.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P1.R.plot
+
+reg.form.LLSC <- lm(form$LLSC ~ form$SL)
+sd.form.LLSC <- rstandard(reg.form.LLSC)
+reg.form.LLSC.plot <- ggplot(form, aes(x = SL, y = LLSC)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.LLSC.plot
+
+reg.form.SALL <- lm(form$SALL ~ form$SL)
+sd.form.SALL <- rstandard(reg.form.SALL)
+reg.form.SALL.plot <- ggplot(form, aes(x = SL, y = SALL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SALL.plot
+
+reg.form.SBLL <- lm(form$SBLL ~ form$SL)
+sd.form.SBLL <- rstandard(reg.form.SBLL)
+reg.form.SBLL.plot <- ggplot(form, aes(x = SL, y = SBLL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SBLL.plot
+
+reg.form.SBDF <- lm(form$SBDF ~ form$SL)
+sd.form.SBDF <- rstandard(reg.form.SBDF)
+reg.form.SBDF.plot <- ggplot(form, aes(x = SL, y = SBDF)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SBDF.plot
+
+reg.form.BD <- lm(form$cbR_BD ~ form$cbR_SL)
+sd.form.BD <- rstandard(reg.form.BD)
+reg.form.BD.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_BD)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.BD.plot
+
+reg.form.CPD <- lm(form$CPD_log ~ form$SL_log)
+sd.form.CPD <- rstandard(reg.form.CPD)
+reg.form.CPD.plot <- ggplot(form, aes(x = SL_log, y = CPD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.CPD.plot
+
+reg.form.CPL <- lm(form$CPL_log ~ form$SL_log)
+sd.form.CPL <- rstandard(reg.form.CPL)
+reg.form.CPL.plot <- ggplot(form, aes(x = SL_log, y = CPL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.CPL.plot
+
+reg.form.PreDL <- lm(form$cbR_PreDL ~ form$cbR_SL)
+sd.form.PreDL <- rstandard(reg.form.PreDL)
+reg.form.PreDL.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_PreDL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.PreDL.plot
+
+reg.form.DbL <- lm(form$cbR_DbL ~ form$cbR_SL)
+sd.form.DbL <- rstandard(reg.form.DbL)
+reg.form.DbL.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_DbL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.DbL.plot
+
+reg.form.HL <- lm(form$HL_log ~ form$SL_log)
+sd.form.HL <- rstandard(reg.form.HL)
+reg.form.HL.plot <- ggplot(form, aes(x = SL_log, y = HL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.HL.plot
+
+reg.form.HD <- lm(form$HD_log ~ form$SL_log)
+sd.form.HD <- rstandard(reg.form.HD)
+reg.form.HD.plot <- ggplot(form, aes(x = SL_log, y = HD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.HD.plot
+
+reg.form.HW <- lm(form$HW_log ~ form$SL_log)
+sd.form.HW <- rstandard(reg.form.HW)
+reg.form.HW.plot <- ggplot(form, aes(x = SL_log, y = HW_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.HW.plot
+
+reg.form.SnL <- lm(form$SnL_log ~ form$SL_log)
+sd.form.SnL <- rstandard(reg.form.SnL)
+reg.form.SnL.plot <- ggplot(form, aes(x = SL_log, y = SnL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.SnL.plot
+
+reg.form.OL <- lm(form$OL_log ~ form$SL_log)
+sd.form.OL <- rstandard(reg.form.OL)
+reg.form.OL.plot <- ggplot(form, aes(x = SL_log, y = OL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.OL.plot
+
+reg.form.FLA <- lm(form$FLA ~ form$SL)
+sd.form.FLA <- rstandard(reg.form.FLA)
+reg.form.FLA.plot <- ggplot(form, aes(x = SL, y = FLA)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.FLA.plot
+
+
+
+##### MEX #####
+reg.mex.D <- lm(mex$D ~ mex$SL)
+sd.mex.D <- rstandard(reg.mex.D)
+reg.mex.D.plot <- ggplot(mex, aes(x = SL, y = D)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.D.plot
+
+reg.mex.P1 <- lm(mex$P1 ~ mex$SL)
+sd.mex.P1 <- rstandard(reg.mex.P1)
+reg.mex.P1.plot <- ggplot(mex, aes(x = SL, y = P1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P1.plot
+
+reg.mex.P2.L <- lm(mex$P2.L ~ mex$SL)
+sd.mex.P2.L <- rstandard(reg.mex.P2.L)
+reg.mex.P2.L.plot <- ggplot(mex, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P2.L.plot
+
+reg.mex.P2.R <- lm(mex$P2.R ~ mex$SL)
+sd.mex.P2.R <- rstandard(reg.mex.P2.R)
+reg.mex.P2.R.plot <- ggplot(mex, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P2.R.plot
+
+reg.mex.A <- lm(mex$A ~ mex$SL)
+sd.mex.A <- rstandard(reg.mex.A)
+reg.mex.A.plot <- ggplot(mex, aes(x = SL, y = A)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.A.plot
+
+reg.mex.P1.R <- lm(mex$P1.R ~ mex$SL)
+sd.mex.P1.R <- rstandard(reg.mex.P1.R)
+reg.mex.P1.R.plot <- ggplot(mex, aes(x = SL, y = P1.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P1.R.plot
+
+reg.mex.LLSC <- lm(mex$LLSC ~ mex$SL)
+sd.mex.LLSC <- rstandard(reg.mex.LLSC)
+reg.mex.LLSC.plot <- ggplot(mex, aes(x = SL, y = LLSC)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.LLSC.plot
+
+reg.mex.SALL <- lm(mex$SALL ~ mex$SL)
+sd.mex.SALL <- rstandard(reg.mex.SALL)
+reg.mex.SALL.plot <- ggplot(mex, aes(x = SL, y = SALL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SALL.plot
+
+reg.mex.SBLL <- lm(mex$SBLL ~ mex$SL)
+sd.mex.SBLL <- rstandard(reg.mex.SBLL)
+reg.mex.SBLL.plot <- ggplot(mex, aes(x = SL, y = SBLL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SBLL.plot
+
+reg.mex.SBDF <- lm(mex$SBDF ~ mex$SL)
+sd.mex.SBDF <- rstandard(reg.mex.SBDF)
+reg.mex.SBDF.plot <- ggplot(mex, aes(x = SL, y = SBDF)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SBDF.plot
+
+reg.mex.BD <- lm(mex$cbR_BD ~ mex$cbR_SL)
+sd.mex.BD <- rstandard(reg.mex.BD)
+reg.mex.BD.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_BD)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.BD.plot
+
+reg.mex.CPD <- lm(mex$CPD_log ~ mex$SL_log)
+sd.mex.CPD <- rstandard(reg.mex.CPD)
+reg.mex.CPD.plot <- ggplot(mex, aes(x = SL_log, y = CPD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.CPD.plot
+
+reg.mex.CPL <- lm(mex$CPL_log ~ mex$SL_log)
+sd.mex.CPL <- rstandard(reg.mex.CPL)
+reg.mex.CPL.plot <- ggplot(mex, aes(x = SL_log, y = CPL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.CPL.plot
+
+reg.mex.PreDL <- lm(mex$cbR_PreDL ~ mex$cbR_SL)
+sd.mex.PreDL <- rstandard(reg.mex.PreDL)
+reg.mex.PreDL.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_PreDL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.PreDL.plot
+
+reg.mex.DbL <- lm(mex$cbR_DbL ~ mex$cbR_SL)
+sd.mex.DbL <- rstandard(reg.mex.DbL)
+reg.mex.DbL.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_DbL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.DbL.plot
+
+reg.mex.HL <- lm(mex$HL_log ~ mex$SL_log)
+sd.mex.HL <- rstandard(reg.mex.HL)
+reg.mex.HL.plot <- ggplot(mex, aes(x = SL_log, y = HL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.HL.plot
+
+reg.mex.HD <- lm(mex$HD_log ~ mex$SL_log)
+sd.mex.HD <- rstandard(reg.mex.HD)
+reg.mex.HD.plot <- ggplot(mex, aes(x = SL_log, y = HD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.HD.plot
+
+reg.mex.HW <- lm(mex$HW_log ~ mex$SL_log)
+sd.mex.HW <- rstandard(reg.mex.HW)
+reg.mex.HW.plot <- ggplot(mex, aes(x = SL_log, y = HW_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.HW.plot
+
+reg.mex.SnL <- lm(mex$SnL_log ~ mex$SL_log)
+sd.mex.SnL <- rstandard(reg.mex.SnL)
+reg.mex.SnL.plot <- ggplot(mex, aes(x = SL_log, y = SnL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.SnL.plot
+
+reg.mex.OL <- lm(mex$OL_log ~ mex$SL_log)
+sd.mex.OL <- rstandard(reg.mex.OL)
+reg.mex.OL.plot <- ggplot(mex, aes(x = SL_log, y = OL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.OL.plot
+
+reg.mex.FLA <- lm(mex$FLA ~ mex$SL)
+sd.mex.FLA <- rstandard(reg.mex.FLA)
+reg.mex.FLA.plot <- ggplot(mex, aes(x = SL, y = FLA)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.FLA.plot
+
+
+```
+
+#### Residuals 
+
+-   **STEP TWO:** get residuals for each individual for traits that were influenced by body size
+
+```{r echo=FALSE}
+
+##### LAT #####
+res.lat.D <- resid(reg.lat.D)
+
+res.lat.P1 <- resid(reg.lat.P1)
+
+res.lat.P1.R <- resid(reg.lat.P1.R)
+
+res.lat.LLSC <- resid(reg.lat.LLSC)
+
+res.lat.SBLL <- resid(reg.lat.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
+
+res.lat.BD <- resid(reg.lat.BD)
+
+res.lat.CPD <- resid(reg.lat.CPD)
+
+res.lat.CPL <- resid(reg.lat.CPL)
+
+res.lat.PreDL <- resid(reg.lat.PreDL)
+
+res.lat.DbL <- resid(reg.lat.DbL)
+
+res.lat.HL <- resid(reg.lat.HL)
+
+res.lat.HD <- resid(reg.lat.HD)
+
+res.lat.HW <- resid(reg.lat.HW)
+
+res.lat.SnL <- resid(reg.lat.SnL)
+
+res.lat.OL <- resid(reg.lat.OL)
+
+##### FORM #####
+
+res.form.D <- resid(reg.form.D)
+
+res.form.P1 <- resid(reg.form.P1)
+
+res.form.P1.R <- resid(reg.form.P1.R)
+
+res.form.LLSC <- resid(reg.form.LLSC)
+
+res.form.SBLL <- resid(reg.form.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
+
+res.form.BD <- resid(reg.form.BD)
+
+res.form.CPD <- resid(reg.form.CPD)
+
+res.form.CPL <- resid(reg.form.CPL)
+
+res.form.PreDL <- resid(reg.form.PreDL)
+
+res.form.DbL <- resid(reg.form.DbL)
+
+res.form.HL <- resid(reg.form.HL)
+
+res.form.HD <- resid(reg.form.HD)
+
+res.form.HW <- resid(reg.form.HW)
+
+res.form.SnL <- resid(reg.form.SnL)
+
+res.form.OL <- resid(reg.form.OL)
+
+
+##### MEX #####
+res.mex.D <- resid(reg.mex.D)
+
+res.mex.P1 <- resid(reg.mex.P1)
+
+res.mex.P1.R <- resid(reg.mex.P1.R)
+
+res.mex.LLSC <- resid(reg.mex.LLSC)
+
+res.mex.SBLL <- resid(reg.mex.SBLL)
+
+res.mex.BD <- resid(reg.mex.BD)
+
+res.mex.CPD <- resid(reg.mex.CPD)
+
+res.mex.CPL <- resid(reg.mex.CPL)
+
+res.mex.PreDL <- resid(reg.mex.PreDL)
+
+res.mex.DbL <- resid(reg.mex.DbL)
+
+res.mex.HL <- resid(reg.mex.HL)
+
+res.mex.HD <- resid(reg.mex.HD)
+
+res.mex.HW <- resid(reg.mex.HW)
+
+res.mex.SnL <- resid(reg.mex.SnL)
+
+res.mex.OL <- resid(reg.mex.OL)
+
+
+```
+
+-   **STEP THREE:** convert residuals to absolute value
+
+```{r}
+
+##### LAT #####
+
+abs.lat.D <- abs(res.lat.D)
+mean(abs.lat.D)
+
+abs.lat.P1 <- abs(res.lat.P1)
+mean(abs.lat.P1)
+
+abs.lat.P1.R <- abs(res.lat.P1.R)
+mean(abs.lat.P1.R)
+
+abs.lat.LLSC <- abs(res.lat.LLSC)
+mean(abs.lat.LLSC)
+
+abs.lat.SBLL <- abs(res.lat.SBLL)
+mean(abs.lat.SBLL)
+
+abs.lat.BD <- abs(res.lat.BD)
+mean(abs.lat.BD)
+
+abs.lat.CPD <- abs(res.lat.CPD)
+mean(abs.lat.CPD)
+
+abs.lat.CPL <- abs(res.lat.CPL)
+mean(abs.lat.CPL)
+
+abs.lat.PreDL <- abs(res.lat.PreDL)
+mean(abs.lat.PreDL)
+
+abs.lat.DbL <- abs(res.lat.DbL)
+mean(abs.lat.DbL)
+
+abs.lat.HL <- abs(res.lat.HL)
+mean(abs.lat.HL)
+
+abs.lat.HD <- abs(res.lat.HD)
+mean(abs.lat.HD)
+
+abs.lat.HW <- abs(res.lat.HW)
+mean(abs.lat.HW)
+
+abs.lat.SnL <- abs(res.lat.SnL)
+mean(abs.lat.SnL)
+
+abs.lat.OL <- abs(res.lat.OL)
+mean(abs.lat.OL)
+
+
+##### FORM #####
+
+abs.form.D <- abs(res.form.D)
+mean(abs.form.D)
+
+abs.form.P1 <- abs(res.form.P1)
+mean(abs.form.P1)
+
+abs.form.P1.R <- abs(res.form.P1.R)
+mean(abs.form.P1.R)
+
+abs.form.LLSC <- abs(res.form.LLSC)
+mean(abs.form.LLSC)
+
+abs.form.SBLL <- abs(res.form.SBLL)
+mean(abs.form.SBLL)
+
+abs.form.BD <- abs(res.form.BD)
+mean(abs.form.BD)
+
+abs.form.CPD <- abs(res.form.CPD)
+mean(abs.form.CPD)
+
+abs.form.CPL <- abs(res.form.CPL)
+mean(abs.form.CPL)
+
+abs.form.PreDL <- abs(res.form.PreDL)
+mean(abs.form.PreDL)
+
+abs.form.DbL <- abs(res.form.DbL)
+mean(abs.form.DbL)
+
+abs.form.HL <- abs(res.form.HL)
+mean(abs.form.HL)
+
+abs.form.HD <- abs(res.form.HD)
+mean(abs.form.HD)
+
+abs.form.HW <- abs(res.form.HW)
+mean(abs.form.HW)
+
+abs.form.SnL <- abs(res.form.SnL)
+mean(abs.form.SnL)
+
+abs.form.OL <- abs(res.form.OL)
+mean(abs.form.OL)
+
+##### MEX #####
+
+abs.mex.D <- abs(res.mex.D)
+mean(abs.mex.D)
+
+abs.mex.P1 <- abs(res.mex.P1)
+mean(abs.mex.P1)
+
+abs.mex.P1.R <- abs(res.mex.P1.R)
+mean(abs.mex.P1.R)
+
+abs.mex.LLSC <- abs(res.mex.LLSC)
+mean(abs.mex.LLSC)
+
+abs.mex.SBLL <- abs(res.mex.SBLL)
+mean(abs.mex.SBLL)
+
+abs.mex.BD <- abs(res.mex.BD)
+mean(abs.mex.BD)
+
+abs.mex.CPD <- abs(res.mex.CPD)
+mean(abs.mex.CPD)
+
+abs.mex.CPL <- abs(res.mex.CPL)
+mean(abs.mex.CPL)
+
+abs.mex.PreDL <- abs(res.mex.PreDL)
+mean(abs.mex.PreDL)
+
+abs.mex.DbL <- abs(res.mex.DbL)
+mean(abs.mex.DbL)
+
+abs.mex.HL <- abs(res.mex.HL)
+mean(abs.mex.HL)
+
+abs.mex.HD <- abs(res.mex.HD)
+mean(abs.mex.HD)
+
+abs.mex.HW <- abs(res.mex.HW)
+mean(abs.mex.HW)
+
+abs.mex.SnL <- abs(res.mex.SnL)
+mean(abs.mex.SnL)
+
+abs.mex.OL <- abs(res.mex.OL)
+mean(abs.mex.OL)
+
+
+#let's get this into the raw1 data set so that we can plot this more easily
+
+abs.res.D <- c(abs.lat.D, abs.form.D, abs.mex.D)
+abs.res.P1 <- c(abs.lat.P1, abs.form.P1, abs.mex.P1)
+abs.res.P1.R <- c(abs.lat.P1.R, abs.form.P1.R, abs.mex.P1.R)
+abs.res.LLSC<- c(abs.lat.LLSC, abs.form.LLSC, abs.mex.LLSC)
+abs.res.SBLL<- c(abs.lat.SBLL, abs.form.SBLL, abs.mex.SBLL)
+abs.res.BD<- c(abs.lat.BD, abs.form.BD, abs.mex.BD)
+abs.res.CPD<- c(abs.lat.CPD, abs.form.CPD, abs.mex.CPD)
+abs.res.CPL<- c(abs.lat.CPL, abs.form.CPL, abs.mex.CPL)
+abs.res.PreDL <- c(abs.lat.PreDL, abs.form.PreDL, abs.mex.PreDL)
+abs.res.DbL <- c(abs.lat.DbL, abs.form.DbL, abs.mex.DbL)
+abs.res.HL<- c(abs.lat.HL, abs.form.HL, abs.mex.HL)
+abs.res.HD<- c(abs.lat.HD, abs.form.HD, abs.mex.HD)
+abs.res.HW <- c(abs.lat.HW, abs.form.HW, abs.mex.HW)
+abs.res.SnL <- c(abs.lat.SnL, abs.form.SnL, abs.mex.SnL)
+abs.res.OL <- c(abs.lat.OL, abs.form.OL, abs.mex.OL)
+
+
+raw2 <- cbind(raw1, abs.res.D, abs.res.P1, abs.res.P1.R, abs.res.LLSC, abs.res.SBLL, abs.res.BD, abs.res.CPD, abs.res.CPL, abs.res.PreDL, abs.res.DbL, abs.res.HL, abs.res.HD, abs.res.HW, abs.res.SnL, abs.res.OL)
+
+```
+
+#### Residual Comparisons 
+
+-   **STEP FOUR:** plot the mean of the |residuals| for both species, for all traits influenced by body size
+
+```{r}
+
+library(ggbeeswarm)
+library(dplyr)
+
+
+ggplot(raw2, aes(SPP, abs.res.D)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+scatter_violin <- ggplot(data=raw2, aes(x=SPP, y=abs.res.D)) +
+  geom_violin(trim = FALSE) + 
+  stat_summary(
+    fun.data = "mean_sdl",  fun.args = list(mult = 1),
+    geom = "pointrange", color = "black"
+    )
+
+print(scatter_violin)
+
+scatter_violin1 <- ggplot(data=raw2, aes(x=SPP, y=abs.res.D)) +
+  geom_violin(trim = FALSE) + 
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="crossbar", fill="red", width=0.03)
+
+print(scatter_violin1)
+
+
+
+ggplot(raw2, aes(SPP, abs.res.P1)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.P1.R)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
+
+ggplot(raw2, aes(SPP, abs.res.LLSC)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.SBLL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.BD)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.CPD)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.CPL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
+
+ggplot(raw2, aes(SPP, abs.res.PreDL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.DbL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.HL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.HD)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.HW)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.SnL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(raw2, aes(SPP, abs.res.OL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+
+
+```
+
+## Comparing variation 
+
+### Variance tests {.tabset .tabset-fade .tabset-pills}
+
+  (1) t-test for residuals, continuous (do an f-test too, might be cool)
+  (2) residual discrete will go through glmer
+  (3) raw discrete will go through f-test (no idea how to do this otherwise), and results will be compared to visualizations to check for discrepencies. 
+
+*(note: did non-parametric instead of transforming, but Mike said to transform, so I copied that work to the 'morphology-analysis-final' Rmd).*
+
+F-test on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F-test on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? Based on the regressions, if the trait was influenced by body size, I will perform a t-test on the absolute value of the residuals. If the trait was not influenced by body size, I will perform an F-test of variance on the raw data.
+
+**Quick results summary:** For the F-test on raw data, none of the traits were significantly different (P2L/R, A, SBDF, FLA). For the t-tests on residuals, the only significant traits are left pectoral (), right pectoral (lat>form), scales above lateral line (), scales below lateral line (form>lat), and head length ().
+
+```         
+-   will do two-tailed and check out the residual means to infer direction; for traits in which we use raw data, a one-tailed f-test will be perfomed in both direction to determine which species is varying more. We will also visulize the variation using a histogram to confirm direction results.
+```
+#### (1) Continuous, residuals
+
+
+   -    will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
+   -    this will be for the traits that *did* have a significant regression compared to SL; will be using the absolute value residuals. 
+   -    For continuous traits, we will be using the transformed data.
+    
+##### T-tests
+
+```{r, echo=FALSE}
+
+
+ttest.abs.BD <- t.test(abs.lat.BD, abs.form.BD, alternative = "two.sided")
+ttest.abs.BD
+
+
+ttest.abs.CPD <- t.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
+ttest.abs.CPD
+
+
+ttest.abs.CPL <- t.test(abs.lat.CPL, abs.form.CPL, alternative = "two.sided")
+ttest.abs.CPL
+
+
+ttest.abs.PreDL <- t.test(abs.lat.PreDL, abs.form.PreDL, alternative = "two.sided")
+ttest.abs.PreDL
+
+
+ttest.abs.DbL <- t.test(abs.lat.DbL, abs.form.DbL, alternative = "two.sided")
+ttest.abs.DbL
+
+
+ttest.abs.HL <- t.test(abs.lat.HL, abs.form.HL, alternative = "two.sided")
+ttest.abs.HL
+
+
+ttest.abs.HD <- t.test(abs.lat.HD, abs.form.HD, alternative = "two.sided")
+ttest.abs.HD
+
+
+ttest.abs.HW <- t.test(abs.lat.HW, abs.form.HW, alternative = "two.sided")
+ttest.abs.HW
+
+
+ttest.abs.SnL <- t.test(abs.lat.SnL, abs.form.SnL, alternative = "two.sided")
+ttest.abs.SnL
+
+
+ttest.abs.OL <- t.test(abs.lat.OL, abs.form.OL, alternative = "two.sided")
+ttest.abs.OL
+
+
+
+
+```
+
+##### F-tests
+
+Gonna try F-tests for funsies. Would be interesting if both are varying, but in different ways (amazon with identical variance around best fit, whereas lat with more variation around best fit for example).
+
+```{r, echo=FALSE}
+
+
+Ftest.abs.BD <- var.test(abs.lat.BD, abs.form.BD, alternative = "two.sided")
+Ftest.abs.BD
+
+
+Ftest.abs.CPD <- var.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
+Ftest.abs.CPD
+
+
+Ftest.abs.CPL <- var.test(abs.lat.CPL, abs.form.CPL, alternative = "two.sided")
+Ftest.abs.CPL
+
+
+Ftest.abs.PreDL <- var.test(abs.lat.PreDL, abs.form.PreDL, alternative = "two.sided")
+Ftest.abs.PreDL
+
+
+Ftest.abs.DbL <- var.test(abs.lat.DbL, abs.form.DbL, alternative = "two.sided")
+Ftest.abs.DbL
+
+
+Ftest.abs.HL <- var.test(abs.lat.HL, abs.form.HL, alternative = "two.sided")
+Ftest.abs.HL
+
+
+Ftest.abs.HD <- var.test(abs.lat.HD, abs.form.HD, alternative = "two.sided")
+Ftest.abs.HD
+
+
+Ftest.abs.HW <- var.test(abs.lat.HW, abs.form.HW, alternative = "two.sided")
+Ftest.abs.HW
+
+
+Ftest.abs.SnL <- var.test(abs.lat.SnL, abs.form.SnL, alternative = "two.sided")
+Ftest.abs.SnL
+
+
+Ftest.abs.OL <- var.test(abs.lat.OL, abs.form.OL, alternative = "two.sided")
+Ftest.abs.OL
+
+
+
+
+```
+
+***
+
+#### (2) Discrete, residuals
+
+Logan suggested doing a glm with poisson distribution (because it is count data) for these relationships. I originally performed Mann Whitney U tests, so will also include that. Overall, results don't differ even though exact values are slightly different.
+
+##### GLMs
+
+```{r}
+
+raw3 <- raw2[raw2$SPP !="p.mexicana", ]
+
+glm_D <- glm(abs.res.D~SPP, data=raw3)
+print(summary(glm_D), show.residuals=TRUE)
+
+glm_P1 <- glm(abs.res.P1~SPP, data=raw3)
+print(summary(glm_P1), show.residuals=TRUE)
+
+glm_P1.R <- glm(abs.res.P1.R~SPP, data=raw3)
+print(summary(glm_P1.R), show.residuals=TRUE)
+
+glm_LLSC <- glm(abs.res.LLSC~SPP, data=raw3)
+print(summary(glm_LLSC), show.residuals=TRUE)
+
+```
+
+
+##### Mann Whitney U tests
+
+This will be performed on traits that **DID** vary with SL.
+
+```{r}
+
+(MW_D <- wilcox.test(abs.res.D~SPP, data=raw3, conf.int=T))
+
+(MW_P1 <- wilcox.test(abs.res.P1~SPP, data=raw3, conf.int=T))
+
+(MW_P1R <- wilcox.test(abs.res.P1.R~SPP, data=raw3, conf.int=T))
+
+(MW_LLSC <- wilcox.test(abs.res.LLSC~SPP, data=raw3, conf.int=T))
+
+
+```
+
+##### Variance of residuals
+
+I did notice that the deviance residual information was out of whack (median not super close to zero in many cases, the max and min VERY different). In the EXTRAS rscript, I ran a DHARMa test to see what the issue was, and apparently they fail the levene's test for homogeneity of variance. This indicates that while the AVERAGE variance is not different between the two species, there could be a different in how the species are varying, which may be interesting (similar to the F-tests of the continuous residuals). Will run some levene's test for these discrete residuals, just to see. 
+
+```{r}
+
+library(car)
+library(carData)
+
+(L_D <- leveneTest(abs.res.D~SPP, data=raw3))
+
+(L_P1 <- leveneTest(abs.res.P1~SPP, data=raw3))
+
+(L_P1R <- leveneTest(abs.res.P1.R~SPP, data=raw3))
+
+(L_LLSC <- leveneTest(abs.res.LLSC~SPP, data=raw3))
+
+```
+
+
+***
+
+#### (3) Discrete, raw
+
+EVEN THOUGH THESE ARE DISCRETE, NO IDEA WHAT ELSE TO DO WITH THEM (glmm on raw data will just compare means). Did both F-test and Levene's test. Get the same overall results, albeit slightly different values. Might go with Levene's since it is good with non-normal data. 
+
+This will only be for the traits that did **not** have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA); none of these traits were transformed, so just doing raw for now.
+
+##### F-tests
+
+```{r}
+var.left.pel <- var.test(lat$P2.L, form$P2.L, alternative = "two.sided")
+var.left.pel
+
+ggplot(raw2, aes(SPP, P2.L)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.rig.pel <- var.test(lat$P2.R, form$P2.R, alternative = "two.sided")
+var.rig.pel
+
+ggplot(raw2, aes(SPP, P2.R)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.anal <- var.test(lat$A, form$A, alternative = "two.sided")
+var.anal
+
+ggplot(raw2, aes(SPP, A)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.sca.ab.ll <- var.test(lat$SALL, form$SALL, alternative = "two.sided")
+var.sca.ab.ll
+
+ggplot(raw2, aes(SPP, SALL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.sca.df <- var.test(lat$SBDF, form$SBDF, alternative = "two.sided")
+var.sca.df
+
+ggplot(raw2, aes(SPP, SBDF)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.flu.asy <- var.test(lat$FLA, form$FLA, alternative = "two.sided")
+var.flu.asy
+
+ggplot(raw2, aes(SPP, FLA)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+```
+
+***
+
+
+##### Levene's test
+
+
+Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
+
+```{r}
+
+(LT_P2L <- leveneTest(P2.L~SPP, data=raw3)) #gives nothing since it's all the same value
+
+(LT_P2R <- leveneTest(P2.R~SPP, data=raw3)) #same as above
+
+(LT_A <- leveneTest(A~SPP, data=raw3)) 
+
+(LT_SALL <- leveneTest(SALL~SPP, data=raw3))
+
+(LT_SBLL <- leveneTest(SBLL~SPP, data=raw3))
+
+(LT_SBDF <- leveneTest(SBDF~SPP, data=raw3))
+
+(LT_FLA <- leveneTest(FLA~SPP, data=raw3))
+
+
+
+```
+
+
+
+
+
+
+### Summary of variance results 
+
+WHY WON'T THIS TABLE WORK!!!!!!!!       
+
+
+average.table <- matrix(c(MW_D$p.value, mean(abs.lat.D, na.rm = TRUE), mean(abs.form.D, na.rm = TRUE), MW_P1$p.value, mean(abs.lat.P1, na.rm = TRUE), mean(abs.form.P1, na.rm = TRUE), LT_P2R$"Pr(>F)", mean(lat$P2.R, na.rm = TRUE), mean(form$P2.R, na.rm = TRUE), LT_P2R$"Pr(>F)", mean(lat$P2.L, na.rm = TRUE), mean(form$P2.L, na.rm = TRUE), LT_A$"Pr(>F)", mean(lat$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), MW_P1R$p.value, mean(abs.lat.P1.R, na.rm = TRUE), mean(abs.form.P1.R, na.rm = TRUE), MW_LLSC$p.value, mean(abs.lat.LLSC, na.rm = TRUE), mean(abs.form.LLSC, na.rm = TRUE), LT_SALL$"Pr(>F)", mean(lat$SALL, na.rm = TRUE), mean(form$SALL, na.rm = TRUE), LT_SBLL$"Pr(>F)", mean(abs.lat.SBLL, na.rm = TRUE), mean(abs.form.SBLL, na.rm = TRUE), LT_SBDF$"Pr(>F)", mean(lat$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), ttest.abs.BD$p.value, mean(abs.lat.BD, na.rm = TRUE), mean(abs.form.BD, na.rm = TRUE), ttest.abs.CPD$p.value, mean(abs.lat.CPD, na.rm = TRUE), mean(abs.form.CPD, na.rm = TRUE), ttest.abs.CPL$p.value, mean(abs.lat.CPL, na.rm = TRUE), mean(abs.form.CPL, na.rm = TRUE), ttest.abs.PreDL$p.value, mean(abs.lat.PreDL, na.rm = TRUE), mean(abs.form.PreDL, na.rm = TRUE), ttest.abs.DbL$p.value, mean(abs.lat.DbL, na.rm = TRUE), mean(abs.form.DbL, na.rm = TRUE), ttest.abs.HL$p.value, mean(abs.lat.HL, na.rm = TRUE), mean(abs.form.HL, na.rm = TRUE), ttest.abs.HD$p.value, mean(abs.lat.HD, na.rm = TRUE), mean(abs.form.HD, na.rm = TRUE), ttest.abs.HW$p.value, mean(abs.lat.HW, na.rm = TRUE), mean(abs.form.HW, na.rm = TRUE), ttest.abs.SnL$p.value, mean(abs.lat.SnL, na.rm = TRUE), mean(abs.form.SnL, na.rm = TRUE), ttest.abs.OL$p.value, mean(abs.lat.OL, na.rm = TRUE), mean(abs.form.OL, na.rm = TRUE), LT_FLA$"Pr(>F)", mean(lat$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE)), ncol=3, byrow=TRUE)
+
+colnames(average.table)<- c("p-value for variance", "lat mean", "form mean")
+
+rownames(average.table) <- c("dorsal rays", "L pect rays", "R pelvic rays*", "L pelvic rays*", "Anal rays", "R pect rays*", "lat line scales", "scales above LL", "scales below LL", "scales before dor*", "body dep", "peduncle dep", "peduncle leng", "pre-dorsal", "dorsal base", "head length", "head depth", "head width", "snout leng", "orbital leng", "fluct. asymmetries")
+
+average.table
+
+
+
+
+
+### Variance plots
+
+
+```{r}
+
+plot_multi_histogram <- function(df, feature, label_column) {
+    plt <- ggplot(df, aes(x=eval(parse(text=feature)), fill=eval(parse(text=label_column)))) +
+    geom_histogram(bins=10, alpha=0.4, position="identity", aes(y = ..density..), color="black") +
+    geom_density(alpha=0.2)  +
+    labs(x=feature, y = "Density")
+    plt + guides(fill=guide_legend(title=label_column))
+}
+
+plot_multi_histogram(raw3, "abs.res.CPD", "SPP")
+
+plot_multi_histogram(raw3, "abs.res.DbL", "SPP")
+
+plot_multi_histogram(raw3, "abs.res.P1", "SPP")
+
+plot_multi_histogram(raw3, "abs.res.P1.R", "SPP")
+
+
+```
+
+
+
+
+## PCA analysis 
+
+### PCA {.tabset .tabset-fade .tabset-pills}
+
+LOGAN: CHECK THAT EACH VARIABLES IS NEAR NORMALLY DISTRIBUTED. IF NOT, LOG TRANSFORM BEFORE PCA. ALSO CHECK THAT PCA CALCULATES Z SCORES AND PLOTS BASED ON THAT; IF NOT CONVERT TO Z SCORES THEN RUN PCA.
+
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **116 Sailfin and 186 Amazon**.
+
+#### Chart
+
+```{r}
+(chart <- matrix(c("Variable chart:", "D: dorsal ray count", "P1: left pectoral ray count", "P2.R: right pelvic rays", "P2.L: left pelvic rays", "A: anal rays", "P1.R: right pectoral ray count", "LLSC: lateral line scale count", "SALL: scales above lateral line", "SBLL: scales below lateral line", "SBDF: scales before dorsal fin", "TL: total length", "SL: standard length", "BD: body depth", "CPD: caudal peduncle depth", "CPL: caudal peduncle length", "PreDL: pre-dorsal length", "DbL: dorsal base length", "HL/HW/HD: head length/width/depth", "SnL: snout length", "OL: ocular length"), ncol=1, byrow=TRUE))
+```
+
+#### Loadings
+
+```{r}
+
+raw1a <- subset(raw1, select = -c(17:18) )
+
+#PCA <- prcomp(raw1a[, 15:32], center=TRUE, scale. = TRUE) #includes all but pelvic traits, since they are the same in all species WILL SCALE/CENTER DATA ON MY OWN, LOGAN SAID IT IS NOT ALWAYS DOING IT FOR YOU EVEN WHEN YOU SPECIFY
+
+
+z.scores <- scale(raw1a[, 15:32], center = TRUE, scale = TRUE)
+
+raw1a <- cbind(raw1a, z.scores)
+
+PCA <- prcomp(raw1a[, 45:62])
+
+summary(PCA)
+
+(loadings <- PCA$rotation[, 1:5])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+
+VM_PCA <- varimax(PCA$rotation) 
+
+VM_PCA
+
+```
+
+
+#### Plots
+
+##### Component extractions
+
+```{r}
+
+library(AMR) 
+library(ggplot2)
+library(ggfortify)
+
+(PCA$sdev ^ 2)
+
+evplot <- function(ev)
+{
+	# Broken stick model (MacArthur 1957)
+	n <- length(ev)
+	bsm <- data.frame(j=seq(1:n), p=0)
+	bsm$p[1] <- 1/n
+	for (i in 2:n) bsm$p[i] <- bsm$p[i-1] + (1/(n + 1 - i))
+	bsm$p <- 100*bsm$p/n
+	# Plot eigenvalues and % of variation for each axis
+	op <- par(mfrow=c(2,1))
+	barplot(ev, main="Eigenvalues", col="bisque", las=2)
+	abline(h=mean(ev), col="red")
+	legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
+	barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
+		main="% variation", col=c("bisque",2), las=2)
+	legend("topright", c("% eigenvalue", "Broken stick model"), 
+		pch=15, col=c("bisque",2), bty="n")
+	par(op)
+}
+
+
+ev <- PCA$sdev^2 
+evplot(ev) #according to Kaiser-Guttman criteron, we can use the first 4 PCs, even though the broken stick model shows only the first above the red bar plot... not 100% confident I know what this means, but pretty sure PC1 is body size
+
+
+```
+
+
+##### PCA 1v2
+
+
+```{r}
+
+plot1<- autoplot(PCA, data = raw1, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot1
+
+```
+
+###### By zone
+
+```{r}
+
+plot2<- autoplot(PCA, data = raw1, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot2
+
+```
+
+
+###### By Basin
+
+```{r}
+
+plot3<- autoplot(PCA, data = raw1, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot3
+
+```
+
+
+###### By watershed
+
+```{r}
+plot4<- autoplot(PCA, data = raw1, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot4
+
+```
+
+##### PCA 2v3
+
+```{r}
+
+plot5<- autoplot(PCA, x=2, y=3, data = raw1, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot5
+
+```
+
+
+###### By zone
+
+```{r}
+
+plot6<- autoplot(PCA, x=2, y=3, data = raw1, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot6
+
+```
+
+
+###### By basin
+
+```{r}
+
+plot7<- autoplot(PCA, x=2, y=3, data = raw1, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot7
+
+```
+
+
+###### By watershed
+
+```{r}
+
+plot8<- autoplot(PCA, x=2, y=3, data = raw1, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot8
+
+```
+
+***
+
+
+#### Density comparisons
+
+I will try to compare the area of the density clusters for the PCA. I will attempt to do this use EMD (earth mover's distance). From what I understand, this will basically tell me how much "work" is needed to transform one distribution into another, thus providing a metric of the overall difference in shape between two distributions. 
+
+
+```{r}
+library(emdist)
+
+
+```
+<br><br><br><br><br>
+
+***
+
+# Filtered data
+
+Now I will repeat analysis on a dataset that filters for fish above 32.5mm (this is the average for the range I found in literature, 28-37mm). This would confirm that all fish are likely adults, and remove any bias from juvenile proportions (ex. if juvenile head is proportionately larger than expected for body).
+
+## Initial steps 
+
+Data collection 
+
+```{r}
+
+library(dplyr)
+
+rawF <- filter(raw1,SL>=32.5)
+
+rawF1 <- rawF[-c(150), ] #this takes out the monster fish too
+
+
+```
+
+### Checking normality 
+
+#### Checking normality {.tabset .tabset-fade .tabset-pills}
+
+I will use Shapiro-wilke, histograms, and QQ plots to determine what traits are normal. These will only be performed on continuous variables, as discrete variables are not normal by nature.
+
+**Conclusions:** literally all of them are NOT normal... will log transform them and run parametric tests (t-test, F-test, ANOVA). Not sure what to do with the discrete variables...[Logan said to use non-parametric OR a glmer with poisson distribution]
+
+##### SW Test 
+
+```{r}
+
+shapiro.test(rawF$SL)
+
+shapiro.test(rawF$BD)
+
+shapiro.test(rawF$CPD)
+
+shapiro.test(rawF$CPL)
+
+shapiro.test(rawF$PreDL)
+
+shapiro.test(rawF$DbL)
+
+shapiro.test(rawF$HL)
+
+shapiro.test(rawF$HD)
+
+shapiro.test(rawF$HW)
+
+shapiro.test(rawF$SnL)
+
+shapiro.test(rawF$OL)
+
+
+
+
+```
+
+##### Histograms 
+
+```{r}
+
+hist(rawF$SL)
+
+hist(rawF$BD)
+
+hist(rawF$CPD)
+
+hist(rawF$CPL)
+
+hist(rawF$PreDL)
+
+hist(rawF$DbL)
+
+hist(rawF$HL)
+
+hist(rawF$HD)
+
+hist(rawF$HW)
+
+hist(rawF$SnL)
+
+hist(rawF$OL)
+
+
+```
+
+##### QQ plots 
+
+```{r}
+
+qqnorm(rawF$SL)
+qqline(rawF$SL)
+
+qqnorm(rawF$BD)
+qqline(rawF$BD)
+
+qqnorm(rawF$CPD)
+qqline(rawF$CPD)
+
+qqnorm(rawF$CPL)
+qqline(rawF$CPL)
+
+qqnorm(rawF$PreDL)
+qqline(rawF$PreDL)
+
+qqnorm(rawF$DbL)
+qqline(rawF$DbL)
+
+qqnorm(rawF$HL)
+qqline(rawF$HL)
+
+qqnorm(rawF$HD)
+qqline(rawF$HD)
+
+qqnorm(rawF$HW)
+qqline(rawF$HW)
+
+qqnorm(rawF$SnL)
+qqline(rawF$SnL)
+
+qqnorm(rawF$OL)
+qqline(rawF$OL)
+
+
+
+```
+
+
+
+
+
+
+#### Log transformations
+
+Since all of the continuous characters were not normal, I will log transform them, and proceed with the transformed data in all analyses.
+
+```{r}
+rawF[paste0(names(rawF), '_log')] <- log(rawF[, 25:35], 10)
+#for some reason did the log of the whole data frame instead of those specific columns, so I will just remove the unnecessary columns instead of spending time on what went wrong.
+
+rawF <- subset(rawF, select = -c(48:77) )
+
+#double checking normality with a SW test and QQ plot
+
+shapiro.test(rawF$SL_log)
+
+shapiro.test(rawF$BD_log)
+
+shapiro.test(rawF$CPD_log)
+
+shapiro.test(rawF$CPL_log)
+
+shapiro.test(rawF$PreDL_log)
+
+shapiro.test(rawF$DbL_log)
+
+shapiro.test(rawF$HL_log)
+
+shapiro.test(rawF$HD_log)
+
+shapiro.test(rawF$HW_log)
+
+shapiro.test(rawF$SnL_log)
+
+shapiro.test(rawF$OL_log)
+
+qqnorm(rawF$SL_log)
+qqline(rawF$SL_log)
+
+qqnorm(rawF$BD_log)
+qqline(rawF$BD_log)
+
+qqnorm(rawF$CPD_log)
+qqline(rawF$CPD_log)
+
+qqnorm(rawF$CPL_log)
+qqline(rawF$CPL_log)
+
+qqnorm(rawF$PreDL_log)
+qqline(rawF$PreDL_log)
+
+qqnorm(rawF$DbL_log)
+qqline(rawF$DbL_log)
+
+qqnorm(rawF$HL_log)
+qqline(rawF$HL_log)
+
+qqnorm(rawF$HD_log)
+qqline(rawF$HD_log)
+
+qqnorm(rawF$HW_log)
+qqline(rawF$HW_log)
+
+qqnorm(rawF$SnL_log)
+qqline(rawF$SnL_log)
+
+qqnorm(rawF$OL_log)
+qqline(rawF$OL_log)
+
+
+```
+
+## Correcting for body size (residuals) 
+
+### SL correction {.tabset .tabset-fade .tabset-pills}
+
+Since amazons are in general bigger than sailfin, we don't want any results to be due to this difference in body size bias. Therefore, we will see what traits are influenced by body size (regressions) and correct for body size when necessary (absolute value of residuals). We can then use the residuals when comparing between species for traits that are influenced by body size, and raw/transformed data for traits that are not influenced by body size. I will also calculate standardized residuals to compare residuals across traits in later analyses.
+
+**Quick results summary:** traits *not* influenced by body size are left & right pelvic, anal, scales above and below lateral line (except in mexicana), scales before dorsal fin and fluctuating asymmetry; all other traits influenced by body size.
+
+#### Regressions 
+
+-   STEP ONE: plot trait vs body size
+
+```{r}
+
+library(ggplot2)
+library(ggpubr)
+
+
+
+lat.F <- rawF[rawF$SPP == "p.latipinna",]
+
+
+form.F <- rawF[rawF$SPP == "p.formosa",]
+
+
+mex.F <- rawF[rawF$SPP == "p.mexicana",]
+
+
+
+##### LAT #####
+F.reg.lat.D <- lm(lat.F$D ~ lat.F$SL)
+F.sd.lat.D <- rstandard(F.reg.lat.D)
+F.reg.lat.D.plot <- ggplot(lat.F, aes(x = SL, y = D)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.D.plot
+
+F.reg.lat.P1 <- lm(lat.F$P1 ~ lat.F$SL)
+F.sd.lat.P1 <- rstandard(F.reg.lat.P1)
+F.reg.lat.P1.plot <- ggplot(lat.F, aes(x = SL, y = P1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.P1.plot
+
+F.reg.lat.P2.L <- lm(lat.F$P2.L ~ lat.F$SL)
+F.sd.lat.P2.L <- rstandard(F.reg.lat.P2.L)
+F.reg.lat.P2.L.plot <- ggplot(lat.F, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.P2.L.plot
+
+F.reg.lat.P2.R <- lm(lat.F$P2.R ~ lat.F$SL)
+F.sd.lat.P2.R <- rstandard(F.reg.lat.P2.R)
+F.reg.lat.P2.R.plot <- ggplot(lat.F, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.P2.R.plot
+
+F.reg.lat.A <- lm(lat.F$A ~ lat.F$SL)
+F.sd.lat.A <- rstandard(F.reg.lat.A)
+F.reg.lat.A.plot <- ggplot(lat.F, aes(x = SL, y = A)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.A.plot
+
+F.reg.lat.P1.R <- lm(lat.F$P1.R ~ lat.F$SL)
+F.sd.lat.P1.R <- rstandard(F.reg.lat.P1.R)
+F.reg.lat.P1.R.plot <- ggplot(lat.F, aes(x = SL, y = P1.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.P1.R.plot
+
+F.reg.lat.LLSC <- lm(lat.F$LLSC ~ lat.F$SL)
+F.sd.lat.LLSC <- rstandard(F.reg.lat.LLSC)
+F.reg.lat.LLSC.plot <- ggplot(lat.F, aes(x = SL, y = LLSC)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.LLSC.plot
+
+F.reg.lat.SALL <- lm(lat.F$SALL ~ lat.F$SL)
+F.sd.lat.SALL <- rstandard(F.reg.lat.SALL)
+F.reg.lat.SALL.plot <- ggplot(lat.F, aes(x = SL, y = SALL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.SALL.plot
+
+F.reg.lat.SBLL <- lm(lat.F$SBLL ~ lat.F$SL)
+F.sd.lat.SBLL <- rstandard(F.reg.lat.SBLL)
+F.reg.lat.SBLL.plot <- ggplot(lat.F, aes(x = SL, y = SBLL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.SBLL.plot
+
+F.reg.lat.SBDF <- lm(lat.F$SBDF ~ lat.F$SL)
+F.sd.lat.SBDF <- rstandard(F.reg.lat.SBDF)
+F.reg.lat.SBDF.plot <- ggplot(lat.F, aes(x = SL, y = SBDF)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.SBDF.plot
+
+F.reg.lat.BD <- lm(lat.F$BD_log ~ lat.F$SL_log)
+F.sd.lat.BD <- rstandard(F.reg.lat.BD)
+F.reg.lat.BD.plot <- ggplot(lat.F, aes(x = SL_log, y = BD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.BD.plot
+
+F.reg.lat.CPD <- lm(lat.F$CPD_log ~ lat.F$SL_log)
+F.sd.lat.CPD <- rstandard(F.reg.lat.CPD)
+F.reg.lat.CPD.plot <- ggplot(lat.F, aes(x = SL_log, y = CPD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.CPD.plot
+
+F.reg.lat.CPL <- lm(lat.F$CPL_log ~ lat.F$SL_log)
+F.sd.lat.CPL <- rstandard(F.reg.lat.CPL)
+F.reg.lat.CPL.plot <- ggplot(lat.F, aes(x = SL_log, y = CPL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.CPL.plot
+
+F.reg.lat.PreDL <- lm(lat.F$PreDL_log ~ lat.F$SL_log)
+F.sd.lat.PreDL <- rstandard(F.reg.lat.PreDL)
+F.reg.lat.PreDL.plot <- ggplot(lat.F, aes(x = SL_log, y = PreDL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.PreDL.plot
+
+F.reg.lat.DbL <- lm(lat.F$DbL_log ~ lat.F$SL_log)
+F.sd.lat.DbL <- rstandard(F.reg.lat.DbL)
+F.reg.lat.DbL.plot <- ggplot(lat.F, aes(x = SL_log, y = DbL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.DbL.plot
+
+F.reg.lat.HL <- lm(lat.F$HL_log ~ lat.F$SL_log)
+F.sd.lat.HL <- rstandard(F.reg.lat.HL)
+F.reg.lat.HL.plot <- ggplot(lat.F, aes(x = SL_log, y = HL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.HL.plot
+
+F.reg.lat.HD <- lm(lat.F$HD_log ~ lat.F$SL_log)
+F.sd.lat.HD <- rstandard(F.reg.lat.HD)
+F.reg.lat.HD.plot <- ggplot(lat.F, aes(x = SL_log, y = HD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.HD.plot
+
+F.reg.lat.HW <- lm(lat.F$HW_log ~ lat.F$SL_log)
+F.sd.lat.HW <- rstandard(F.reg.lat.HW)
+F.reg.lat.HW.plot <- ggplot(lat.F, aes(x = SL_log, y = HW_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.HW.plot
+
+F.reg.lat.SnL <- lm(lat.F$SnL_log ~ lat.F$SL_log)
+F.sd.lat.SnL <- rstandard(F.reg.lat.SnL)
+F.reg.lat.SnL.plot <- ggplot(lat.F, aes(x = SL_log, y = SnL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.SnL.plot
+
+F.reg.lat.OL <- lm(lat.F$OL_log ~ lat.F$SL_log)
+F.sd.lat.OL <- rstandard(F.reg.lat.OL)
+F.reg.lat.OL.plot <- ggplot(lat.F, aes(x = SL_log, y = OL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.OL.plot
+
+F.reg.lat.FLA <- lm(lat.F$FLA ~ lat.F$SL)
+F.sd.lat.FLA <- rstandard(F.reg.lat.FLA)
+F.reg.lat.FLA.plot <- ggplot(lat.F, aes(x = SL, y = FLA)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.lat.FLA.plot
+
+##### FORM #####
+
+F.reg.form.D <- lm(form.F$D ~ form.F$SL)
+F.sd.form.D <- rstandard(F.reg.form.D)
+F.reg.form.D.plot <- ggplot(form.F, aes(x =SL, y = D)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.D.plot
+
+F.reg.form.P1 <- lm(form.F$P1 ~ form.F$SL)
+F.sd.form.P1 <- rstandard(F.reg.form.P1)
+F.reg.form.P1.plot <- ggplot(form.F, aes(x = SL, y = P1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.P1.plot
+
+F.reg.form.P2.L <- lm(form.F$P2.L ~ form.F$SL)
+F.sd.form.P2.L <- rstandard(F.reg.form.P2.L)
+F.reg.form.P2.L.plot <- ggplot(form.F, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.P2.L.plot
+
+F.reg.form.P2.R <- lm(form.F$P2.R ~ form.F$SL)
+F.sd.form.P2.R <- rstandard(F.reg.form.P2.R)
+F.reg.form.P2.R.plot <- ggplot(form.F, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.P2.R.plot
+
+F.reg.form.A <- lm(form.F$A ~ form.F$SL)
+F.sd.form.A <- rstandard(F.reg.form.A)
+F.reg.form.A.plot <- ggplot(form.F, aes(x = SL, y = A)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.A.plot
+
+F.reg.form.P1.R <- lm(form.F$P1.R ~ form.F$SL)
+F.sd.form.P1.R <- rstandard(F.reg.form.P1.R)
+F.reg.form.P1.R.plot <- ggplot(form.F, aes(x = SL, y = P1.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.P1.R.plot
+
+F.reg.form.LLSC <- lm(form.F$LLSC ~ form.F$SL)
+F.sd.form.LLSC <- rstandard(F.reg.form.LLSC)
+F.reg.form.LLSC.plot <- ggplot(form.F, aes(x = SL, y = LLSC)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.LLSC.plot
+
+F.reg.form.SALL <- lm(form.F$SALL ~ form.F$SL)
+F.sd.form.SALL <- rstandard(F.reg.form.SALL)
+F.reg.form.SALL.plot <- ggplot(form.F, aes(x = SL, y = SALL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.SALL.plot
+
+F.reg.form.SBLL <- lm(form.F$SBLL ~ form.F$SL)
+F.sd.form.SBLL <- rstandard(F.reg.form.SBLL)
+F.reg.form.SBLL.plot <- ggplot(form.F, aes(x = SL, y = SBLL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.SBLL.plot
+
+F.reg.form.SBDF <- lm(form.F$SBDF ~ form.F$SL)
+F.sd.form.SBDF <- rstandard(F.reg.form.SBDF)
+F.reg.form.SBDF.plot <- ggplot(form.F, aes(x = SL, y = SBDF)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.SBDF.plot
+
+F.reg.form.BD <- lm(form.F$BD_log ~ form.F$SL_log)
+F.sd.form.BD <- rstandard(F.reg.form.BD)
+F.reg.form.BD.plot <- ggplot(form.F, aes(x = SL_log, y = BD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.BD.plot
+
+F.reg.form.CPD <- lm(form.F$CPD_log ~ form.F$SL_log)
+F.sd.form.CPD <- rstandard(F.reg.form.CPD)
+F.reg.form.CPD.plot <- ggplot(form.F, aes(x = SL_log, y = CPD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.CPD.plot
+
+F.reg.form.CPL <- lm(form.F$CPL_log ~ form.F$SL_log)
+F.sd.form.CPL <- rstandard(F.reg.form.CPL)
+F.reg.form.CPL.plot <- ggplot(form.F, aes(x = SL_log, y = CPL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.CPL.plot
+
+F.reg.form.PreDL <- lm(form.F$PreDL_log ~ form.F$SL_log)
+F.sd.form.PreDL <- rstandard(F.reg.form.PreDL)
+F.reg.form.PreDL.plot <- ggplot(form.F, aes(x = SL_log, y = PreDL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.PreDL.plot
+
+F.reg.form.DbL <- lm(form.F$DbL_log ~ form.F$SL_log)
+F.sd.form.DbL <- rstandard(F.reg.form.DbL)
+F.reg.form.DbL.plot <- ggplot(form.F, aes(x = SL_log, y = DbL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.DbL.plot
+
+F.reg.form.HL <- lm(form.F$HL_log ~ form.F$SL_log)
+F.sd.form.HL <- rstandard(F.reg.form.HL)
+F.reg.form.HL.plot <- ggplot(form.F, aes(x = SL_log, y = HL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.HL.plot
+
+F.reg.form.HD <- lm(form.F$HD_log ~ form.F$SL_log)
+F.sd.form.HD <- rstandard(F.reg.form.HD)
+F.reg.form.HD.plot <- ggplot(form.F, aes(x = SL_log, y = HD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.HD.plot
+
+F.reg.form.HW <- lm(form.F$HW_log ~ form.F$SL_log)
+F.sd.form.HW <- rstandard(F.reg.form.HW)
+F.reg.form.HW.plot <- ggplot(form.F, aes(x = SL_log, y = HW_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.HW.plot
+
+F.reg.form.SnL <- lm(form.F$SnL_log ~ form.F$SL_log)
+F.sd.form.SnL <- rstandard(F.reg.form.SnL)
+F.reg.form.SnL.plot <- ggplot(form.F, aes(x = SL_log, y = SnL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.SnL.plot
+
+F.reg.form.OL <- lm(form.F$OL_log ~ form.F$SL_log)
+F.sd.form.OL <- rstandard(F.reg.form.OL)
+F.reg.form.OL.plot <- ggplot(form.F, aes(x = SL_log, y = OL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.OL.plot
+
+F.reg.form.FLA <- lm(form.F$FLA ~ form.F$SL)
+F.sd.form.FLA <- rstandard(F.reg.form.FLA)
+F.reg.form.FLA.plot <- ggplot(form.F, aes(x = SL, y = FLA)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.form.FLA.plot
+
+
+
+##### MEX #####
+F.reg.mex.D <- lm(mex.F$D ~ mex.F$SL)
+F.sd.mex.D <- rstandard(F.reg.mex.D)
+F.reg.mex.D.plot <- ggplot(mex.F, aes(x = SL, y = D)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.D.plot
+
+F.reg.mex.P1 <- lm(mex.F$P1 ~ mex.F$SL)
+F.sd.mex.P1 <- rstandard(F.reg.mex.P1)
+F.reg.mex.P1.plot <- ggplot(mex.F, aes(x = SL, y = P1)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.P1.plot
+
+F.reg.mex.P2.L <- lm(mex.F$P2.L ~ mex.F$SL)
+F.sd.mex.P2.L <- rstandard(F.reg.mex.P2.L)
+F.reg.mex.P2.L.plot <- ggplot(mex.F, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.P2.L.plot
+
+F.reg.mex.P2.R <- lm(mex.F$P2.R ~ mex.F$SL)
+F.sd.mex.P2.R <- rstandard(F.reg.mex.P2.R)
+F.reg.mex.P2.R.plot <- ggplot(mex.F, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.P2.R.plot
+
+F.reg.mex.A <- lm(mex.F$A ~ mex.F$SL)
+F.sd.mex.A <- rstandard(F.reg.mex.A)
+F.reg.mex.A.plot <- ggplot(mex.F, aes(x = SL, y = A)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.A.plot
+
+F.reg.mex.P1.R <- lm(mex.F$P1.R ~ mex.F$SL)
+F.sd.mex.P1.R <- rstandard(F.reg.mex.P1.R)
+F.reg.mex.P1.R.plot <- ggplot(mex.F, aes(x = SL, y = P1.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.P1.R.plot
+
+F.reg.mex.LLSC <- lm(mex.F$LLSC ~ mex.F$SL)
+F.sd.mex.LLSC <- rstandard(F.reg.mex.LLSC)
+F.reg.mex.LLSC.plot <- ggplot(mex.F, aes(x = SL, y = LLSC)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.LLSC.plot
+
+F.reg.mex.SALL <- lm(mex.F$SALL ~ mex.F$SL)
+F.sd.mex.SALL <- rstandard(F.reg.mex.SALL)
+F.reg.mex.SALL.plot <- ggplot(mex.F, aes(x = SL, y = SALL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.SALL.plot
+
+F.reg.mex.SBLL <- lm(mex.F$SBLL ~ mex.F$SL)
+F.sd.mex.SBLL <- rstandard(F.reg.mex.SBLL)
+F.reg.mex.SBLL.plot <- ggplot(mex.F, aes(x = SL, y = SBLL)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.SBLL.plot
+
+F.reg.mex.SBDF <- lm(mex.F$SBDF ~ mex.F$SL)
+F.sd.mex.SBDF <- rstandard(F.reg.mex.SBDF)
+F.reg.mex.SBDF.plot <- ggplot(mex.F, aes(x = SL, y = SBDF)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.SBDF.plot
+
+F.reg.mex.BD <- lm(mex.F$BD_log ~ mex.F$SL_log)
+F.sd.mex.BD <- rstandard(F.reg.mex.BD)
+F.reg.mex.BD.plot <- ggplot(mex.F, aes(x = SL_log, y = BD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.BD.plot
+
+F.reg.mex.CPD <- lm(mex.F$CPD_log ~ mex.F$SL_log)
+F.sd.mex.CPD <- rstandard(F.reg.mex.CPD)
+F.reg.mex.CPD.plot <- ggplot(mex.F, aes(x = SL_log, y = CPD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.CPD.plot
+
+F.reg.mex.CPL <- lm(mex.F$CPL_log ~ mex.F$SL_log)
+F.sd.mex.CPL <- rstandard(F.reg.mex.CPL)
+F.reg.mex.CPL.plot <- ggplot(mex.F, aes(x = SL_log, y = CPL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.CPL.plot
+
+F.reg.mex.PreDL <- lm(mex.F$PreDL_log ~ mex.F$SL_log)
+F.sd.mex.PreDL <- rstandard(F.reg.mex.PreDL)
+F.reg.mex.PreDL.plot <- ggplot(mex.F, aes(x = SL_log, y = PreDL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.PreDL.plot
+
+F.reg.mex.DbL <- lm(mex.F$DbL_log ~ mex.F$SL_log)
+F.sd.mex.DbL <- rstandard(F.reg.mex.DbL)
+F.reg.mex.DbL.plot <- ggplot(mex.F, aes(x = SL_log, y = DbL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.DbL.plot
+
+F.reg.mex.HL <- lm(mex.F$HL_log ~ mex.F$SL_log)
+F.sd.mex.HL <- rstandard(F.reg.mex.HL)
+F.reg.mex.HL.plot <- ggplot(mex.F, aes(x = SL_log, y = HL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.HL.plot
+
+F.reg.mex.HD <- lm(mex.F$HD_log ~ mex.F$SL_log)
+F.sd.mex.HD <- rstandard(F.reg.mex.HD)
+F.reg.mex.HD.plot <- ggplot(mex.F, aes(x = SL_log, y = HD_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.HD.plot
+
+F.reg.mex.HW <- lm(mex.F$HW_log ~ mex.F$SL_log)
+F.sd.mex.HW <- rstandard(F.reg.mex.HW)
+F.reg.mex.HW.plot <- ggplot(mex.F, aes(x = SL_log, y = HW_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.HW.plot
+
+F.reg.mex.SnL <- lm(mex.F$SnL_log ~ mex.F$SL_log)
+F.sd.mex.SnL <- rstandard(F.reg.mex.SnL)
+F.reg.mex.SnL.plot <- ggplot(mex.F, aes(x = SL_log, y = SnL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.SnL.plot
+
+F.reg.mex.OL <- lm(mex.F$OL_log ~ mex.F$SL_log)
+F.sd.mex.OL <- rstandard(F.reg.mex.OL)
+F.reg.mex.OL.plot <- ggplot(mex.F, aes(x = SL_log, y = OL_log)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.OL.plot
+
+F.reg.mex.FLA <- lm(mex.F$FLA ~ mex.F$SL)
+F.sd.mex.FLA <- rstandard(F.reg.mex.FLA)
+F.reg.mex.FLA.plot <- ggplot(mex.F, aes(x = SL, y = FLA)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+F.reg.mex.FLA.plot
+
+
+```
+
