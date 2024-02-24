@@ -1301,7 +1301,7 @@ Ftest.abs.BD <- var.test(abs.lat.BD, abs.form.BD, alternative = "two.sided")
 Ftest.abs.BD
 
 
-ftest.abs.CPD <- var.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
+Ftest.abs.CPD <- var.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
 Ftest.abs.CPD
 
 
@@ -1350,6 +1350,9 @@ Logan suggested doing a glm with poisson distribution (because it is count data)
 ##### GLMs
 
 ```{r}
+
+raw3 <- raw2[raw2$SPP !="p.mexicana", ]
+
 glm_D <- glm(abs.res.D~SPP, data=raw3, family = poisson)
 print(summary(glm_D), show.residuals=TRUE)
 
@@ -1387,6 +1390,10 @@ This will be performed on traits that **DID** vary with SL.
 I did notice that the deviance residual information was out of whack (median not super close to zero in many cases, the max and min VERY different). In the EXTRAS rscript, I ran a DHARMa test to see what the issue was, and apparently they fail the levene's test for homogeneity of variance. This indicates that while the AVERAGE variance is not different between the two species, there could be a different in how the species are varying, which may be interesting (similar to the F-tests of the continuous residuals). Will run some levene's test for these discrete residuals, just to see. 
 
 ```{r}
+
+library(car)
+library(carData)
+
 (L_D <- leveneTest(abs.res.D~SPP, data=raw3))
 
 (L_P1 <- leveneTest(abs.res.P1~SPP, data=raw3))
@@ -1475,11 +1482,6 @@ ggplot(raw2, aes(SPP, FLA)) +
 Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
 
 ```{r}
-raw3 <- raw2[raw2$SPP !="p.mexicana", ]
-
-
-library(car)
-library(carData)
 
 (LT_P2L <- leveneTest(P2.L~SPP, data=raw3)) #gives nothing since it's all the same value
 
@@ -2506,6 +2508,13 @@ Will run mixed models with zones/basins/watersheds as random effect. This will a
 #### Zones
 
 ```{r}
+library(lmerTest)
+library(lme4)
+
+#if (!require("BiocManager", quietly = TRUE))
+    #install.packages("BiocManager")
+
+#BiocManager::install("DESeq2")
 
 MM.D <- glmer(abs.res.D ~ SPP + (1|QUARTILE), data=raw3, family = poisson)
 summary(MM.D)
@@ -2691,57 +2700,103 @@ I'm hoping I can do this, but thought another interesting way of testing this wo
 ```{r}
 library(irr)
 
-lat_D <- lat3$D
-lat_P1 <- lat3$P1
-lat_P2.R <- lat3$P2.R
-lat_P2.L <- lat3$P2.L
-lat_A <- lat3$A
-lat_P1.R <- lat3$P1.R
-lat_LLSC <- lat3$LLSC
-lat_SALL <- lat3$SALL
-lat_SBLL <- lat3$SBLL
-lat_SBDF <- lat3$SBDF
-lat_SL <- lat3$SL
-lat_BD <- lat3$BD
-lat_CPD <- lat3$CPD
-lat_CPL <- lat3$CPL
-lat_PreDL <- lat3$PreDL
-lat_DbL <- lat3$DbL
-lat_HL <- lat3$HL
-lat_HD <- lat3$HD
-lat_HW <- lat3$HW
-lat_SnL <- lat3$SnL
-lat_OL <- lat3$OL
-lat_FLA <- lat3$FLA
-
-
-
-form_D <- form3$D
-form_P1 <- form3$P1
-form_P2.R <- form3$P2.R
-form_P2.L <- form3$P2.L
-form_A <- form3$A
-form_P1.R <- form3$P1.R
-form_LLSC <- form3$LLSC
-form_SALL <- form3$SALL
-form_SBLL <- form3$SBLL
-form_SBDF <- form3$SBDF
-form_SL <- form3$SL
-form_BD <- form3$BD
-form_CPD <- form3$CPD
-form_CPL <- form3$CPL
-form_PreDL <- form3$PreDL
-form_DbL <- form3$DbL
-form_HL <- form3$HL
-form_HD <- form3$HD
-form_HW <- form3$HW
-form_SnL <- form3$SnL
-form_OL <- form3$OL
-form_FLA <- form3$FLA
-
 (icc_L.D <- ICC(data = lat3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
 
-(icc_L.D <- ICC(data = lat3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+(icc_L.P1 <- ICC(data = lat3$P1, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.P2.R <- ICC(data = lat3$P2.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.P2.L <- ICC(data = lat3$P2.L, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.A <- ICC(data = lat3$A, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.P1.R <- ICC(data = lat3$P1.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.LLSC <- ICC(data = lat3$LLSC, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SALL <- ICC(data = lat3$SALL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SBLL <- ICC(data = lat3$SBLL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SBDF <- ICC(data = lat3$SBDF, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SL <- ICC(data = lat3$SL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.BD <- ICC(data = lat3$BD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.CPD <- ICC(data = lat3$CPD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.CPL <- ICC(data = lat3$CPL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.PreDL <- ICC(data = lat3$PreDL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.DbL <- ICC(data = lat3$DbL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.HL <- ICC(data = lat3$HL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.HD <- ICC(data = lat3$HD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.HW <- ICC(data = lat3$HW, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.SnL <- ICC(data = lat3$SnL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.OL <- ICC(data = lat3$OL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_L.FLA <- ICC(data = lat3$FLA, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+
+
+#### AMAZONS ####
+
+(icc_F.D <- ICC(data = form3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P1 <- ICC(data = form3$P1, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P2.R <- ICC(data = form3$P2.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P2.L <- ICC(data = form3$P2.L, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.A <- ICC(data = form3$A, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.P1.R <- ICC(data = form3$P1.R, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.LLSC <- ICC(data = form3$LLSC, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SALL <- ICC(data = form3$SALL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SBLL <- ICC(data = form3$SBLL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SBDF <- ICC(data = form3$SBDF, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SL <- ICC(data = form3$SL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.BD <- ICC(data = form3$BD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.CPD <- ICC(data = form3$CPD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.CPL <- ICC(data = form3$CPL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.PreDL <- ICC(data = form3$PreDL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.DbL <- ICC(data = form3$DbL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.HL <- ICC(data = form3$HL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.HD <- ICC(data = form3$HD, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.HW <- ICC(data = form3$HW, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.SnL <- ICC(data = form3$SnL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.OL <- ICC(data = form3$OL, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+(icc_F.FLA <- ICC(data = form3$FLA, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
+
+
+#### BETWEEN SPECIES ####
+
+(icc_F2.FLA <- ICC(data = raw3$FLA, id = raw3$SPP, grouping= raw3$BASINS, model = "twoway", type = "agreement", unit = "single", r0 = 1))
+
 
 
 
@@ -2924,7 +2979,19 @@ plot8
 
 ```
 
+***
 
+
+#### Density comparisons
+
+I will try to compare the area of the density clusters for the PCA. I will attempt to do this use EMD (earth mover's distance). From what I understand, this will basically tell me how much "work" is needed to transform one distribution into another, thus providing a metric of the overall difference in shape between two distributions. 
+
+
+```{r}
+library(emdist)
+
+
+```
 <br><br><br><br><br>
 
 ***
