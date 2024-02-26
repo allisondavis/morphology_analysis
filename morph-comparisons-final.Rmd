@@ -1809,6 +1809,37 @@ shapiro.test(rawF$OL)
 
 ```
 
+###### SW tests for df w/o monster
+```{r}
+
+shapiro.test(rawF1$SL)
+
+shapiro.test(rawF1$BD)
+
+shapiro.test(rawF1$CPD)
+
+shapiro.test(rawF1$CPL)
+
+shapiro.test(rawF1$PreDL)
+
+shapiro.test(rawF1$DbL)
+
+shapiro.test(rawF1$HL)
+
+shapiro.test(rawF1$HD)
+
+shapiro.test(rawF1$HW)
+
+shapiro.test(rawF1$SnL)
+
+shapiro.test(rawF1$OL)
+
+
+
+
+```
+
+
 ##### Histograms 
 
 ```{r}
@@ -1837,6 +1868,37 @@ hist(rawF$OL)
 
 
 ```
+
+###### Hists for df w/o monster
+
+
+```{r}
+
+hist(rawF1$SL)
+
+hist(rawF1$BD)
+
+hist(rawF1$CPD)
+
+hist(rawF1$CPL)
+
+hist(rawF1$PreDL)
+
+hist(rawF1$DbL)
+
+hist(rawF1$HL)
+
+hist(rawF1$HD)
+
+hist(rawF1$HW)
+
+hist(rawF1$SnL)
+
+hist(rawF1$OL)
+
+
+```
+
 
 ##### QQ plots 
 
@@ -1958,6 +2020,77 @@ qqline(rawF$OL_cb)
 
 
 ```
+
+##### W/o monster
+
+```{r}
+rawF1[paste0(names(rawF1), '_cb')] <- '^'(rawF1[, 25:35], 1/3)
+
+#for some reason did the log of the whole data frame instead of those specific columns, so I will just remove the unnecessary columns instead of spending time on what went wrong.
+
+rawF1 <- subset(rawF1, select = -c(37:50) )
+#rawF <- subset(rawF, select = -c(59:94) )
+#double checking normality with a SW test and QQ plot
+
+shapiro.test(rawF1$SL_cb)
+
+shapiro.test(rawF1$BD_cb)
+
+shapiro.test(rawF1$CPD_cb)
+
+shapiro.test(rawF1$CPL_cb)
+
+shapiro.test(rawF1$PreDL_cb)
+
+shapiro.test(rawF1$DbL_cb)
+
+shapiro.test(rawF1$HL_cb)
+
+shapiro.test(rawF1$HD_cb)
+
+shapiro.test(rawF1$HW_cb)
+
+shapiro.test(rawF1$SnL_cb)
+
+shapiro.test(rawF1$OL_cb)
+
+qqnorm(rawF1$SL_cb)
+qqline(rawF1$SL_cb)
+
+qqnorm(rawF1$BD_cb)
+qqline(rawF1$BD_cb)
+
+qqnorm(rawF1$CPD_cb)
+qqline(rawF1$CPD_cb)
+
+qqnorm(rawF1$CPL_cb)
+qqline(rawF1$CPL_cb)
+
+qqnorm(rawF1$PreDL_cb)
+qqline(rawF1$PreDL_cb)
+
+qqnorm(rawF1$DbL_cb)
+qqline(rawF1$DbL_cb)
+
+qqnorm(rawF1$HL_cb)
+qqline(rawF1$HL_cb)
+
+qqnorm(rawF1$HD_cb)
+qqline(rawF1$HD_cb)
+
+qqnorm(rawF1$HW_cb)
+qqline(rawF1$HW_cb)
+
+qqnorm(rawF1$SnL_cb)
+qqline(rawF1$SnL_cb)
+
+qqnorm(rawF1$OL_cb)
+qqline(rawF1$OL_cb)
+
+
+```
+
+
 
 ## Correcting for body size (residuals) 
 
@@ -2501,3 +2634,936 @@ F.reg.mex.FLA.plot
 
 ```
 
+
+#### Residuals 
+
+-   **STEP TWO:** get residuals for each individual for traits that were influenced by body size
+
+```{r echo=FALSE}
+
+##### LAT #####
+F.res.lat.D <- resid(F.reg.lat.D)
+
+F.res.lat.P1 <- resid(F.reg.lat.P1)
+
+F.res.lat.P1.R <- resid(F.reg.lat.P1.R)
+
+F.res.lat.LLSC <- resid(F.reg.lat.LLSC)
+
+F.res.lat.SBLL <- resid(F.reg.lat.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
+
+F.res.lat.BD <- resid(F.reg.lat.BD)
+
+F.res.lat.CPD <- resid(F.reg.lat.CPD)
+
+F.res.lat.CPL <- resid(F.reg.lat.CPL)
+
+F.res.lat.PreDL <- resid(F.reg.lat.PreDL)
+
+F.res.lat.DbL <- resid(F.reg.lat.DbL)
+
+F.res.lat.HL <- resid(F.reg.lat.HL)
+
+F.res.lat.HD <- resid(F.reg.lat.HD)
+
+F.res.lat.HW <- resid(F.reg.lat.HW)
+
+F.res.lat.SnL <- resid(F.reg.lat.SnL)
+
+F.res.lat.OL <- resid(F.reg.lat.OL)
+
+##### FORM #####
+
+F.res.form.D <- resid(F.reg.form.D)
+
+F.res.form.P1 <- resid(F.reg.form.P1)
+
+F.res.form.P1.R <- resid(F.reg.form.P1.R)
+
+F.res.form.LLSC <- resid(F.reg.form.LLSC)
+
+F.res.form.SBLL <- resid(F.reg.form.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
+
+F.res.form.BD <- resid(F.reg.form.BD)
+
+F.res.form.CPD <- resid(F.reg.form.CPD)
+
+F.res.form.CPL <- resid(F.reg.form.CPL)
+
+F.res.form.PreDL <- resid(F.reg.form.PreDL)
+
+F.res.form.DbL <- resid(F.reg.form.DbL)
+
+F.res.form.HL <- resid(F.reg.form.HL)
+
+F.res.form.HD <- resid(F.reg.form.HD)
+
+F.res.form.HW <- resid(F.reg.form.HW)
+
+F.res.form.SnL <- resid(F.reg.form.SnL)
+
+F.res.form.OL <- resid(F.reg.form.OL)
+
+
+##### MEX #####
+F.res.mex.D <- resid(F.reg.mex.D)
+
+F.res.mex.P1 <- resid(F.reg.mex.P1)
+
+F.res.mex.P1.R <- resid(F.reg.mex.P1.R)
+
+F.res.mex.LLSC <- resid(F.reg.mex.LLSC)
+
+F.res.mex.SBLL <- resid(F.reg.mex.SBLL)
+
+F.res.mex.BD <- resid(F.reg.mex.BD)
+
+F.res.mex.CPD <- resid(F.reg.mex.CPD)
+
+F.res.mex.CPL <- resid(F.reg.mex.CPL)
+
+F.res.mex.PreDL <- resid(F.reg.mex.PreDL)
+
+F.res.mex.DbL <- resid(F.reg.mex.DbL)
+
+F.res.mex.HL <- resid(F.reg.mex.HL)
+
+F.res.mex.HD <- resid(F.reg.mex.HD)
+
+F.res.mex.HW <- resid(F.reg.mex.HW)
+
+F.res.mex.SnL <- resid(F.reg.mex.SnL)
+
+F.res.mex.OL <- resid(F.reg.mex.OL)
+
+
+```
+
+-   **STEP THREE:** convert residuals to absolute value
+
+```{r}
+
+##### LAT #####
+
+F.abs.lat.D <- abs(F.res.lat.D)
+mean(F.abs.lat.D)
+
+F.abs.lat.P1 <- abs(F.res.lat.P1)
+mean(F.abs.lat.P1)
+
+F.abs.lat.P1.R <- abs(F.res.lat.P1.R)
+mean(F.abs.lat.P1.R)
+
+F.abs.lat.LLSC <- abs(F.res.lat.LLSC)
+mean(F.abs.lat.LLSC)
+
+F.abs.lat.SBLL <- abs(F.res.lat.SBLL)
+mean(F.abs.lat.SBLL)
+
+F.abs.lat.BD <- abs(F.res.lat.BD)
+mean(F.abs.lat.BD)
+
+F.abs.lat.CPD <- abs(F.res.lat.CPD)
+mean(F.abs.lat.CPD)
+
+F.abs.lat.CPL <- abs(F.res.lat.CPL)
+mean(F.abs.lat.CPL)
+
+F.abs.lat.PreDL <- abs(F.res.lat.PreDL)
+mean(F.abs.lat.PreDL)
+
+F.abs.lat.DbL <- abs(F.res.lat.DbL)
+mean(F.abs.lat.DbL)
+
+F.abs.lat.HL <- abs(F.res.lat.HL)
+mean(F.abs.lat.HL)
+
+F.abs.lat.HD <- abs(F.res.lat.HD)
+mean(F.abs.lat.HD)
+
+F.abs.lat.HW <- abs(F.res.lat.HW)
+mean(F.abs.lat.HW)
+
+F.abs.lat.SnL <- abs(F.res.lat.SnL)
+mean(F.abs.lat.SnL)
+
+F.abs.lat.OL <- abs(F.res.lat.OL)
+mean(F.abs.lat.OL)
+
+
+##### FORM #####
+
+F.abs.form.D <- abs(F.res.form.D)
+mean(F.abs.form.D)
+
+F.abs.form.P1 <- abs(F.res.form.P1)
+mean(F.abs.form.P1)
+
+F.abs.form.P1.R <- abs(F.res.form.P1.R)
+mean(F.abs.form.P1.R)
+
+F.abs.form.LLSC <- abs(F.res.form.LLSC)
+mean(F.abs.form.LLSC)
+
+F.abs.form.SBLL <- abs(F.res.form.SBLL)
+mean(F.abs.form.SBLL)
+
+F.abs.form.BD <- abs(F.res.form.BD)
+mean(F.abs.form.BD)
+
+F.abs.form.CPD <- abs(F.res.form.CPD)
+mean(F.abs.form.CPD)
+
+F.abs.form.CPL <- abs(F.res.form.CPL)
+mean(F.abs.form.CPL)
+
+F.abs.form.PreDL <- abs(F.res.form.PreDL)
+mean(F.abs.form.PreDL)
+
+F.abs.form.DbL <- abs(F.res.form.DbL)
+mean(F.abs.form.DbL)
+
+F.abs.form.HL <- abs(F.res.form.HL)
+mean(F.abs.form.HL)
+
+F.abs.form.HD <- abs(F.res.form.HD)
+mean(F.abs.form.HD)
+
+F.abs.form.HW <- abs(F.res.form.HW)
+mean(F.abs.form.HW)
+
+F.abs.form.SnL <- abs(F.res.form.SnL)
+mean(F.abs.form.SnL)
+
+F.abs.form.OL <- abs(F.res.form.OL)
+mean(F.abs.form.OL)
+
+##### MEX #####
+
+F.abs.mex.D <- abs(F.res.mex.D)
+mean(F.abs.mex.D)
+
+F.abs.mex.P1 <- abs(F.res.mex.P1)
+mean(F.abs.mex.P1)
+
+F.abs.mex.P1.R <- abs(F.res.mex.P1.R)
+mean(F.abs.mex.P1.R)
+
+F.abs.mex.LLSC <- abs(F.res.mex.LLSC)
+mean(F.abs.mex.LLSC)
+
+F.abs.mex.SBLL <- abs(F.res.mex.SBLL)
+mean(F.abs.mex.SBLL)
+
+F.abs.mex.BD <- abs(F.res.mex.BD)
+mean(F.abs.mex.BD)
+
+F.abs.mex.CPD <- abs(F.res.mex.CPD)
+mean(F.abs.mex.CPD)
+
+F.abs.mex.CPL <- abs(F.res.mex.CPL)
+mean(F.abs.mex.CPL)
+
+F.abs.mex.PreDL <- abs(F.res.mex.PreDL)
+mean(F.abs.mex.PreDL)
+
+F.abs.mex.DbL <- abs(F.res.mex.DbL)
+mean(F.abs.mex.DbL)
+
+F.abs.mex.HL <- abs(F.res.mex.HL)
+mean(F.abs.mex.HL)
+
+F.abs.mex.HD <- abs(F.res.mex.HD)
+mean(F.abs.mex.HD)
+
+F.abs.mex.HW <- abs(F.res.mex.HW)
+mean(F.abs.mex.HW)
+
+F.abs.mex.SnL <- abs(F.res.mex.SnL)
+mean(F.abs.mex.SnL)
+
+F.abs.mex.OL <- abs(F.res.mex.OL)
+mean(F.abs.mex.OL)
+
+
+#let's get this into the raw1 data set so that we can plot this more easily
+
+F.abs.res.D <- c(F.abs.lat.D, F.abs.form.D, F.abs.mex.D)
+F.abs.res.P1 <- c(F.abs.lat.P1, F.abs.form.P1, F.abs.mex.P1)
+F.abs.res.P1.R <- c(F.abs.lat.P1.R, F.abs.form.P1.R, F.abs.mex.P1.R)
+F.abs.res.LLSC<- c(F.abs.lat.LLSC, F.abs.form.LLSC, F.abs.mex.LLSC)
+F.abs.res.SBLL<- c(F.abs.lat.SBLL, F.abs.form.SBLL, F.abs.mex.SBLL)
+F.abs.res.BD<- c(F.abs.lat.BD, F.abs.form.BD, F.abs.mex.BD)
+F.abs.res.CPD<- c(F.abs.lat.CPD, F.abs.form.CPD, F.abs.mex.CPD)
+F.abs.res.CPL<- c(F.abs.lat.CPL, F.abs.form.CPL, F.abs.mex.CPL)
+F.abs.res.PreDL <- c(F.abs.lat.PreDL, F.abs.form.PreDL, F.abs.mex.PreDL)
+F.abs.res.DbL <- c(F.abs.lat.DbL, F.abs.form.DbL, F.abs.mex.DbL)
+F.abs.res.HL<- c(F.abs.lat.HL, F.abs.form.HL, F.abs.mex.HL)
+F.abs.res.HD<- c(F.abs.lat.HD, F.abs.form.HD, F.abs.mex.HD)
+F.abs.res.HW <- c(F.abs.lat.HW, F.abs.form.HW, F.abs.mex.HW)
+F.abs.res.SnL <- c(F.abs.lat.SnL, F.abs.form.SnL, F.abs.mex.SnL)
+F.abs.res.OL <- c(F.abs.lat.OL, F.abs.form.OL, F.abs.mex.OL)
+
+
+rawF2 <- cbind(rawF, F.abs.res.D, F.abs.res.P1, F.abs.res.P1.R, F.abs.res.LLSC, F.abs.res.SBLL, F.abs.res.BD, F.abs.res.CPD, F.abs.res.CPL, F.abs.res.PreDL, F.abs.res.DbL, F.abs.res.HL, F.abs.res.HD, F.abs.res.HW, F.abs.res.SnL, F.abs.res.OL)
+
+```
+
+#### Residual Comparisons 
+
+-   **STEP FOUR:** plot the mean of the |residuals| for both species, for all traits influenced by body size
+
+```{r}
+
+library(ggbeeswarm)
+library(dplyr)
+
+
+ggplot(rawF2, aes(SPP, F.abs.res.D)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+scatter_violin <- ggplot(data=rawF2, aes(x=SPP, y=F.abs.res.D)) +
+  geom_violin(trim = FALSE) + 
+  stat_summary(
+    fun.data = "mean_sdl",  fun.args = list(mult = 1),
+    geom = "pointrange", color = "black"
+    )
+
+print(scatter_violin)
+
+scatter_violin1 <- ggplot(data=rawF2, aes(x=SPP, y=F.abs.res.D)) +
+  geom_violin(trim = FALSE) + 
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="crossbar", fill="red", width=0.03)
+
+print(scatter_violin1)
+
+
+
+ggplot(rawF2, aes(SPP, F.abs.res.P1)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.P1.R)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
+
+ggplot(rawF2, aes(SPP, F.abs.res.LLSC)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.SBLL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.BD)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.CPD)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.CPL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3) 
+
+ggplot(rawF2, aes(SPP, F.abs.res.PreDL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.DbL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.HL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.HD)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.HW)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.SnL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+ggplot(rawF2, aes(SPP, F.abs.res.OL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+
+
+```
+
+## Comparing variation 
+
+### Variance tests {.tabset .tabset-fade .tabset-pills}
+
+  (1) t-test for residuals, continuous (do an f-test too, might be cool)
+  (2) residual discrete will go through glmer
+  (3) raw discrete will go through f-test (no idea how to do this otherwise), and results will be compared to visualizations to check for discrepencies. 
+
+*(note: did non-parametric instead of transforming, but Mike said to transform, so I copied that work to the 'morphology-analysis-final' Rmd).*
+
+F-test on residuals doesn't make much sense; the residuals themselves are representative of the variation present, as they are the distance from the mean. Therefore, F-test on residuals is like variance of the variance. Instead, I have to do a t-test on the absolute value of the residuals. In this sense, we want to see if the mean of the absolute residuals is higher or lower for asexual species--is the average amount of variation higher or lower for this trait? Based on the regressions, if the trait was influenced by body size, I will perform a t-test on the absolute value of the residuals. If the trait was not influenced by body size, I will perform an F-test of variance on the raw data.
+
+**Quick results summary:** For the F-test on raw data, none of the traits were significantly different (P2L/R, A, SBDF, FLA). For the t-tests on residuals, the only significant traits are left pectoral (), right pectoral (lat>form), scales above lateral line (), scales below lateral line (form>lat), and head length ().
+
+```         
+-   will do two-tailed and check out the residual means to infer direction; for traits in which we use raw data, a one-tailed f-test will be perfomed in both direction to determine which species is varying more. We will also visulize the variation using a histogram to confirm direction results.
+```
+#### (1) Continuous, residuals
+
+
+   -    will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
+   -    this will be for the traits that *did* have a significant regression compared to SL; will be using the absolute value residuals. 
+   -    For continuous traits, we will be using the transformed data.
+    
+##### T-tests
+
+```{r, echo=FALSE}
+
+
+ttest.F.abs.BD <- t.test(F.abs.lat.BD, F.abs.form.BD, alternative = "two.sided")
+ttest.F.abs.BD
+
+
+ttest.F.abs.CPD <- t.test(F.abs.lat.CPD, F.abs.form.CPD, alternative = "two.sided")
+ttest.F.abs.CPD
+
+
+ttest.F.abs.CPL <- t.test(F.abs.lat.CPL, F.abs.form.CPL, alternative = "two.sided")
+ttest.F.abs.CPL
+
+
+ttest.F.abs.PreDL <- t.test(F.abs.lat.PreDL, F.abs.form.PreDL, alternative = "two.sided")
+ttest.F.abs.PreDL
+
+
+ttest.F.abs.DbL <- t.test(F.abs.lat.DbL, F.abs.form.DbL, alternative = "two.sided")
+ttest.F.abs.DbL
+
+
+ttest.F.abs.HL <- t.test(F.abs.lat.HL, F.abs.form.HL, alternative = "two.sided")
+ttest.F.abs.HL
+
+
+ttest.F.abs.HD <- t.test(F.abs.lat.HD, F.abs.form.HD, alternative = "two.sided")
+ttest.F.abs.HD
+
+
+ttest.F.abs.HW <- t.test(F.abs.lat.HW, F.abs.form.HW, alternative = "two.sided")
+ttest.F.abs.HW
+
+
+ttest.F.abs.SnL <- t.test(F.abs.lat.SnL, F.abs.form.SnL, alternative = "two.sided")
+ttest.F.abs.SnL
+
+
+ttest.F.abs.OL <- t.test(F.abs.lat.OL, F.abs.form.OL, alternative = "two.sided")
+ttest.F.abs.OL
+
+
+
+
+```
+
+##### F-tests
+
+Gonna try F-tests for funsies. Would be interesting if both are varying, but in different ways (amazon with identical variance around best fit, whereas lat with more variation around best fit for example).
+
+```{r, echo=FALSE}
+
+
+Ftest.F.abs.BD <- var.test(F.abs.lat.BD, F.abs.form.BD, alternative = "two.sided")
+Ftest.F.abs.BD
+
+
+Ftest.F.abs.CPD <- var.test(F.abs.lat.CPD, F.abs.form.CPD, alternative = "two.sided")
+Ftest.F.abs.CPD
+
+
+Ftest.F.abs.CPL <- var.test(F.abs.lat.CPL, F.abs.form.CPL, alternative = "two.sided")
+Ftest.F.abs.CPL
+
+
+Ftest.F.abs.PreDL <- var.test(F.abs.lat.PreDL, F.abs.form.PreDL, alternative = "two.sided")
+Ftest.F.abs.PreDL
+
+
+Ftest.F.abs.DbL <- var.test(F.abs.lat.DbL, F.abs.form.DbL, alternative = "two.sided")
+Ftest.F.abs.DbL
+
+
+Ftest.F.abs.HL <- var.test(F.abs.lat.HL, F.abs.form.HL, alternative = "two.sided")
+Ftest.F.abs.HL
+
+
+Ftest.F.abs.HD <- var.test(F.abs.lat.HD, F.abs.form.HD, alternative = "two.sided")
+Ftest.F.abs.HD
+
+
+Ftest.F.abs.HW <- var.test(F.abs.lat.HW, F.abs.form.HW, alternative = "two.sided")
+Ftest.F.abs.HW
+
+
+Ftest.F.abs.SnL <- var.test(F.abs.lat.SnL, F.abs.form.SnL, alternative = "two.sided")
+Ftest.F.abs.SnL
+
+
+Ftest.F.abs.OL <- var.test(F.abs.lat.OL, F.abs.form.OL, alternative = "two.sided")
+Ftest.F.abs.OL
+
+
+
+
+```
+
+***
+
+#### (2) Discrete, residuals
+
+Logan suggested doing a glm with poisson distribution (because it is count data) for these relationships. I originally performed Mann Whitney U tests, so will also include that. Overall, results don't differ even though exact values are slightly different.
+
+Had to remove the poisson part, becausethe residuals didn't meet the non-integer requirement for poisson (it freaked out and took forever to load).
+
+##### GLMs
+
+```{r}
+
+rawF3 <- rawF2[rawF2$SPP !="p.mexicana", ]
+
+Fglm_D <- glm(F.abs.res.D~SPP, data=rawF3)
+print(summary(Fglm_D), show.residuals=TRUE)
+
+Fglm_P1 <- glm(F.abs.res.P1~SPP, data=rawF3)
+print(summary(Fglm_P1), show.residuals=TRUE)
+
+Fglm_P1.R <- glm(F.abs.res.P1.R~SPP, data=rawF3)
+print(summary(Fglm_P1.R), show.residuals=TRUE)
+
+Fglm_LLSC <- glm(F.abs.res.LLSC~SPP, data=rawF3)
+print(summary(Fglm_LLSC), show.residuals=TRUE)
+
+```
+
+
+##### Mann Whitney U tests
+
+This will be performed on traits that **DID** vary with SL.
+
+```{r}
+
+(FMW_D <- wilcox.test(F.abs.res.D~SPP, data=rawF3, conf.int=T))
+
+(FMW_P1 <- wilcox.test(F.abs.res.P1~SPP, data=rawF3, conf.int=T))
+
+(FMW_P1R <- wilcox.test(F.abs.res.P1.R~SPP, data=rawF3, conf.int=T))
+
+(FMW_LLSC <- wilcox.test(F.abs.res.LLSC~SPP, data=rawF3, conf.int=T))
+
+
+```
+
+##### Variance of residuals
+
+I did notice that the deviance residual information was out of whack (median not super close to zero in many cases, the max and min VERY different). In the EXTRAS rscript, I ran a DHARMa test to see what the issue was, and apparently they fail the levene's test for homogeneity of variance. This indicates that while the AVERAGE variance is not different between the two species, there could be a different in how the species are varying, which may be interesting (similar to the F-tests of the continuous residuals). Will run some levene's test for these discrete residuals, just to see. 
+
+```{r}
+
+library(car)
+library(carData)
+
+(FL_D <- leveneTest(F.abs.res.D~SPP, data=rawF3))
+
+(FL_P1 <- leveneTest(F.abs.res.P1~SPP, data=rawF3))
+
+(FL_P1R <- leveneTest(F.abs.res.P1.R~SPP, data=rawF3))
+
+(FL_LLSC <- leveneTest(F.abs.res.LLSC~SPP, data=rawF3))
+
+```
+
+
+***
+
+#### (3) Discrete, raw
+
+EVEN THOUGH THESE ARE DISCRETE, NO IDEA WHAT ELSE TO DO WITH THEM (glmm on raw data will just compare means). Did both F-test and Levene's test. Get the same overall results, albeit slightly different values. Might go with Levene's since it is good with non-normal data. 
+
+This will only be for the traits that did **not** have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA); none of these traits were transformed, so just doing raw for now.
+
+##### F-tests
+
+```{r}
+Fvar.left.pel <- var.test(lat.F$P2.L, form.F$P2.L, alternative = "two.sided")
+Fvar.left.pel
+
+ggplot(rawF2, aes(SPP, P2.L)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.rig.pel <- var.test(lat.F$P2.R, form.F$P2.R, alternative = "two.sided")
+Fvar.rig.pel
+
+ggplot(rawF2, aes(SPP, P2.R)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.anal <- var.test(lat.F$A, form.F$A, alternative = "two.sided")
+Fvar.anal
+
+ggplot(rawF2, aes(SPP, A)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.sca.ab.ll <- var.test(lat.F$SALL, form.F$SALL, alternative = "two.sided")
+Fvar.sca.ab.ll
+
+ggplot(rawF2, aes(SPP, SALL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.sca.df <- var.test(lat.F$SBDF, form.F$SBDF, alternative = "two.sided")
+Fvar.sca.df
+
+ggplot(rawF2, aes(SPP, SBDF)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.flu.asy <- var.test(lat.F$FLA, form.F$FLA, alternative = "two.sided")
+Fvar.flu.asy
+
+ggplot(rawF2, aes(SPP, FLA)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+```
+
+***
+
+
+##### Levene's test
+
+
+Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
+
+```{r}
+
+(FLT_P2L <- leveneTest(P2.L~SPP, data=rawF3)) #gives nothing since it's all the same value
+
+(FLT_P2R <- leveneTest(P2.R~SPP, data=rawF3)) #same as above
+
+(FLT_A <- leveneTest(A~SPP, data=rawF3)) 
+
+(FLT_SALL <- leveneTest(SALL~SPP, data=rawF3))
+
+(FLT_SBLL <- leveneTest(SBLL~SPP, data=rawF3))
+
+(FLT_SBDF <- leveneTest(SBDF~SPP, data=rawF3))
+
+(FLT_FLA <- leveneTest(FLA~SPP, data=rawF3))
+
+
+
+```
+
+
+
+
+
+
+### Summary of variance results 
+
+WHY WON'T THIS TABLE WORK!!!!!!!!       
+
+
+average.table <- matrix(c(MW_D$p.value, mean(F.abs.lat.F.D, na.rm = TRUE), mean(F.abs.form.D, na.rm = TRUE), MW_P1$p.value, mean(F.abs.lat.F.P1, na.rm = TRUE), mean(F.abs.form.P1, na.rm = TRUE), LT_P2R$"Pr(>F)", mean(lat.F$P2.R, na.rm = TRUE), mean(form$P2.R, na.rm = TRUE), LT_P2R$"Pr(>F)", mean(lat.F$P2.L, na.rm = TRUE), mean(form$P2.L, na.rm = TRUE), LT_A$"Pr(>F)", mean(lat.F$A, na.rm = TRUE), mean(form$A, na.rm = TRUE), MW_P1R$p.value, mean(F.abs.lat.F.P1.R, na.rm = TRUE), mean(F.abs.form.P1.R, na.rm = TRUE), MW_LLSC$p.value, mean(F.abs.lat.F.LLSC, na.rm = TRUE), mean(F.abs.form.LLSC, na.rm = TRUE), LT_SALL$"Pr(>F)", mean(lat.F$SALL, na.rm = TRUE), mean(form$SALL, na.rm = TRUE), LT_SBLL$"Pr(>F)", mean(F.abs.lat.F.SBLL, na.rm = TRUE), mean(F.abs.form.SBLL, na.rm = TRUE), LT_SBDF$"Pr(>F)", mean(lat.F$SBDF, na.rm = TRUE), mean(form$SBDF, na.rm = TRUE), ttest.F.abs.BD$p.value, mean(F.abs.lat.F.BD, na.rm = TRUE), mean(F.abs.form.BD, na.rm = TRUE), ttest.F.abs.CPD$p.value, mean(F.abs.lat.F.CPD, na.rm = TRUE), mean(F.abs.form.CPD, na.rm = TRUE), ttest.F.abs.CPL$p.value, mean(F.abs.lat.F.CPL, na.rm = TRUE), mean(F.abs.form.CPL, na.rm = TRUE), ttest.F.abs.PreDL$p.value, mean(F.abs.lat.F.PreDL, na.rm = TRUE), mean(F.abs.form.PreDL, na.rm = TRUE), ttest.F.abs.DbL$p.value, mean(F.abs.lat.F.DbL, na.rm = TRUE), mean(F.abs.form.DbL, na.rm = TRUE), ttest.F.abs.HL$p.value, mean(F.abs.lat.F.HL, na.rm = TRUE), mean(F.abs.form.HL, na.rm = TRUE), ttest.F.abs.HD$p.value, mean(F.abs.lat.F.HD, na.rm = TRUE), mean(F.abs.form.HD, na.rm = TRUE), ttest.F.abs.HW$p.value, mean(F.abs.lat.F.HW, na.rm = TRUE), mean(F.abs.form.HW, na.rm = TRUE), ttest.F.abs.SnL$p.value, mean(F.abs.lat.F.SnL, na.rm = TRUE), mean(F.abs.form.SnL, na.rm = TRUE), ttest.F.abs.OL$p.value, mean(F.abs.lat.F.OL, na.rm = TRUE), mean(F.abs.form.OL, na.rm = TRUE), LT_FLA$"Pr(>F)", mean(lat.F$FLA, na.rm = TRUE), mean(form$FLA, na.rm = TRUE)), ncol=3, byrow=TRUE)
+
+colnames(average.table)<- c("p-value for variance", "lat mean", "form mean")
+
+rownames(average.table) <- c("dorsal rays", "L pect rays", "R pelvic rays*", "L pelvic rays*", "Anal rays", "R pect rays*", "lat line scales", "scales above LL", "scales below LL", "scales before dor*", "body dep", "peduncle dep", "peduncle leng", "pre-dorsal", "dorsal base", "head length", "head depth", "head width", "snout leng", "orbital leng", "fluct. asymmetries")
+
+average.table
+
+
+***
+
+### Variance plots
+
+
+```{r}
+
+plot_multi_histogram <- function(df, feature, label_column) {
+    plt <- ggplot(df, aes(x=eval(parse(text=feature)), fill=eval(parse(text=label_column)))) +
+    geom_histogram(bins=10, alpha=0.4, position="identity", aes(y = ..density..), color="black") +
+    geom_density(alpha=0.2)  +
+    labs(x=feature, y = "Density")
+    plt + guides(fill=guide_legend(title=label_column))
+}
+
+plot_multi_histogram(rawF3, "F.abs.res.CPD", "SPP")
+
+plot_multi_histogram(rawF3, "F.abs.res.DbL", "SPP")
+
+plot_multi_histogram(rawF3, "F.abs.res.P1", "SPP")
+
+plot_multi_histogram(rawF3, "F.abs.res.P1.R", "SPP")
+
+
+```
+
+
+
+
+## PCA analysis 
+
+### PCA {.tabset .tabset-fade .tabset-pills}
+
+LOGAN: CHECK THAT EACH VARIABLES IS NEAR NORMALLY DISTRIBUTED. IF NOT, LOG TRANSFORM BEFORE PCA. ALSO CHECK THAT PCA CALCULATES Z SCORES AND PLOTS BASED ON THAT; IF NOT CONVERT TO Z SCORES THEN RUN PCA.
+
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **116 Sailfin and 186 Amazon**.
+
+#### Chart
+
+```{r}
+(chart <- matrix(c("Variable chart:", "D: dorsal ray count", "P1: left pectoral ray count", "P2.R: right pelvic rays", "P2.L: left pelvic rays", "A: anal rays", "P1.R: right pectoral ray count", "LLSC: lateral line scale count", "SALL: scales above lateral line", "SBLL: scales below lateral line", "SBDF: scales before dorsal fin", "TL: total length", "SL: standard length", "BD: body depth", "CPD: caudal peduncle depth", "CPL: caudal peduncle length", "PreDL: pre-dorsal length", "DbL: dorsal base length", "HL/HW/HD: head length/width/depth", "SnL: snout length", "OL: ocular length"), ncol=1, byrow=TRUE))
+```
+
+#### Loadings
+
+```{r}
+
+library(stringr)
+
+rawFa <- subset(rawF, select = -c(17:18) ) #took out P2R and L since they don't vary at all
+rawFa <- subset(rawFa, select=-c(34:49))#took out transformed values
+rawFa <- raw1a[rawFa$SPP !="p.mexicana", ]
+
+#PCA <- prcomp(raw1a[, 15:32], center=TRUE, scale. = TRUE) #includes all but pelvic traits, since they are the same in all species WILL SCALE/CENTER DATA ON MY OWN, LOGAN SAID IT IS NOT ALWAYS DOING IT FOR YOU EVEN WHEN YOU SPECIFY
+
+z.scores <- scale(rawFa[, 15:33], center = TRUE, scale = TRUE)
+
+rawFa <- cbind(rawFa, z.scores)
+
+colnames(rawFa)[34:52] <- str_c( "z_", colnames(rawFa)[15:33] )
+
+
+PCA <- prcomp(rawFa[, 34:52])
+
+summary(PCA)
+
+(loadings <- PCA$rotation[, 1:5])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+
+VM_PCA <- varimax(PCA$rotation) 
+
+VM_PCA
+
+
+```
+
+
+#### Plots
+
+##### Component extractions
+
+```{r}
+
+library(AMR) 
+library(ggplot2)
+library(ggfortify)
+
+(PCA$sdev ^ 2)
+
+evplot <- function(ev)
+{
+	# Broken stick model (MacArthur 1957)
+	n <- length(ev)
+	bsm <- data.frame(j=seq(1:n), p=0)
+	bsm$p[1] <- 1/n
+	for (i in 2:n) bsm$p[i] <- bsm$p[i-1] + (1/(n + 1 - i))
+	bsm$p <- 100*bsm$p/n
+	# Plot eigenvalues and % of variation for each axis
+	op <- par(mfrow=c(2,1))
+	barplot(ev, main="Eigenvalues", col="bisque", las=2)
+	abline(h=mean(ev), col="red")
+	legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
+	barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
+		main="% variation", col=c("bisque",2), las=2)
+	legend("topright", c("% eigenvalue", "Broken stick model"), 
+		pch=15, col=c("bisque",2), bty="n")
+	par(op)
+}
+
+
+ev <- PCA$sdev^2 
+evplot(ev) #according to Kaiser-Guttman criteron, we can use the first 4 PCs, even though the broken stick model shows only the first above the red bar plot... not 100% confident I know what this means, but pretty sure PC1 is body size
+
+
+```
+
+
+##### PCA 1v2
+
+
+```{r}
+
+plotF1<- autoplot(PCA, data = rawFa, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plotF1
+
+```
+
+###### By zone
+
+```{r}
+
+plotF2<- autoplot(PCA, data = rawFa, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plotF2
+
+```
+
+
+###### By Basin
+
+```{r}
+
+plotF3<- autoplot(PCA, data = rawFa, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plotF3
+
+```
+
+
+###### By watershed
+
+```{r}
+plotF4<- autoplot(PCA, data = rawFa, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plotF4
+
+```
+
+##### PCA 2v3
+
+```{r}
+
+plotF5<- autoplot(PCA, x=2, y=3, data = rawFa, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plotF5
+
+```
+
+
+###### By zone
+
+```{r}
+
+plotF6<- autoplot(PCA, x=2, y=3, data = rawFa, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plotF6
+
+```
+
+
+###### By basin
+
+```{r}
+
+plotF7<- autoplot(PCA, x=2, y=3, data = rawFa, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plotF7
+
+```
+
+
+###### By watershed
+
+```{r}
+
+plotF8<- autoplot(PCA, x=2, y=3, data = rawFa, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plotF8
+
+```
+
+***
+
+
+#### Density comparisons
+
+I will try to compare the area of the density clusters for the PCA. I will attempt to do this use EMD (earth mover's distance). From what I understand, this will basically tell me how much "work" is needed to transform one distribution into another, thus providing a metric of the overall difference in shape between two distributions. 
+
+**To do this, I would need to be able to separate the loadings based on species, but I have no idea how to do that without running two separate PCAs, one for each group (which sorta defeats the point I think). **
+
+
+library(emdist) OR library(energy)
+
+
+
+
+
+<br><br><br><br><br>
+
+***
