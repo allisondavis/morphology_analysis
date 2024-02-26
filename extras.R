@@ -1,3 +1,39 @@
+
+
+#if (!require("BiocManager", quietly = TRUE))
+#install.packages("BiocManager")
+
+#BiocManager::install("DESeq2")
+
+
+plot1a<- autoplot(PCA2, data = raw1c, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot1a
+
+plot1b<- autoplot(PCA3, data = raw1d, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot1b
+
+
+#### test for density shit ###
+raw1c <- raw1a[raw1a$SPP == "p.latipinna",]
+
+PCA2 <- prcomp(raw1c[, 34:52])
+
+summary(PCA2)
+
+(loadings2 <- PCA2$rotation[, 1:5])
+
+
+raw1d <- raw1a[raw1a$SPP == "p.formosa",]
+
+PCA3 <- prcomp(raw1d[, 34:52])
+
+summary(PCA3)
+
+(loadings3 <- PCA3$rotation[, 1:5])
+
+
+
+
 library(DHARMa)
 
 test <- glm(abs.res.D~SPP, data=raw3)

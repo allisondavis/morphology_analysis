@@ -1156,7 +1156,7 @@ I'm hoping I can do this, but thought another interesting way of testing this wo
 
 ```{r}
 library(irr)
-
+icc_result_twoway_explicit <- ICC(data = data$value, id = data$composite_id, grouping = data$population, model = "twoway", type = "agreement", unit = "single", r0 = 1)
 (icc_L.D <- icc(data = lat3$D, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
 
 (icc_L.P1 <- icc(data = lat3$P1, model = "oneway", type = "agreement", unit = "agreement", r0 = 1))
