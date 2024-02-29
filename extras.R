@@ -1,3 +1,357 @@
+reg.lat.P2.L <- lm(lat$P2.L ~ lat$SL)
+sd.lat.P2.L <- rstandard(reg.lat.P2.L)
+reg.lat.P2.L.plot <- ggplot(lat, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P2.L.plot
+
+reg.lat.P2.R <- lm(lat$P2.R ~ lat$SL)
+sd.lat.P2.R <- rstandard(reg.lat.P2.R)
+reg.lat.P2.R.plot <- ggplot(lat, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.lat.P2.R.plot
+
+reg.form.P2.L <- lm(form$P2.L ~ form$SL)
+sd.form.P2.L <- rstandard(reg.form.P2.L)
+reg.form.P2.L.plot <- ggplot(form, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P2.L.plot
+
+reg.form.P2.R <- lm(form$P2.R ~ form$SL)
+sd.form.P2.R <- rstandard(reg.form.P2.R)
+reg.form.P2.R.plot <- ggplot(form, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.form.P2.R.plot
+
+reg.mex.P2.L <- lm(mex$P2.L ~ mex$SL)
+sd.mex.P2.L <- rstandard(reg.mex.P2.L)
+reg.mex.P2.L.plot <- ggplot(mex, aes(x = SL, y = P2.L)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P2.L.plot
+
+reg.mex.P2.R <- lm(mex$P2.R ~ mex$SL)
+sd.mex.P2.R <- rstandard(reg.mex.P2.R)
+reg.mex.P2.R.plot <- ggplot(mex, aes(x = SL, y = P2.R)) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  stat_cor(label.y = 10)
+reg.mex.P2.R.plot
+
+##### F-tests
+
+Gonna try F-tests for funsies. Would be interesting if both are varying, but in different ways (amazon with identical variance around best fit, whereas lat with more variation around best fit for example).
+
+```{r, echo=FALSE}
+
+
+Ftest.abs.BD <- var.test(abs.lat.BD, abs.form.BD, alternative = "two.sided")
+Ftest.abs.BD
+
+
+Ftest.abs.CPD <- var.test(abs.lat.CPD, abs.form.CPD, alternative = "two.sided")
+Ftest.abs.CPD
+
+
+Ftest.abs.CPL <- var.test(abs.lat.CPL, abs.form.CPL, alternative = "two.sided")
+Ftest.abs.CPL
+
+
+Ftest.abs.PreDL <- var.test(abs.lat.PreDL, abs.form.PreDL, alternative = "two.sided")
+Ftest.abs.PreDL
+
+
+Ftest.abs.DbL <- var.test(abs.lat.DbL, abs.form.DbL, alternative = "two.sided")
+Ftest.abs.DbL
+
+
+Ftest.abs.HL <- var.test(abs.lat.HL, abs.form.HL, alternative = "two.sided")
+Ftest.abs.HL
+
+
+Ftest.abs.HD <- var.test(abs.lat.HD, abs.form.HD, alternative = "two.sided")
+Ftest.abs.HD
+
+
+Ftest.abs.HW <- var.test(abs.lat.HW, abs.form.HW, alternative = "two.sided")
+Ftest.abs.HW
+
+
+Ftest.abs.SnL <- var.test(abs.lat.SnL, abs.form.SnL, alternative = "two.sided")
+Ftest.abs.SnL
+
+
+Ftest.abs.OL <- var.test(abs.lat.OL, abs.form.OL, alternative = "two.sided")
+Ftest.abs.OL
+
+
+
+
+```
+
+##### Mann Whitney U tests
+
+This will be performed on traits that **DID** vary with SL.
+
+```{r}
+
+(MW_D <- wilcox.test(abs.res.D~SPP, data=raw3, conf.int=T))
+
+(MW_P1 <- wilcox.test(abs.res.P1~SPP, data=raw3, conf.int=T))
+
+(MW_P1R <- wilcox.test(abs.res.P1.R~SPP, data=raw3, conf.int=T))
+
+(MW_LLSC <- wilcox.test(abs.res.LLSC~SPP, data=raw3, conf.int=T))
+
+
+```
+
+##### Variance of residuals
+
+I did notice that the deviance residual information was out of whack (median not super close to zero in many cases, the max and min VERY different). In the EXTRAS rscript, I ran a DHARMa test to see what the issue was, and apparently they fail the levene's test for homogeneity of variance. This indicates that while the AVERAGE variance is not different between the two species, there could be a different in how the species are varying, which may be interesting (similar to the F-tests of the continuous residuals). Will run some levene's test for these discrete residuals, just to see. 
+
+```{r}
+
+library(car)
+library(carData)
+
+(L_D <- leveneTest(abs.res.D~SPP, data=raw3))
+
+(L_P1 <- leveneTest(abs.res.P1~SPP, data=raw3))
+
+(L_P1R <- leveneTest(abs.res.P1.R~SPP, data=raw3))
+
+(L_LLSC <- leveneTest(abs.res.LLSC~SPP, data=raw3))
+
+```
+
+##### F-tests
+
+```{r}
+var.left.pel <- var.test(lat$P2.L, form$P2.L, alternative = "two.sided")
+var.left.pel
+
+ggplot(raw2, aes(SPP, P2.L)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.rig.pel <- var.test(lat$P2.R, form$P2.R, alternative = "two.sided")
+var.rig.pel
+
+ggplot(raw2, aes(SPP, P2.R)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.anal <- var.test(lat$A, form$A, alternative = "two.sided")
+var.anal
+
+ggplot(raw2, aes(SPP, A)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.sca.ab.ll <- var.test(lat$SALL, form$SALL, alternative = "two.sided")
+var.sca.ab.ll
+
+ggplot(raw2, aes(SPP, SALL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.sca.df <- var.test(lat$SBDF, form$SBDF, alternative = "two.sided")
+var.sca.df
+
+ggplot(raw2, aes(SPP, SBDF)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+var.flu.asy <- var.test(lat$FLA, form$FLA, alternative = "two.sided")
+var.flu.asy
+
+ggplot(raw2, aes(SPP, FLA)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+```
+
+##### Component extractions
+
+```{r}
+library(AMR) 
+library(ggplot2)
+library(ggfortify)
+
+
+(PCA$sdev ^ 2)
+
+evplot <- function(ev)
+{
+  # Broken stick model (MacArthur 1957)
+  n <- length(ev)
+  bsm <- data.frame(j=seq(1:n), p=0)
+  bsm$p[1] <- 1/n
+  for (i in 2:n) bsm$p[i] <- bsm$p[i-1] + (1/(n + 1 - i))
+  bsm$p <- 100*bsm$p/n
+  # Plot eigenvalues and % of variation for each axis
+  op <- par(mfrow=c(2,1))
+  barplot(ev, main="Eigenvalues", col="bisque", las=2)
+  abline(h=mean(ev), col="red")
+  legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
+  barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
+          main="% variation", col=c("bisque",2), las=2)
+  legend("topright", c("% eigenvalue", "Broken stick model"), 
+         pch=15, col=c("bisque",2), bty="n")
+  par(op)
+}
+
+
+ev <- PCA$sdev^2 
+evplot(ev) #according to Kaiser-Guttman criteron, we can use the first 4 PCs, even though the broken stick model shows only the first above the red bar plot... not 100% confident I know what this means, but pretty sure PC1 is body size
+
+
+```
+
+###### By zone
+
+```{r}
+
+plot2<- autoplot(PCA, data = raw1a, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot2
+
+```
+
+
+###### By Basin
+
+```{r}
+
+plot3<- autoplot(PCA, data = raw1a, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot3
+
+```
+
+
+###### By watershed
+
+```{r}
+plot4<- autoplot(PCA, data = raw1a, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot4
+
+```
+
+
+
+
+###### By zone
+
+```{r}
+
+plot6<- autoplot(PCA, x=2, y=3, data = raw1a, colour='QUARTILE', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot6
+
+```
+
+
+###### By basin
+
+```{r}
+
+plot7<- autoplot(PCA, x=2, y=3, data = raw1a, colour='BASIN', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot7
+
+```
+
+
+###### By watershed
+
+```{r}
+
+plot8<- autoplot(PCA, x=2, y=3, data = raw1a, colour='WATERSHED', shape="SPP", frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+plot8
+
+```
+
+***
+  
+  
+  #### Density comparisons
+  
+  I will try to compare the area of the density clusters for the PCA. I will attempt to do this use EMD (earth mover's distance). From what I understand, this will basically tell me how much "work" is needed to transform one distribution into another, thus providing a metric of the overall difference in shape between two distributions. 
+
+**To do this, I would need to be able to separate the loadings based on species, but I have no idea how to do that without running two separate PCAs, one for each group (which sorta defeats the point I think). **
+
+
+library(emdist) OR library(energy)
+
+
+
+
+
+
+
+
+
+
+
+
+library("ggplot2")
+library(ChemoSpec)
+library(robustbase)
+data(metMUD2)
+
+# Original factor encoding:
+levels(metMUD2$groups)
+
+# Split those original levels into 2 new ones (re-code them)
+new.grps <- list(geneBb = c("B", "b"), geneCc = c("C", "c"))
+mM3 <- splitSpectraGroups(metMUD2, new.grps)
+
+# run aov_pcaSpectra
+PCAs <- aov_pcaSpectra(mM3, fac = c("geneBb", "geneCc"))
+
+p1 <- aovPCAscores(mM3, PCAs, submat = 1, ellipse = "cls")
+p1 <- p1 + ggtitle("aovPCA: B vs b")
+p1
+
+p2 <- aovPCAscores(mM3, PCAs, submat = 2)
+p2 <- p2 + ggtitle("aovPCA: C vs c")
+p2
+
+p3 <- aovPCAscores(mM3, PCAs, submat = 3)
+p3 <- p3 + ggtitle("aovPCA: Interaction Term")
+p3
+
+p4 <- aovPCAloadings(spectra = mM3, PCA = PCAs)
+p4 <- p4 + ggtitle("aov_pcaSpectra: Bb Loadings")
+p4
+
+
+
+
+
+
+
+
+
 
 
 #if (!require("BiocManager", quietly = TRUE))
