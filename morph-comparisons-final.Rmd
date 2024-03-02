@@ -1566,9 +1566,9 @@ plot5
 ```{r}
 
 tampico <- raw2[raw2$COUNTY.ST == "Tamaulipas/MX",]
-lat.mx <- raw2[raw2$SPP == "p.latipinna",]
-form.mx <- raw2[raw2$SPP == "p.formosa",]
-mex.mx <- raw2[raw2$SPP == "p.mexicana",]
+lat.mx <- tampico[tampico$SPP == "p.latipinna",]
+form.mx <- tampico[tampico$SPP == "p.formosa",]
+mex.mx <- tampico[tampico$SPP == "p.mexicana",]
 
 
 
@@ -1629,6 +1629,11 @@ print(summary(MX.glm_P1.R), show.residuals=TRUE)
 MX.glm_LLSC <- glm(abs.res.LLSC~SPP, data=tampico)
 print(summary(MX.glm_LLSC), show.residuals=TRUE)
 
+MX.glm_SBLL <- glm(abs.res.SBLL~SPP, data=tampico)
+print(summary(MX.glm_SBLL), show.residuals=TRUE)
+
+
+
 ```
 
 
@@ -1658,8 +1663,6 @@ library(carData)
 (LT_A <- leveneTest(A~SPP, data=tampico)) 
 
 (LT_SALL <- leveneTest(SALL~SPP, data=tampico))
-
-(LT_SBLL <- leveneTest(SBLL~SPP, data=tampico))
 
 (LT_SBDF <- leveneTest(SBDF~SPP, data=tampico))
 
@@ -1877,17 +1880,17 @@ qqline(rawF$OL)
 Since all of the continuous characters were not normal, I will log transform them, and proceed with the transformed data in all analyses.
 
 
-Log transformations did not work on ANY of them. Will try square/cubed root. Square didn't work...
+Log transformations did not work on ANY of them. Will try square/cubed root. Square root didn't work...neither did cubed or sqaured. Log seemed to get them the closest. Will continue with log....
 
 
 ```{r}
-#rawF[paste0(names(rawF), '_log')] <- log(rawF[, 25:35], 10)
+#rawF[paste0(names(rawF), '_sq')] <- '^'(rawF[, 25:35], 2)
 #raw1 (which rawF is filtered from) already has log of shit, so don't need to do again
 
 #for some reason did the log of the whole data frame instead of those specific columns, so I will just remove the unnecessary columns instead of spending time on what went wrong.
 
-#rawF <- subset(rawF, select = -c(37:50) )
-#rawF <- subset(rawF, select = -c(59:94) )
+#rawF <- subset(rawF, select = -c(52:65) )
+#rawF <- subset(rawF, select = -c(74:88) )
 #double checking normality with a SW test and QQ plot
 
 shapiro.test(rawF$SL_log)
@@ -2594,13 +2597,11 @@ F.reg.mex.FLA.plot
 ##### LAT #####
 F.res.lat.D <- resid(F.reg.lat.D)
 
-F.res.lat.P1 <- resid(F.reg.lat.P1)
-
 F.res.lat.P1.R <- resid(F.reg.lat.P1.R)
 
 F.res.lat.LLSC <- resid(F.reg.lat.LLSC)
 
-F.res.lat.SBLL <- resid(F.reg.lat.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
+F.res.lat.SBLL <- resid(F.reg.lat.SBLL) 
 
 F.res.lat.BD <- resid(F.reg.lat.BD)
 
@@ -2626,13 +2627,11 @@ F.res.lat.OL <- resid(F.reg.lat.OL)
 
 F.res.form.D <- resid(F.reg.form.D)
 
-F.res.form.P1 <- resid(F.reg.form.P1)
-
 F.res.form.P1.R <- resid(F.reg.form.P1.R)
 
 F.res.form.LLSC <- resid(F.reg.form.LLSC)
 
-F.res.form.SBLL <- resid(F.reg.form.SBLL) #will only be used when comparing with p.mex; raw data used otherwise
+F.res.form.SBLL <- resid(F.reg.form.SBLL)
 
 F.res.form.BD <- resid(F.reg.form.BD)
 
@@ -2657,8 +2656,6 @@ F.res.form.OL <- resid(F.reg.form.OL)
 
 ##### MEX #####
 F.res.mex.D <- resid(F.reg.mex.D)
-
-F.res.mex.P1 <- resid(F.reg.mex.P1)
 
 F.res.mex.P1.R <- resid(F.reg.mex.P1.R)
 
@@ -2697,9 +2694,6 @@ F.res.mex.OL <- resid(F.reg.mex.OL)
 
 F.abs.lat.D <- abs(F.res.lat.D)
 mean(F.abs.lat.D)
-
-F.abs.lat.P1 <- abs(F.res.lat.P1)
-mean(F.abs.lat.P1)
 
 F.abs.lat.P1.R <- abs(F.res.lat.P1.R)
 mean(F.abs.lat.P1.R)
@@ -2746,9 +2740,6 @@ mean(F.abs.lat.OL)
 F.abs.form.D <- abs(F.res.form.D)
 mean(F.abs.form.D)
 
-F.abs.form.P1 <- abs(F.res.form.P1)
-mean(F.abs.form.P1)
-
 F.abs.form.P1.R <- abs(F.res.form.P1.R)
 mean(F.abs.form.P1.R)
 
@@ -2793,9 +2784,6 @@ mean(F.abs.form.OL)
 F.abs.mex.D <- abs(F.res.mex.D)
 mean(F.abs.mex.D)
 
-F.abs.mex.P1 <- abs(F.res.mex.P1)
-mean(F.abs.mex.P1)
-
 F.abs.mex.P1.R <- abs(F.res.mex.P1.R)
 mean(F.abs.mex.P1.R)
 
@@ -2839,7 +2827,6 @@ mean(F.abs.mex.OL)
 #let's get this into the raw1 data set so that we can plot this more easily
 
 F.abs.res.D <- c(F.abs.lat.D, F.abs.form.D, F.abs.mex.D)
-F.abs.res.P1 <- c(F.abs.lat.P1, F.abs.form.P1, F.abs.mex.P1)
 F.abs.res.P1.R <- c(F.abs.lat.P1.R, F.abs.form.P1.R, F.abs.mex.P1.R)
 F.abs.res.LLSC<- c(F.abs.lat.LLSC, F.abs.form.LLSC, F.abs.mex.LLSC)
 F.abs.res.SBLL<- c(F.abs.lat.SBLL, F.abs.form.SBLL, F.abs.mex.SBLL)
@@ -2855,7 +2842,7 @@ F.abs.res.SnL <- c(F.abs.lat.SnL, F.abs.form.SnL, F.abs.mex.SnL)
 F.abs.res.OL <- c(F.abs.lat.OL, F.abs.form.OL, F.abs.mex.OL)
 
 
-rawF2 <- cbind(rawF, F.abs.res.D, F.abs.res.P1, F.abs.res.P1.R, F.abs.res.LLSC, F.abs.res.SBLL, F.abs.res.BD, F.abs.res.CPD, F.abs.res.CPL, F.abs.res.PreDL, F.abs.res.DbL, F.abs.res.HL, F.abs.res.HD, F.abs.res.HW, F.abs.res.SnL, F.abs.res.OL)
+rawF2 <- cbind(rawF, F.abs.res.D, F.abs.res.P1.R, F.abs.res.LLSC, F.abs.res.SBLL, F.abs.res.BD, F.abs.res.CPD, F.abs.res.CPL, F.abs.res.PreDL, F.abs.res.DbL, F.abs.res.HL, F.abs.res.HD, F.abs.res.HW, F.abs.res.SnL, F.abs.res.OL)
 
 ```
 
@@ -2892,14 +2879,6 @@ scatter_violin1 <- ggplot(data=rawF2, aes(x=SPP, y=F.abs.res.D)) +
   stat_summary(fun=mean, geom="crossbar", fill="red", width=0.03)
 
 print(scatter_violin1)
-
-
-
-ggplot(rawF2, aes(SPP, F.abs.res.P1)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
 
 ggplot(rawF2, aes(SPP, F.abs.res.P1.R)) +
   geom_point(alpha=0.3) +
@@ -3056,58 +3035,6 @@ ttest.F.abs.OL
 
 
 ```
-
-##### F-tests
-
-Gonna try F-tests for funsies. Would be interesting if both are varying, but in different ways (amazon with identical variance around best fit, whereas lat with more variation around best fit for example).
-
-```{r, echo=FALSE}
-
-
-Ftest.F.abs.BD <- var.test(F.abs.lat.BD, F.abs.form.BD, alternative = "two.sided")
-Ftest.F.abs.BD
-
-
-Ftest.F.abs.CPD <- var.test(F.abs.lat.CPD, F.abs.form.CPD, alternative = "two.sided")
-Ftest.F.abs.CPD
-
-
-Ftest.F.abs.CPL <- var.test(F.abs.lat.CPL, F.abs.form.CPL, alternative = "two.sided")
-Ftest.F.abs.CPL
-
-
-Ftest.F.abs.PreDL <- var.test(F.abs.lat.PreDL, F.abs.form.PreDL, alternative = "two.sided")
-Ftest.F.abs.PreDL
-
-
-Ftest.F.abs.DbL <- var.test(F.abs.lat.DbL, F.abs.form.DbL, alternative = "two.sided")
-Ftest.F.abs.DbL
-
-
-Ftest.F.abs.HL <- var.test(F.abs.lat.HL, F.abs.form.HL, alternative = "two.sided")
-Ftest.F.abs.HL
-
-
-Ftest.F.abs.HD <- var.test(F.abs.lat.HD, F.abs.form.HD, alternative = "two.sided")
-Ftest.F.abs.HD
-
-
-Ftest.F.abs.HW <- var.test(F.abs.lat.HW, F.abs.form.HW, alternative = "two.sided")
-Ftest.F.abs.HW
-
-
-Ftest.F.abs.SnL <- var.test(F.abs.lat.SnL, F.abs.form.SnL, alternative = "two.sided")
-Ftest.F.abs.SnL
-
-
-Ftest.F.abs.OL <- var.test(F.abs.lat.OL, F.abs.form.OL, alternative = "two.sided")
-Ftest.F.abs.OL
-
-
-
-
-```
-
 ***
 
 #### (2) Discrete, residuals
@@ -3124,9 +3051,9 @@ rawF3 <- rawF2[rawF2$SPP !="p.mexicana", ]
 
 Fglm_D <- glm(F.abs.res.D~SPP, data=rawF3)
 print(summary(Fglm_D), show.residuals=TRUE)
+test <- aov(Fglm_D)
+summary(test)
 
-Fglm_P1 <- glm(F.abs.res.P1~SPP, data=rawF3)
-print(summary(Fglm_P1), show.residuals=TRUE)
 
 Fglm_P1.R <- glm(F.abs.res.P1.R~SPP, data=rawF3)
 print(summary(Fglm_P1.R), show.residuals=TRUE)
@@ -3134,45 +3061,10 @@ print(summary(Fglm_P1.R), show.residuals=TRUE)
 Fglm_LLSC <- glm(F.abs.res.LLSC~SPP, data=rawF3)
 print(summary(Fglm_LLSC), show.residuals=TRUE)
 
-```
-
-
-##### Mann Whitney U tests
-
-This will be performed on traits that **DID** vary with SL.
-
-```{r}
-
-(FMW_D <- wilcox.test(F.abs.res.D~SPP, data=rawF3, conf.int=T))
-
-(FMW_P1 <- wilcox.test(F.abs.res.P1~SPP, data=rawF3, conf.int=T))
-
-(FMW_P1R <- wilcox.test(F.abs.res.P1.R~SPP, data=rawF3, conf.int=T))
-
-(FMW_LLSC <- wilcox.test(F.abs.res.LLSC~SPP, data=rawF3, conf.int=T))
-
+Fglm_SBLL <- glm(F.abs.res.SBLL~SPP, data=rawF3)
+print(summary(Fglm_SBLL), show.residuals=TRUE)
 
 ```
-
-##### Variance of residuals
-
-I did notice that the deviance residual information was out of whack (median not super close to zero in many cases, the max and min VERY different). In the EXTRAS rscript, I ran a DHARMa test to see what the issue was, and apparently they fail the levene's test for homogeneity of variance. This indicates that while the AVERAGE variance is not different between the two species, there could be a different in how the species are varying, which may be interesting (similar to the F-tests of the continuous residuals). Will run some levene's test for these discrete residuals, just to see. 
-
-```{r}
-
-library(car)
-library(carData)
-
-(FL_D <- leveneTest(F.abs.res.D~SPP, data=rawF3))
-
-(FL_P1 <- leveneTest(F.abs.res.P1~SPP, data=rawF3))
-
-(FL_P1R <- leveneTest(F.abs.res.P1.R~SPP, data=rawF3))
-
-(FL_LLSC <- leveneTest(F.abs.res.LLSC~SPP, data=rawF3))
-
-```
-
 
 ***
 
@@ -3181,68 +3073,6 @@ library(carData)
 EVEN THOUGH THESE ARE DISCRETE, NO IDEA WHAT ELSE TO DO WITH THEM (glmm on raw data will just compare means). Did both F-test and Levene's test. Get the same overall results, albeit slightly different values. Might go with Levene's since it is good with non-normal data. 
 
 This will only be for the traits that did **not** have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA); none of these traits were transformed, so just doing raw for now.
-
-##### F-tests
-
-```{r}
-Fvar.left.pel <- var.test(lat.F$P2.L, form.F$P2.L, alternative = "two.sided")
-Fvar.left.pel
-
-ggplot(rawF2, aes(SPP, P2.L)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
-
-Fvar.rig.pel <- var.test(lat.F$P2.R, form.F$P2.R, alternative = "two.sided")
-Fvar.rig.pel
-
-ggplot(rawF2, aes(SPP, P2.R)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
-
-Fvar.anal <- var.test(lat.F$A, form.F$A, alternative = "two.sided")
-Fvar.anal
-
-ggplot(rawF2, aes(SPP, A)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
-
-Fvar.sca.ab.ll <- var.test(lat.F$SALL, form.F$SALL, alternative = "two.sided")
-Fvar.sca.ab.ll
-
-ggplot(rawF2, aes(SPP, SALL)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
-
-Fvar.sca.df <- var.test(lat.F$SBDF, form.F$SBDF, alternative = "two.sided")
-Fvar.sca.df
-
-ggplot(rawF2, aes(SPP, SBDF)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
-
-Fvar.flu.asy <- var.test(lat.F$FLA, form.F$FLA, alternative = "two.sided")
-Fvar.flu.asy
-
-ggplot(rawF2, aes(SPP, FLA)) +
-  geom_point(alpha=0.3) +
-  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
-               width=0.03, colour="red", alpha=0.7) +
-  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
-
-
-```
-
-***
 
 
 ##### Levene's test
@@ -3256,11 +3086,11 @@ Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A
 
 (FLT_P2R <- leveneTest(P2.R~SPP, data=rawF3)) #same as above
 
+(FLT_P1 <- leveneTest(P1~SPP, data=rawF3)) 
+
 (FLT_A <- leveneTest(A~SPP, data=rawF3)) 
 
 (FLT_SALL <- leveneTest(SALL~SPP, data=rawF3))
-
-(FLT_SBLL <- leveneTest(SBLL~SPP, data=rawF3))
 
 (FLT_SBDF <- leveneTest(SBDF~SPP, data=rawF3))
 
@@ -3307,8 +3137,6 @@ plot_multi_histogram <- function(df, feature, label_column) {
 plot_multi_histogram(rawF3, "F.abs.res.CPD", "SPP")
 
 plot_multi_histogram(rawF3, "F.abs.res.DbL", "SPP")
-
-plot_multi_histogram(rawF3, "F.abs.res.P1", "SPP")
 
 plot_multi_histogram(rawF3, "F.abs.res.P1.R", "SPP")
 
@@ -3500,25 +3328,131 @@ plotF8
 
 ```
 
-***
-
-
-#### Density comparisons
-
-I will try to compare the area of the density clusters for the PCA. I will attempt to do this use EMD (earth mover's distance). From what I understand, this will basically tell me how much "work" is needed to transform one distribution into another, thus providing a metric of the overall difference in shape between two distributions. 
-
-**To do this, I would need to be able to separate the loadings based on species, but I have no idea how to do that without running two separate PCAs, one for each group (which sorta defeats the point I think). **
-
-
-library(emdist) OR library(energy)
-
-
 
 
 
 <br><br><br><br><br>
 
 ***
+
+## Tampico population
+
+
+#### (1) Continuous, residuals
+
+
+   -    will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
+   -    this will be for the traits that *did* have a significant regression compared to SL; will be using the absolute value residuals. 
+   -    For continuous traits, we will be using the transformed data.
+    
+##### ANOVAs
+
+```{r}
+
+Ftampico <- rawF2[rawF2$COUNTY.ST == "Tamaulipas/MX",]
+Flat.mx <- Ftampico[Ftampico$SPP == "p.latipinna",]
+Fform.mx <- Ftampico[Ftampico$SPP == "p.formosa",]
+Fmex.mx <- Ftampico[Ftampico$SPP == "p.mexicana",]
+
+
+
+MX.BD <- aov(F.abs.res.BD~SPP, data=Ftampico)
+summary(MX.BD)
+
+MX.CPD <- aov(F.abs.res.CPD~SPP, data=Ftampico)
+summary(MX.CPD)
+
+MX.CPL <- aov(F.abs.res.CPL~SPP, data=Ftampico)
+summary(MX.CPL)
+
+MX.PreDL <- aov(F.abs.res.PreDL~SPP, data=Ftampico)
+summary(MX.PreDL)
+
+MX.DbL <- aov(F.abs.res.DbL~SPP, data=Ftampico)
+summary(MX.DbL)
+
+MX.HL <- aov(F.abs.res.HL~SPP, data=Ftampico)
+summary(MX.HL)
+
+MX.HD <- aov(F.abs.res.HD~SPP, data=Ftampico)
+summary(MX.HD)
+
+MX.HW <- aov(F.abs.res.HW~SPP, data=Ftampico)
+summary(MX.HW)
+
+MX.SnL <- aov(F.abs.res.SnL~SPP, data=Ftampico)
+summary(MX.SnL)
+
+MX.OL <- aov(F.abs.res.OL~SPP, data=Ftampico)
+summary(MX.OL)
+
+
+```
+
+***
+
+#### (2) Discrete, residuals
+
+Logan suggested doing a glm with poisson distribution (because it is count data) for these relationships. I originally performed Mann Whitney U tests, so will also include that. Overall, results don't differ even though exact values are slightly different.
+
+Had to remove the poisson part, becausethe residuals didn't meet the non-integer requirement for poisson (it freaked out and took forever to load).
+
+##### GLMs
+
+```{r}
+
+MX.glm_D <- glm(F.abs.res.D~SPP, data=Ftampico)
+print(summary(MX.glm_D), show.residuals=TRUE)
+
+MX.glm_P1.R <- glm(F.abs.res.P1.R~SPP, data=Ftampico)
+print(summary(MX.glm_P1.R), show.residuals=TRUE)
+
+MX.glm_LLSC <- glm(F.abs.res.LLSC~SPP, data=Ftampico)
+print(summary(MX.glm_LLSC), show.residuals=TRUE)
+
+MX.glm_SBLL <- glm(F.abs.res.SBLL~SPP, data=Ftampico)
+print(summary(MX.glm_SBLL), show.residuals=TRUE)``
+
+```
+
+
+***
+
+#### (3) Discrete, raw
+
+EVEN THOUGH THESE ARE DISCRETE, NO IDEA WHAT ELSE TO DO WITH THEM (glmm on raw data will just compare means). Did both F-test and Levene's test. Get the same overall results, albeit slightly different values. Might go with Levene's since it is good with non-normal data. 
+
+This will only be for the traits that did **not** have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA); none of these traits were transformed, so just doing raw for now.
+
+
+##### Levene's test
+
+
+Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
+
+```{r}
+
+library(car)
+library(carData)
+
+(LT_P2L <- leveneTest(P2.L~SPP, data=Ftampico)) #gives nothing since it's all the same value
+
+(LT_P2R <- leveneTest(P2.R~SPP, data=Ftampico)) #same as above
+
+(LT_P1 <- leveneTest(P1~SPP, data=Ftampico))
+
+(LT_A <- leveneTest(A~SPP, data=Ftampico)) 
+
+(LT_SALL <- leveneTest(SALL~SPP, data=Ftampico))
+
+(LT_SBDF <- leveneTest(SBDF~SPP, data=Ftampico))
+
+(LT_FLA <- leveneTest(FLA~SPP, data=Ftampico))
+
+
+
+```
+
 
 
 ### other

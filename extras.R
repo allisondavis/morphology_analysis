@@ -1,3 +1,162 @@
+##### F-tests
+
+```{r}
+Fvar.left.pel <- var.test(lat.F$P2.L, form.F$P2.L, alternative = "two.sided")
+Fvar.left.pel
+
+ggplot(rawF2, aes(SPP, P2.L)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.rig.pel <- var.test(lat.F$P2.R, form.F$P2.R, alternative = "two.sided")
+Fvar.rig.pel
+
+ggplot(rawF2, aes(SPP, P2.R)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.anal <- var.test(lat.F$A, form.F$A, alternative = "two.sided")
+Fvar.anal
+
+ggplot(rawF2, aes(SPP, A)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.sca.ab.ll <- var.test(lat.F$SALL, form.F$SALL, alternative = "two.sided")
+Fvar.sca.ab.ll
+
+ggplot(rawF2, aes(SPP, SALL)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.sca.df <- var.test(lat.F$SBDF, form.F$SBDF, alternative = "two.sided")
+Fvar.sca.df
+
+ggplot(rawF2, aes(SPP, SBDF)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+Fvar.flu.asy <- var.test(lat.F$FLA, form.F$FLA, alternative = "two.sided")
+Fvar.flu.asy
+
+ggplot(rawF2, aes(SPP, FLA)) +
+  geom_point(alpha=0.3) +
+  stat_summary(fun.data=function(x){mean_cl_normal(x, conf.int=.683)}, geom="errorbar", 
+               width=0.03, colour="red", alpha=0.7) +
+  stat_summary(fun=mean, geom="point", fill="red", pch=21, size=3)
+
+
+```
+
+***
+
+
+
+
+##### Mann Whitney U tests
+
+This will be performed on traits that **DID** vary with SL.
+
+```{r}
+
+(FMW_D <- wilcox.test(F.abs.res.D~SPP, data=rawF3, conf.int=T))
+
+(FMW_P1 <- wilcox.test(F.abs.res.P1~SPP, data=rawF3, conf.int=T))
+
+(FMW_P1R <- wilcox.test(F.abs.res.P1.R~SPP, data=rawF3, conf.int=T))
+
+(FMW_LLSC <- wilcox.test(F.abs.res.LLSC~SPP, data=rawF3, conf.int=T))
+
+
+```
+
+##### Variance of residuals
+
+I did notice that the deviance residual information was out of whack (median not super close to zero in many cases, the max and min VERY different). In the EXTRAS rscript, I ran a DHARMa test to see what the issue was, and apparently they fail the levene's test for homogeneity of variance. This indicates that while the AVERAGE variance is not different between the two species, there could be a different in how the species are varying, which may be interesting (similar to the F-tests of the continuous residuals). Will run some levene's test for these discrete residuals, just to see. 
+
+```{r}
+
+library(car)
+library(carData)
+
+(FL_D <- leveneTest(F.abs.res.D~SPP, data=rawF3))
+
+(FL_P1 <- leveneTest(F.abs.res.P1~SPP, data=rawF3))
+
+(FL_P1R <- leveneTest(F.abs.res.P1.R~SPP, data=rawF3))
+
+(FL_LLSC <- leveneTest(F.abs.res.LLSC~SPP, data=rawF3))
+
+```
+
+
+
+
+##### F-tests
+
+#Gonna try F-tests for funsies. Would be interesting if both are varying, but in different ways (amazon with identical variance around best fit, whereas lat with more variation around best fit for example).
+
+```{r, echo=FALSE}
+
+
+Ftest.F.abs.BD <- var.test(F.abs.lat.BD, F.abs.form.BD, alternative = "two.sided")
+Ftest.F.abs.BD
+
+
+Ftest.F.abs.CPD <- var.test(F.abs.lat.CPD, F.abs.form.CPD, alternative = "two.sided")
+Ftest.F.abs.CPD
+
+
+Ftest.F.abs.CPL <- var.test(F.abs.lat.CPL, F.abs.form.CPL, alternative = "two.sided")
+Ftest.F.abs.CPL
+
+
+Ftest.F.abs.PreDL <- var.test(F.abs.lat.PreDL, F.abs.form.PreDL, alternative = "two.sided")
+Ftest.F.abs.PreDL
+
+
+Ftest.F.abs.DbL <- var.test(F.abs.lat.DbL, F.abs.form.DbL, alternative = "two.sided")
+Ftest.F.abs.DbL
+
+
+Ftest.F.abs.HL <- var.test(F.abs.lat.HL, F.abs.form.HL, alternative = "two.sided")
+Ftest.F.abs.HL
+
+
+Ftest.F.abs.HD <- var.test(F.abs.lat.HD, F.abs.form.HD, alternative = "two.sided")
+Ftest.F.abs.HD
+
+
+Ftest.F.abs.HW <- var.test(F.abs.lat.HW, F.abs.form.HW, alternative = "two.sided")
+Ftest.F.abs.HW
+
+
+Ftest.F.abs.SnL <- var.test(F.abs.lat.SnL, F.abs.form.SnL, alternative = "two.sided")
+Ftest.F.abs.SnL
+
+
+Ftest.F.abs.OL <- var.test(F.abs.lat.OL, F.abs.form.OL, alternative = "two.sided")
+Ftest.F.abs.OL
+
+
+
+
+```
+
+
+
+
+
 reg.lat.P2.L <- lm(lat$P2.L ~ lat$SL)
 sd.lat.P2.L <- rstandard(reg.lat.P2.L)
 reg.lat.P2.L.plot <- ggplot(lat, aes(x = SL, y = P2.L)) + 
