@@ -1326,15 +1326,23 @@ raw3 <- raw2[raw2$SPP !="p.mexicana", ]
 
 glm_D <- glm(abs.res.D~SPP, data=raw3)
 print(summary(glm_D), show.residuals=TRUE)
+D.aov <- aov(glm_D)
+summary(D.aov)
 
 glm_P1 <- glm(abs.res.P1~SPP, data=raw3)
 print(summary(glm_P1), show.residuals=TRUE)
+P1.aov <- aov(glm_P1)
+summary(P1.aov)
 
 glm_P1.R <- glm(abs.res.P1.R~SPP, data=raw3)
 print(summary(glm_P1.R), show.residuals=TRUE)
+P1.R.aov <- aov(glm_P1.R)
+summary(P1.R.aov)
 
 glm_LLSC <- glm(abs.res.LLSC~SPP, data=raw3)
 print(summary(glm_LLSC), show.residuals=TRUE)
+LLSC.aov <- aov(glm_LLSC)
+summary(LLSC.aov)
 
 ```
 
@@ -1619,18 +1627,28 @@ Had to remove the poisson part, becausethe residuals didn't meet the non-integer
 
 MX.glm_D <- glm(abs.res.D~SPP, data=tampico)
 print(summary(MX.glm_D), show.residuals=TRUE)
+MX.D.aov <- aov(MX.glm_D)
+summary(MX.D.aov)
 
 MX.glm_P1 <- glm(abs.res.P1~SPP, data=tampico)
 print(summary(MX.glm_P1), show.residuals=TRUE)
+MX.P1.aov <- aov(MX.glm_P1)
+summary(MX.P1.aov)
 
 MX.glm_P1.R <- glm(abs.res.P1.R~SPP, data=tampico)
 print(summary(MX.glm_P1.R), show.residuals=TRUE)
+MX.P1.R.aov <- aov(MX.glm_P1.R)
+summary(MX.P1.R.aov)
 
 MX.glm_LLSC <- glm(abs.res.LLSC~SPP, data=tampico)
 print(summary(MX.glm_LLSC), show.residuals=TRUE)
+MX.LLSC.aov <- aov(MX.glm_LLSC)
+summary(MX.LLSC.aov)
 
 MX.glm_SBLL <- glm(abs.res.SBLL~SPP, data=tampico)
 print(summary(MX.glm_SBLL), show.residuals=TRUE)
+MX.SBLL.aov <- aov(MX.glm_SBLL)
+summary(MX.SBLL.aov)
 
 
 
@@ -3051,18 +3069,24 @@ rawF3 <- rawF2[rawF2$SPP !="p.mexicana", ]
 
 Fglm_D <- glm(F.abs.res.D~SPP, data=rawF3)
 print(summary(Fglm_D), show.residuals=TRUE)
-test <- aov(Fglm_D)
-summary(test)
+F.D.aov <- aov(Fglm_D)
+summary(F.D.aov)
 
 
 Fglm_P1.R <- glm(F.abs.res.P1.R~SPP, data=rawF3)
 print(summary(Fglm_P1.R), show.residuals=TRUE)
+F.P1.R.aov <- aov(Fglm_P1.R)
+summary(F.P1.R.aov)
 
 Fglm_LLSC <- glm(F.abs.res.LLSC~SPP, data=rawF3)
 print(summary(Fglm_LLSC), show.residuals=TRUE)
+F.LLSC.aov <- aov(Fglm_LLSC)
+summary(F.LLSC.aov)
 
 Fglm_SBLL <- glm(F.abs.res.SBLL~SPP, data=rawF3)
 print(summary(Fglm_SBLL), show.residuals=TRUE)
+F.SBLL.aov <- aov(Fglm_SBLL)
+summary(F.SBLL.aov)
 
 ```
 
@@ -3401,17 +3425,25 @@ Had to remove the poisson part, becausethe residuals didn't meet the non-integer
 
 ```{r}
 
-MX.glm_D <- glm(F.abs.res.D~SPP, data=Ftampico)
-print(summary(MX.glm_D), show.residuals=TRUE)
+FMX.glm_D <- glm(F.abs.res.D~SPP, data=Ftampico)
+print(summary(FMX.glm_D), show.residuals=TRUE)
+FMX.D.aov <- aov(FMX.glm_D)
+summary(FMX.D.aov)
 
-MX.glm_P1.R <- glm(F.abs.res.P1.R~SPP, data=Ftampico)
-print(summary(MX.glm_P1.R), show.residuals=TRUE)
+FMX.glm_P1.R <- glm(F.abs.res.P1.R~SPP, data=Ftampico)
+print(summary(FMX.glm_P1.R), show.residuals=TRUE)
+FMX.P1.R.aov <- aov(FMX.glm_P1.R)
+summary(FMX.P1.R.aov)
 
-MX.glm_LLSC <- glm(F.abs.res.LLSC~SPP, data=Ftampico)
-print(summary(MX.glm_LLSC), show.residuals=TRUE)
+FMX.glm_LLSC <- glm(F.abs.res.LLSC~SPP, data=Ftampico)
+print(summary(FMX.glm_LLSC), show.residuals=TRUE)
+FMX.LLSC.aov <- aov(FMX.glm_LLSC)
+summary(FMX.LLSC.aov)
 
-MX.glm_SBLL <- glm(F.abs.res.SBLL~SPP, data=Ftampico)
-print(summary(MX.glm_SBLL), show.residuals=TRUE)``
+FMX.glm_SBLL <- glm(F.abs.res.SBLL~SPP, data=Ftampico)
+print(summary(FMX.glm_SBLL), show.residuals=TRUE)
+FMX.SBLL.aov <- aov(FMX.glm_SBLL)
+summary(FMX.SBLL.aov)
 
 ```
 
