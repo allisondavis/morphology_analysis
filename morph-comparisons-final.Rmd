@@ -109,6 +109,7 @@ shapiro.test(raw1b$OL)
 ##### Histograms 
 
 ```{r}
+par(mfcol=c(2,2), oma = c(0,0,2,0))
 
 hist(raw1$SL, breaks=30)
 
@@ -137,27 +138,27 @@ hist(raw1$OL, breaks=30)
 
 ####### WITHOUT MONSTER ########
 
-hist(raw1b$SL, breaks=30)
+#hist(raw1b$SL, breaks=30)
 
-hist(raw1b$BD, breaks=30)
+#hist(raw1b$BD, breaks=30)
 
-hist(raw1b$CPD, breaks=30)
+#hist(raw1b$CPD, breaks=30)
 
-hist(raw1b$CPL, breaks=30)
+#hist(raw1b$CPL, breaks=30)
 
-hist(raw1b$PreDL, breaks=30)
+#hist(raw1b$PreDL, breaks=30)
 
-hist(raw1b$DbL, breaks=30)
+#hist(raw1b$DbL, breaks=30)
 
-hist(raw1b$HL, breaks=30)
+#hist(raw1b$HL, breaks=30)
 
-hist(raw1b$HD, breaks=30)
+#hist(raw1b$HD, breaks=30)
 
-hist(raw1b$HW, breaks=30)
+#hist(raw1b$HW, breaks=30)
 
-hist(raw1b$SnL, breaks=30)
+#hist(raw1b$SnL, breaks=30)
 
-hist(raw1b$OL, breaks=30)
+#hist(raw1b$OL, breaks=30)
 
 
 ```
@@ -165,6 +166,7 @@ hist(raw1b$OL, breaks=30)
 ##### QQ plots 
 
 ```{r}
+par(mfcol=c(2,2), oma = c(0,0,2,0))
 
 qqnorm(raw1$SL)
 qqline(raw1$SL)
@@ -243,6 +245,8 @@ shapiro.test(raw1$SnL_log)
 
 shapiro.test(raw1$OL_log)
 
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
 qqnorm(raw1$SL_log)
 qqline(raw1$SL_log)
 
@@ -309,6 +313,8 @@ shapiro.test(raw1$cbR_BD) #didn't work, but closest to normal
 shapiro.test(raw1$cbR_PreDL)#worked
 shapiro.test(raw1$cbR_DbL)#worked
 
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
 qqnorm(raw1$cbR_BD)
 qqline(raw1$cbR_BD)
 
@@ -368,12 +374,14 @@ t.test(mex$BD_log, form$BD_log, alternative = "two.sided")
 
 
 ##### LAT #####
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
 reg.lat.D <- lm(lat$D ~ lat$SL)
 sd.lat.D <- rstandard(reg.lat.D)
 reg.lat.D.plot <- ggplot(lat, aes(x = SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.lat.D.plot
 
 reg.lat.P1 <- lm(lat$P1 ~ lat$SL)
@@ -381,7 +389,7 @@ sd.lat.P1 <- rstandard(reg.lat.P1)
 reg.lat.P1.plot <- ggplot(lat, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.lat.P1.plot
 
 reg.lat.A <- lm(lat$A ~ lat$SL)
@@ -389,7 +397,7 @@ sd.lat.A <- rstandard(reg.lat.A)
 reg.lat.A.plot <- ggplot(lat, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 8)
 reg.lat.A.plot
 
 reg.lat.P1.R <- lm(lat$P1.R ~ lat$SL)
@@ -397,7 +405,7 @@ sd.lat.P1.R <- rstandard(reg.lat.P1.R)
 reg.lat.P1.R.plot <- ggplot(lat, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.lat.P1.R.plot
 
 reg.lat.LLSC <- lm(lat$LLSC ~ lat$SL)
@@ -405,7 +413,7 @@ sd.lat.LLSC <- rstandard(reg.lat.LLSC)
 reg.lat.LLSC.plot <- ggplot(lat, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 20)
 reg.lat.LLSC.plot
 
 reg.lat.SALL <- lm(lat$SALL ~ lat$SL)
@@ -413,7 +421,7 @@ sd.lat.SALL <- rstandard(reg.lat.SALL)
 reg.lat.SALL.plot <- ggplot(lat, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.lat.SALL.plot
 
 reg.lat.SBLL <- lm(lat$SBLL ~ lat$SL)
@@ -421,7 +429,7 @@ sd.lat.SBLL <- rstandard(reg.lat.SBLL)
 reg.lat.SBLL.plot <- ggplot(lat, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 2)
 reg.lat.SBLL.plot
 
 reg.lat.SBDF <- lm(lat$SBDF ~ lat$SL)
@@ -429,7 +437,7 @@ sd.lat.SBDF <- rstandard(reg.lat.SBDF)
 reg.lat.SBDF.plot <- ggplot(lat, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.lat.SBDF.plot
 
 reg.lat.BD <- lm(lat$cbR_BD ~ lat$cbR_SL)
@@ -437,7 +445,7 @@ sd.lat.BD <- rstandard(reg.lat.BD)
 reg.lat.BD.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3)
 reg.lat.BD.plot
 
 reg.lat.CPD <- lm(lat$CPD_log ~ lat$SL_log)
@@ -445,7 +453,7 @@ sd.lat.CPD <- rstandard(reg.lat.CPD)
 reg.lat.CPD.plot <- ggplot(lat, aes(x = SL_log, y = CPD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.lat.CPD.plot
 
 reg.lat.CPL <- lm(lat$CPL_log ~ lat$SL_log)
@@ -453,7 +461,7 @@ sd.lat.CPL <- rstandard(reg.lat.CPL)
 reg.lat.CPL.plot <- ggplot(lat, aes(x = SL_log, y = CPL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.lat.CPL.plot
 
 reg.lat.PreDL <- lm(lat$cbR_PreDL ~ lat$cbR_SL)
@@ -461,7 +469,7 @@ sd.lat.PreDL <- rstandard(reg.lat.PreDL)
 reg.lat.PreDL.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.2)
 reg.lat.PreDL.plot
 
 reg.lat.DbL <- lm(lat$cbR_DbL ~ lat$cbR_SL)
@@ -469,7 +477,7 @@ sd.lat.DbL <- rstandard(reg.lat.DbL)
 reg.lat.DbL.plot <- ggplot(lat, aes(x = cbR_SL, y = cbR_DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3)
 reg.lat.DbL.plot
 
 reg.lat.HL <- lm(lat$HL_log ~ lat$SL_log)
@@ -477,7 +485,7 @@ sd.lat.HL <- rstandard(reg.lat.HL)
 reg.lat.HL.plot <- ggplot(lat, aes(x = SL_log, y = HL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.lat.HL.plot
 
 reg.lat.HD <- lm(lat$HD_log ~ lat$SL_log)
@@ -485,7 +493,7 @@ sd.lat.HD <- rstandard(reg.lat.HD)
 reg.lat.HD.plot <- ggplot(lat, aes(x = SL_log, y = HD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.lat.HD.plot
 
 reg.lat.HW <- lm(lat$HW_log ~ lat$SL_log)
@@ -493,7 +501,7 @@ sd.lat.HW <- rstandard(reg.lat.HW)
 reg.lat.HW.plot <- ggplot(lat, aes(x = SL_log, y = HW_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.lat.HW.plot
 
 reg.lat.SnL <- lm(lat$SnL_log ~ lat$SL_log)
@@ -501,7 +509,7 @@ sd.lat.SnL <- rstandard(reg.lat.SnL)
 reg.lat.SnL.plot <- ggplot(lat, aes(x = SL_log, y = SnL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.8)
 reg.lat.SnL.plot
 
 reg.lat.OL <- lm(lat$OL_log ~ lat$SL_log)
@@ -509,7 +517,7 @@ sd.lat.OL <- rstandard(reg.lat.OL)
 reg.lat.OL.plot <- ggplot(lat, aes(x = SL_log, y = OL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.lat.OL.plot
 
 reg.lat.FLA <- lm(lat$FLA ~ lat$SL)
@@ -517,7 +525,7 @@ sd.lat.FLA <- rstandard(reg.lat.FLA)
 reg.lat.FLA.plot <- ggplot(lat, aes(x = SL, y = FLA)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.lat.FLA.plot
 
 ##### FORM #####
@@ -527,7 +535,7 @@ sd.form.D <- rstandard(reg.form.D)
 reg.form.D.plot <- ggplot(form, aes(x =SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 9)
 reg.form.D.plot
 
 reg.form.P1 <- lm(form$P1 ~ form$SL)
@@ -535,7 +543,7 @@ sd.form.P1 <- rstandard(reg.form.P1)
 reg.form.P1.plot <- ggplot(form, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.form.P1.plot
 
 reg.form.A <- lm(form$A ~ form$SL)
@@ -543,7 +551,7 @@ sd.form.A <- rstandard(reg.form.A)
 reg.form.A.plot <- ggplot(form, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 8)
 reg.form.A.plot
 
 reg.form.P1.R <- lm(form$P1.R ~ form$SL)
@@ -551,7 +559,7 @@ sd.form.P1.R <- rstandard(reg.form.P1.R)
 reg.form.P1.R.plot <- ggplot(form, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.form.P1.R.plot
 
 reg.form.LLSC <- lm(form$LLSC ~ form$SL)
@@ -559,7 +567,7 @@ sd.form.LLSC <- rstandard(reg.form.LLSC)
 reg.form.LLSC.plot <- ggplot(form, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 18.5)
 reg.form.LLSC.plot
 
 reg.form.SALL <- lm(form$SALL ~ form$SL)
@@ -567,7 +575,7 @@ sd.form.SALL <- rstandard(reg.form.SALL)
 reg.form.SALL.plot <- ggplot(form, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.form.SALL.plot
 
 reg.form.SBLL <- lm(form$SBLL ~ form$SL)
@@ -575,7 +583,7 @@ sd.form.SBLL <- rstandard(reg.form.SBLL)
 reg.form.SBLL.plot <- ggplot(form, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 2)
 reg.form.SBLL.plot
 
 reg.form.SBDF <- lm(form$SBDF ~ form$SL)
@@ -583,7 +591,7 @@ sd.form.SBDF <- rstandard(reg.form.SBDF)
 reg.form.SBDF.plot <- ggplot(form, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 5)
 reg.form.SBDF.plot
 
 reg.form.BD <- lm(form$cbR_BD ~ form$cbR_SL)
@@ -591,7 +599,7 @@ sd.form.BD <- rstandard(reg.form.BD)
 reg.form.BD.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3)
 reg.form.BD.plot
 
 reg.form.CPD <- lm(form$CPD_log ~ form$SL_log)
@@ -599,7 +607,7 @@ sd.form.CPD <- rstandard(reg.form.CPD)
 reg.form.CPD.plot <- ggplot(form, aes(x = SL_log, y = CPD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.form.CPD.plot
 
 reg.form.CPL <- lm(form$CPL_log ~ form$SL_log)
@@ -607,7 +615,7 @@ sd.form.CPL <- rstandard(reg.form.CPL)
 reg.form.CPL.plot <- ggplot(form, aes(x = SL_log, y = CPL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.form.CPL.plot
 
 reg.form.PreDL <- lm(form$cbR_PreDL ~ form$cbR_SL)
@@ -615,7 +623,7 @@ sd.form.PreDL <- rstandard(reg.form.PreDL)
 reg.form.PreDL.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.2)
 reg.form.PreDL.plot
 
 reg.form.DbL <- lm(form$cbR_DbL ~ form$cbR_SL)
@@ -623,7 +631,7 @@ sd.form.DbL <- rstandard(reg.form.DbL)
 reg.form.DbL.plot <- ggplot(form, aes(x = cbR_SL, y = cbR_DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3)
 reg.form.DbL.plot
 
 reg.form.HL <- lm(form$HL_log ~ form$SL_log)
@@ -631,7 +639,7 @@ sd.form.HL <- rstandard(reg.form.HL)
 reg.form.HL.plot <- ggplot(form, aes(x = SL_log, y = HL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.form.HL.plot
 
 reg.form.HD <- lm(form$HD_log ~ form$SL_log)
@@ -639,7 +647,7 @@ sd.form.HD <- rstandard(reg.form.HD)
 reg.form.HD.plot <- ggplot(form, aes(x = SL_log, y = HD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.form.HD.plot
 
 reg.form.HW <- lm(form$HW_log ~ form$SL_log)
@@ -647,7 +655,7 @@ sd.form.HW <- rstandard(reg.form.HW)
 reg.form.HW.plot <- ggplot(form, aes(x = SL_log, y = HW_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.form.HW.plot
 
 reg.form.SnL <- lm(form$SnL_log ~ form$SL_log)
@@ -655,7 +663,7 @@ sd.form.SnL <- rstandard(reg.form.SnL)
 reg.form.SnL.plot <- ggplot(form, aes(x = SL_log, y = SnL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.8)
 reg.form.SnL.plot
 
 reg.form.OL <- lm(form$OL_log ~ form$SL_log)
@@ -663,7 +671,7 @@ sd.form.OL <- rstandard(reg.form.OL)
 reg.form.OL.plot <- ggplot(form, aes(x = SL_log, y = OL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.form.OL.plot
 
 reg.form.FLA <- lm(form$FLA ~ form$SL)
@@ -671,7 +679,7 @@ sd.form.FLA <- rstandard(reg.form.FLA)
 reg.form.FLA.plot <- ggplot(form, aes(x = SL, y = FLA)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.form.FLA.plot
 
 
@@ -682,7 +690,7 @@ sd.mex.D <- rstandard(reg.mex.D)
 reg.mex.D.plot <- ggplot(mex, aes(x = SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.mex.D.plot
 
 reg.mex.P1 <- lm(mex$P1 ~ mex$SL)
@@ -690,7 +698,7 @@ sd.mex.P1 <- rstandard(reg.mex.P1)
 reg.mex.P1.plot <- ggplot(mex, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.mex.P1.plot
 
 reg.mex.A <- lm(mex$A ~ mex$SL)
@@ -698,7 +706,7 @@ sd.mex.A <- rstandard(reg.mex.A)
 reg.mex.A.plot <- ggplot(mex, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 8)
 reg.mex.A.plot
 
 reg.mex.P1.R <- lm(mex$P1.R ~ mex$SL)
@@ -706,7 +714,7 @@ sd.mex.P1.R <- rstandard(reg.mex.P1.R)
 reg.mex.P1.R.plot <- ggplot(mex, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 reg.mex.P1.R.plot
 
 reg.mex.LLSC <- lm(mex$LLSC ~ mex$SL)
@@ -714,7 +722,7 @@ sd.mex.LLSC <- rstandard(reg.mex.LLSC)
 reg.mex.LLSC.plot <- ggplot(mex, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 20)
 reg.mex.LLSC.plot
 
 reg.mex.SALL <- lm(mex$SALL ~ mex$SL)
@@ -722,7 +730,7 @@ sd.mex.SALL <- rstandard(reg.mex.SALL)
 reg.mex.SALL.plot <- ggplot(mex, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 reg.mex.SALL.plot
 
 reg.mex.SBLL <- lm(mex$SBLL ~ mex$SL)
@@ -730,7 +738,7 @@ sd.mex.SBLL <- rstandard(reg.mex.SBLL)
 reg.mex.SBLL.plot <- ggplot(mex, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 2)
 reg.mex.SBLL.plot
 
 reg.mex.SBDF <- lm(mex$SBDF ~ mex$SL)
@@ -738,7 +746,7 @@ sd.mex.SBDF <- rstandard(reg.mex.SBDF)
 reg.mex.SBDF.plot <- ggplot(mex, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 5)
 reg.mex.SBDF.plot
 
 reg.mex.BD <- lm(mex$cbR_BD ~ mex$cbR_SL)
@@ -746,7 +754,7 @@ sd.mex.BD <- rstandard(reg.mex.BD)
 reg.mex.BD.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_BD)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.BD.plot
 
 reg.mex.CPD <- lm(mex$CPD_log ~ mex$SL_log)
@@ -754,7 +762,7 @@ sd.mex.CPD <- rstandard(reg.mex.CPD)
 reg.mex.CPD.plot <- ggplot(mex, aes(x = SL_log, y = CPD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.CPD.plot
 
 reg.mex.CPL <- lm(mex$CPL_log ~ mex$SL_log)
@@ -762,7 +770,7 @@ sd.mex.CPL <- rstandard(reg.mex.CPL)
 reg.mex.CPL.plot <- ggplot(mex, aes(x = SL_log, y = CPL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.CPL.plot
 
 reg.mex.PreDL <- lm(mex$cbR_PreDL ~ mex$cbR_SL)
@@ -770,7 +778,7 @@ sd.mex.PreDL <- rstandard(reg.mex.PreDL)
 reg.mex.PreDL.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_PreDL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.PreDL.plot
 
 reg.mex.DbL <- lm(mex$cbR_DbL ~ mex$cbR_SL)
@@ -778,7 +786,7 @@ sd.mex.DbL <- rstandard(reg.mex.DbL)
 reg.mex.DbL.plot <- ggplot(mex, aes(x = cbR_SL, y = cbR_DbL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.DbL.plot
 
 reg.mex.HL <- lm(mex$HL_log ~ mex$SL_log)
@@ -786,7 +794,7 @@ sd.mex.HL <- rstandard(reg.mex.HL)
 reg.mex.HL.plot <- ggplot(mex, aes(x = SL_log, y = HL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.HL.plot
 
 reg.mex.HD <- lm(mex$HD_log ~ mex$SL_log)
@@ -794,7 +802,7 @@ sd.mex.HD <- rstandard(reg.mex.HD)
 reg.mex.HD.plot <- ggplot(mex, aes(x = SL_log, y = HD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.HD.plot
 
 reg.mex.HW <- lm(mex$HW_log ~ mex$SL_log)
@@ -802,7 +810,7 @@ sd.mex.HW <- rstandard(reg.mex.HW)
 reg.mex.HW.plot <- ggplot(mex, aes(x = SL_log, y = HW_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.HW.plot
 
 reg.mex.SnL <- lm(mex$SnL_log ~ mex$SL_log)
@@ -810,7 +818,7 @@ sd.mex.SnL <- rstandard(reg.mex.SnL)
 reg.mex.SnL.plot <- ggplot(mex, aes(x = SL_log, y = SnL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.SnL.plot
 
 reg.mex.OL <- lm(mex$OL_log ~ mex$SL_log)
@@ -818,7 +826,7 @@ sd.mex.OL <- rstandard(reg.mex.OL)
 reg.mex.OL.plot <- ggplot(mex, aes(x = SL_log, y = OL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 reg.mex.OL.plot
 
 reg.mex.FLA <- lm(mex$FLA ~ mex$SL)
@@ -826,7 +834,7 @@ sd.mex.FLA <- rstandard(reg.mex.FLA)
 reg.mex.FLA.plot <- ggplot(mex, aes(x = SL, y = FLA)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 4)
 reg.mex.FLA.plot
 
 
@@ -1690,6 +1698,91 @@ library(carData)
 
 ```
 
+#### pca Loadings- TAMPICO
+
+```{r}
+
+library(stringr)
+
+rawMX <- subset(tampico, select = -c(17:18) ) #took out P2R and L since they don't vary at all
+rawMX <- subset(rawMX, select=-c(37:66))#took out transformed values
+
+MXz.scores <- scale(rawMX[, 15:34], center = TRUE, scale = TRUE)
+
+rawMX <- cbind(rawMX, MXz.scores)
+
+colnames(rawMX)[35:53] <- str_c( "z_", colnames(rawMX)[15:34] )
+
+
+PCA.MX <- prcomp(rawMX[, 35:53])
+
+summary(PCA.MX)
+
+(loadings.MX <- PCA.MX$rotation[, 1:5])
+
+MX.sorted.loadings.1 <- loadings[order(loadings.MX[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+MX.sorted.loadings.2 <- loadings[order(loadings.MX[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+MX.sorted.loadings.3 <- loadings[order(loadings.MX[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+
+MX.VM_PCA <- varimax(PCA.MX$rotation[, 1:3]) 
+
+MX.VM_PCA
+
+(MXeig.val <- get_eigenvalue(PCA.MX))
+
+MXind <- get_pca_ind(PCA.MX)
+head(MXind$coord[,1:4])
+
+
+MX.raw1.p <- cbind(rawMX, MXind$coord[,1:4])
+
+Tplot1<- autoplot(PCA.MX, x=2, y=3, data = rawMX, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+Tplot1
+
+Tplot2<- autoplot(PCA.MX, data = rawMX, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+Tplot2
+
+
+```
+
+##### Post PCA tests
+
+```{r}
+
+
+MXpc1 <- aov(Dim.1~SPP, data=MX.raw1.p)
+summary(MXpc1)
+
+MXpc2 <- aov(Dim.2~SPP, data=MX.raw1.p)
+summary(MXpc2)
+
+MXpc3 <- aov(Dim.3~SPP, data=MX.raw1.p)
+summary(MXpc3)
+
+
+(MXpc1V <- leveneTest(Dim.1~SPP, data=MX.raw1.p))
+
+(MXpc2V <- leveneTest(Dim.2~SPP, data=MX.raw1.p))
+
+(MXpc3V <- leveneTest(Dim.3~SPP, data=MX.raw1.p))
+
+
+
+
+```
+
 
 
 
@@ -2098,7 +2191,7 @@ F.sd.lat.D <- rstandard(F.reg.lat.D)
 F.reg.lat.D.plot <- ggplot(lat.F, aes(x = SL, y = D)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 F.reg.lat.D.plot
 
 F.reg.lat.P1 <- lm(lat.F$P1 ~ lat.F$SL)
@@ -2106,31 +2199,16 @@ F.sd.lat.P1 <- rstandard(F.reg.lat.P1)
 F.reg.lat.P1.plot <- ggplot(lat.F, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 F.reg.lat.P1.plot
 
-F.reg.lat.P2.L <- lm(lat.F$P2.L ~ lat.F$SL)
-F.sd.lat.P2.L <- rstandard(F.reg.lat.P2.L)
-F.reg.lat.P2.L.plot <- ggplot(lat.F, aes(x = SL, y = P2.L)) + 
-  geom_point() +
-  stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
-F.reg.lat.P2.L.plot
-
-F.reg.lat.P2.R <- lm(lat.F$P2.R ~ lat.F$SL)
-F.sd.lat.P2.R <- rstandard(F.reg.lat.P2.R)
-F.reg.lat.P2.R.plot <- ggplot(lat.F, aes(x = SL, y = P2.R)) + 
-  geom_point() +
-  stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
-F.reg.lat.P2.R.plot
 
 F.reg.lat.A <- lm(lat.F$A ~ lat.F$SL)
 F.sd.lat.A <- rstandard(F.reg.lat.A)
 F.reg.lat.A.plot <- ggplot(lat.F, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 8)
 F.reg.lat.A.plot
 
 F.reg.lat.P1.R <- lm(lat.F$P1.R ~ lat.F$SL)
@@ -2138,7 +2216,7 @@ F.sd.lat.P1.R <- rstandard(F.reg.lat.P1.R)
 F.reg.lat.P1.R.plot <- ggplot(lat.F, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 F.reg.lat.P1.R.plot
 
 F.reg.lat.LLSC <- lm(lat.F$LLSC ~ lat.F$SL)
@@ -2146,7 +2224,7 @@ F.sd.lat.LLSC <- rstandard(F.reg.lat.LLSC)
 F.reg.lat.LLSC.plot <- ggplot(lat.F, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 20)
 F.reg.lat.LLSC.plot
 
 F.reg.lat.SALL <- lm(lat.F$SALL ~ lat.F$SL)
@@ -2154,7 +2232,7 @@ F.sd.lat.SALL <- rstandard(F.reg.lat.SALL)
 F.reg.lat.SALL.plot <- ggplot(lat.F, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 F.reg.lat.SALL.plot
 
 F.reg.lat.SBLL <- lm(lat.F$SBLL ~ lat.F$SL)
@@ -2162,7 +2240,7 @@ F.sd.lat.SBLL <- rstandard(F.reg.lat.SBLL)
 F.reg.lat.SBLL.plot <- ggplot(lat.F, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 2)
 F.reg.lat.SBLL.plot
 
 F.reg.lat.SBDF <- lm(lat.F$SBDF ~ lat.F$SL)
@@ -2170,7 +2248,7 @@ F.sd.lat.SBDF <- rstandard(F.reg.lat.SBDF)
 F.reg.lat.SBDF.plot <- ggplot(lat.F, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 5)
 F.reg.lat.SBDF.plot
 
 F.reg.lat.BD <- lm(lat.F$BD_log ~ lat.F$SL_log)
@@ -2178,7 +2256,7 @@ F.sd.lat.BD <- rstandard(F.reg.lat.BD)
 F.reg.lat.BD.plot <- ggplot(lat.F, aes(x = SL_log, y = BD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 F.reg.lat.BD.plot
 
 F.reg.lat.CPD <- lm(lat.F$CPD_log ~ lat.F$SL_log)
@@ -2186,7 +2264,7 @@ F.sd.lat.CPD <- rstandard(F.reg.lat.CPD)
 F.reg.lat.CPD.plot <- ggplot(lat.F, aes(x = SL_log, y = CPD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.2)
 F.reg.lat.CPD.plot
 
 F.reg.lat.CPL <- lm(lat.F$CPL_log ~ lat.F$SL_log)
@@ -2194,7 +2272,7 @@ F.sd.lat.CPL <- rstandard(F.reg.lat.CPL)
 F.reg.lat.CPL.plot <- ggplot(lat.F, aes(x = SL_log, y = CPL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.2)
 F.reg.lat.CPL.plot
 
 F.reg.lat.PreDL <- lm(lat.F$PreDL_log ~ lat.F$SL_log)
@@ -2202,7 +2280,7 @@ F.sd.lat.PreDL <- rstandard(F.reg.lat.PreDL)
 F.reg.lat.PreDL.plot <- ggplot(lat.F, aes(x = SL_log, y = PreDL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1)
 F.reg.lat.PreDL.plot
 
 F.reg.lat.DbL <- lm(lat.F$DbL_log ~ lat.F$SL_log)
@@ -2210,7 +2288,7 @@ F.sd.lat.DbL <- rstandard(F.reg.lat.DbL)
 F.reg.lat.DbL.plot <- ggplot(lat.F, aes(x = SL_log, y = DbL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1)
 F.reg.lat.DbL.plot
 
 F.reg.lat.HL <- lm(lat.F$HL_log ~ lat.F$SL_log)
@@ -2218,7 +2296,7 @@ F.sd.lat.HL <- rstandard(F.reg.lat.HL)
 F.reg.lat.HL.plot <- ggplot(lat.F, aes(x = SL_log, y = HL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.4)
 F.reg.lat.HL.plot
 
 F.reg.lat.HD <- lm(lat.F$HD_log ~ lat.F$SL_log)
@@ -2226,7 +2304,7 @@ F.sd.lat.HD <- rstandard(F.reg.lat.HD)
 F.reg.lat.HD.plot <- ggplot(lat.F, aes(x = SL_log, y = HD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.2)
 F.reg.lat.HD.plot
 
 F.reg.lat.HW <- lm(lat.F$HW_log ~ lat.F$SL_log)
@@ -2234,7 +2312,7 @@ F.sd.lat.HW <- rstandard(F.reg.lat.HW)
 F.reg.lat.HW.plot <- ggplot(lat.F, aes(x = SL_log, y = HW_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.3)
 F.reg.lat.HW.plot
 
 F.reg.lat.SnL <- lm(lat.F$SnL_log ~ lat.F$SL_log)
@@ -2242,7 +2320,7 @@ F.sd.lat.SnL <- rstandard(F.reg.lat.SnL)
 F.reg.lat.SnL.plot <- ggplot(lat.F, aes(x = SL_log, y = SnL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 F.reg.lat.SnL.plot
 
 F.reg.lat.OL <- lm(lat.F$OL_log ~ lat.F$SL_log)
@@ -2250,7 +2328,7 @@ F.sd.lat.OL <- rstandard(F.reg.lat.OL)
 F.reg.lat.OL.plot <- ggplot(lat.F, aes(x = SL_log, y = OL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.2)
 F.reg.lat.OL.plot
 
 F.reg.lat.FLA <- lm(lat.F$FLA ~ lat.F$SL)
@@ -2258,7 +2336,7 @@ F.sd.lat.FLA <- rstandard(F.reg.lat.FLA)
 F.reg.lat.FLA.plot <- ggplot(lat.F, aes(x = SL, y = FLA)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 F.reg.lat.FLA.plot
 
 ##### FORM #####
@@ -2276,31 +2354,15 @@ F.sd.form.P1 <- rstandard(F.reg.form.P1)
 F.reg.form.P1.plot <- ggplot(form.F, aes(x = SL, y = P1)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 12)
 F.reg.form.P1.plot
-
-F.reg.form.P2.L <- lm(form.F$P2.L ~ form.F$SL)
-F.sd.form.P2.L <- rstandard(F.reg.form.P2.L)
-F.reg.form.P2.L.plot <- ggplot(form.F, aes(x = SL, y = P2.L)) + 
-  geom_point() +
-  stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
-F.reg.form.P2.L.plot
-
-F.reg.form.P2.R <- lm(form.F$P2.R ~ form.F$SL)
-F.sd.form.P2.R <- rstandard(F.reg.form.P2.R)
-F.reg.form.P2.R.plot <- ggplot(form.F, aes(x = SL, y = P2.R)) + 
-  geom_point() +
-  stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
-F.reg.form.P2.R.plot
 
 F.reg.form.A <- lm(form.F$A ~ form.F$SL)
 F.sd.form.A <- rstandard(F.reg.form.A)
 F.reg.form.A.plot <- ggplot(form.F, aes(x = SL, y = A)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 8.7)
 F.reg.form.A.plot
 
 F.reg.form.P1.R <- lm(form.F$P1.R ~ form.F$SL)
@@ -2308,7 +2370,7 @@ F.sd.form.P1.R <- rstandard(F.reg.form.P1.R)
 F.reg.form.P1.R.plot <- ggplot(form.F, aes(x = SL, y = P1.R)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 11)
 F.reg.form.P1.R.plot
 
 F.reg.form.LLSC <- lm(form.F$LLSC ~ form.F$SL)
@@ -2316,7 +2378,7 @@ F.sd.form.LLSC <- rstandard(F.reg.form.LLSC)
 F.reg.form.LLSC.plot <- ggplot(form.F, aes(x = SL, y = LLSC)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 20)
 F.reg.form.LLSC.plot
 
 F.reg.form.SALL <- lm(form.F$SALL ~ form.F$SL)
@@ -2324,7 +2386,7 @@ F.sd.form.SALL <- rstandard(F.reg.form.SALL)
 F.reg.form.SALL.plot <- ggplot(form.F, aes(x = SL, y = SALL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 F.reg.form.SALL.plot
 
 F.reg.form.SBLL <- lm(form.F$SBLL ~ form.F$SL)
@@ -2332,7 +2394,7 @@ F.sd.form.SBLL <- rstandard(F.reg.form.SBLL)
 F.reg.form.SBLL.plot <- ggplot(form.F, aes(x = SL, y = SBLL)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 F.reg.form.SBLL.plot
 
 F.reg.form.SBDF <- lm(form.F$SBDF ~ form.F$SL)
@@ -2340,7 +2402,7 @@ F.sd.form.SBDF <- rstandard(F.reg.form.SBDF)
 F.reg.form.SBDF.plot <- ggplot(form.F, aes(x = SL, y = SBDF)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 6.5)
 F.reg.form.SBDF.plot
 
 F.reg.form.BD <- lm(form.F$BD_log ~ form.F$SL_log)
@@ -2348,7 +2410,7 @@ F.sd.form.BD <- rstandard(F.reg.form.BD)
 F.reg.form.BD.plot <- ggplot(form.F, aes(x = SL_log, y = BD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.5)
 F.reg.form.BD.plot
 
 F.reg.form.CPD <- lm(form.F$CPD_log ~ form.F$SL_log)
@@ -2356,7 +2418,7 @@ F.sd.form.CPD <- rstandard(F.reg.form.CPD)
 F.reg.form.CPD.plot <- ggplot(form.F, aes(x = SL_log, y = CPD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.2)
 F.reg.form.CPD.plot
 
 F.reg.form.CPL <- lm(form.F$CPL_log ~ form.F$SL_log)
@@ -2364,7 +2426,7 @@ F.sd.form.CPL <- rstandard(F.reg.form.CPL)
 F.reg.form.CPL.plot <- ggplot(form.F, aes(x = SL_log, y = CPL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.2)
 F.reg.form.CPL.plot
 
 F.reg.form.PreDL <- lm(form.F$PreDL_log ~ form.F$SL_log)
@@ -2372,7 +2434,7 @@ F.sd.form.PreDL <- rstandard(F.reg.form.PreDL)
 F.reg.form.PreDL.plot <- ggplot(form.F, aes(x = SL_log, y = PreDL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1)
 F.reg.form.PreDL.plot
 
 F.reg.form.DbL <- lm(form.F$DbL_log ~ form.F$SL_log)
@@ -2380,7 +2442,7 @@ F.sd.form.DbL <- rstandard(F.reg.form.DbL)
 F.reg.form.DbL.plot <- ggplot(form.F, aes(x = SL_log, y = DbL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1)
 F.reg.form.DbL.plot
 
 F.reg.form.HL <- lm(form.F$HL_log ~ form.F$SL_log)
@@ -2388,7 +2450,7 @@ F.sd.form.HL <- rstandard(F.reg.form.HL)
 F.reg.form.HL.plot <- ggplot(form.F, aes(x = SL_log, y = HL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.4)
 F.reg.form.HL.plot
 
 F.reg.form.HD <- lm(form.F$HD_log ~ form.F$SL_log)
@@ -2396,7 +2458,7 @@ F.sd.form.HD <- rstandard(F.reg.form.HD)
 F.reg.form.HD.plot <- ggplot(form.F, aes(x = SL_log, y = HD_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.25)
 F.reg.form.HD.plot
 
 F.reg.form.HW <- lm(form.F$HW_log ~ form.F$SL_log)
@@ -2404,7 +2466,7 @@ F.sd.form.HW <- rstandard(F.reg.form.HW)
 F.reg.form.HW.plot <- ggplot(form.F, aes(x = SL_log, y = HW_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.3)
 F.reg.form.HW.plot
 
 F.reg.form.SnL <- lm(form.F$SnL_log ~ form.F$SL_log)
@@ -2412,7 +2474,7 @@ F.sd.form.SnL <- rstandard(F.reg.form.SnL)
 F.reg.form.SnL.plot <- ggplot(form.F, aes(x = SL_log, y = SnL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.6)
 F.reg.form.SnL.plot
 
 F.reg.form.OL <- lm(form.F$OL_log ~ form.F$SL_log)
@@ -2420,7 +2482,7 @@ F.sd.form.OL <- rstandard(F.reg.form.OL)
 F.reg.form.OL.plot <- ggplot(form.F, aes(x = SL_log, y = OL_log)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 1.2)
 F.reg.form.OL.plot
 
 F.reg.form.FLA <- lm(form.F$FLA ~ form.F$SL)
@@ -2428,7 +2490,7 @@ F.sd.form.FLA <- rstandard(F.reg.form.FLA)
 F.reg.form.FLA.plot <- ggplot(form.F, aes(x = SL, y = FLA)) + 
   geom_point() +
   stat_smooth(method = "lm", col = "red") +
-  stat_cor(label.y = 10)
+  stat_cor(label.y = 3.5)
 F.reg.form.FLA.plot
 
 
@@ -3209,30 +3271,69 @@ summary(PCA.F)
 
 (loadings.F <- PCA.F$rotation[, 1:5])
 
-F.sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+F.sorted.loadings.1 <- loadings[order(loadings.F[, 1]), 1]
 myTitle <- "Loadings Plot for PC1" 
 myXlab  <- "Variable Loadings"
 dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
 
-F.sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+F.sorted.loadings.2 <- loadings[order(loadings.F[, 2]), 2]
 myTitle <- "Loadings Plot for PC2" 
 myXlab  <- "Variable Loadings"
 dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
 
-F.sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+F.sorted.loadings.3 <- loadings[order(loadings.F[, 3]), 3]
 myTitle <- "Loadings Plot for PC3" 
 myXlab  <- "Variable Loadings"
 dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
 
 
-FVM_PCA <- varimax(PCA.F$rotation) 
+FVM_PCA <- varimax(PCA.F$rotation[, 1:3]) 
 
 FVM_PCA
 
-(eig.val.F <- get_eigenvalue(PCA.F))
+
+library(factoextra)
+
+(Feig.val <- get_eigenvalue(PCA.F))
+
+Find <- get_pca_ind(PCA.F)
+head(Find$coord[,1:4])
+
+
+Fraw1.p <- rawFa[rawFa$SPP !="p.mexicana", ]
+Fraw1.p <- cbind(Fraw1.p, Find$coord[,1:4])
 
 
 ```
+
+##### Post PCA tests
+
+```{r}
+
+Flat.p <- Fraw1.p[Fraw1.p$SPP == "p.latipinna",]
+
+
+Fform.p <- Fraw1.p[Fraw1.p$SPP == "p.formosa",]
+
+(Fpc1 <- t.test(Flat.p$Dim.1, Fform.p$Dim.1, alternative = "two.sided"))
+
+(Fpc2 <- t.test(Flat.p$Dim.2, Fform.p$Dim.2, alternative = "two.sided"))
+
+(Fpc3 <- t.test(Flat.p$Dim.3, Fform.p$Dim.3, alternative = "two.sided"))
+
+
+(Fpc1V <- leveneTest(Dim.1~SPP, data=Fraw1.p))
+
+(Fpc2V <- leveneTest(Dim.2~SPP, data=Fraw1.p))
+
+(Fpc3V <- leveneTest(Dim.3~SPP, data=Fraw1.p))
+
+
+
+
+```
+
+
 
 
 #### Plots
@@ -3467,19 +3568,104 @@ Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A
 library(car)
 library(carData)
 
-(LT_P2L <- leveneTest(P2.L~SPP, data=Ftampico)) #gives nothing since it's all the same value
+(FLT_P2L <- leveneTest(P2.L~SPP, data=Ftampico)) #gives nothing since it's all the same value
 
-(LT_P2R <- leveneTest(P2.R~SPP, data=Ftampico)) #same as above
+(FLT_P2R <- leveneTest(P2.R~SPP, data=Ftampico)) #same as above
 
-(LT_P1 <- leveneTest(P1~SPP, data=Ftampico))
+(FLT_P1 <- leveneTest(P1~SPP, data=Ftampico))
 
-(LT_A <- leveneTest(A~SPP, data=Ftampico)) 
+(FLT_A <- leveneTest(A~SPP, data=Ftampico)) 
 
-(LT_SALL <- leveneTest(SALL~SPP, data=Ftampico))
+(FLT_SALL <- leveneTest(SALL~SPP, data=Ftampico))
 
-(LT_SBDF <- leveneTest(SBDF~SPP, data=Ftampico))
+(FLT_SBDF <- leveneTest(SBDF~SPP, data=Ftampico))
 
-(LT_FLA <- leveneTest(FLA~SPP, data=Ftampico))
+(FLT_FLA <- leveneTest(FLA~SPP, data=Ftampico))
+
+
+
+```
+
+#### pca Loadings- TAMPICO
+
+```{r}
+
+library(stringr)
+
+FrawMX <- subset(Ftampico, select = -c(17:18) ) #took out P2R and L since they don't vary at all
+FrawMX <- subset(FrawMX, select=-c(37:66))#took out transformed values
+
+FMXz.scores <- scale(FrawMX[, 15:34], center = TRUE, scale = TRUE)
+
+FrawMX <- cbind(FrawMX, FMXz.scores)
+
+colnames(FrawMX)[35:53] <- str_c( "z_", colnames(FrawMX)[15:34] )
+
+
+FPCA.MX <- prcomp(FrawMX[, 35:53])
+
+summary(FPCA.MX)
+
+(Floadings.MX <- FPCA.MX$rotation[, 1:5])
+
+FMX.sorted.loadings.1 <- loadings[order(Floadings.MX[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+FMX.sorted.loadings.2 <- loadings[order(Floadings.MX[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+FMX.sorted.loadings.3 <- loadings[order(Floadings.MX[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+
+FMX.VM_PCA <- varimax(FPCA.MX$rotation[, 1:3]) 
+
+FMX.VM_PCA
+
+(FMXeig.val <- get_eigenvalue(FPCA.MX))
+
+FMXind <- get_pca_ind(FPCA.MX)
+head(FMXind$coord[,1:4])
+
+
+FMX.raw1.p <- cbind(FrawMX, FMXind$coord[,1:4])
+
+TplotF1<- autoplot(FPCA.MX, x=2, y=3, data = FrawMX, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+TplotF1
+
+TplotF2<- autoplot(FPCA.MX, data = FrawMX, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
+TplotF2
+
+
+```
+
+##### Post PCA tests
+
+```{r}
+
+
+FMXpc1 <- aov(Dim.1~SPP, data=FMX.raw1.p)
+summary(FMXpc1)
+
+FMXpc2 <- aov(Dim.2~SPP, data=FMX.raw1.p)
+summary(FMXpc2)
+
+FMXpc3 <- aov(Dim.3~SPP, data=FMX.raw1.p)
+summary(FMXpc3)
+
+
+(FMXpc1V <- leveneTest(Dim.1~SPP, data=FMX.raw1.p))
+
+(FMXpc2V <- leveneTest(Dim.2~SPP, data=FMX.raw1.p))
+
+(FMXpc3V <- leveneTest(Dim.3~SPP, data=FMX.raw1.p))
+
 
 
 
@@ -3506,4 +3692,353 @@ test.form.OL.plot <- ggplot(form, aes(x = SL_log, y = OL)) +
   stat_smooth(method = "lm", col = "red") +
   stat_cor(label.y = 10)
 test.form.OL.plot
+```
+
+
+
+
+## Pretty plots
+### Normal data
+```{r}
+library(stringr)
+library(ggplot2)
+
+D <- ggplot(raw3, aes(x=SPP, y=abs.res.D, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.D), fun=mean, geom="point", colour= "black", size=2)
+
+P1 <- ggplot(raw3, aes(x=SPP, y=P1, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 1) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=P1), fun=mean, geom="point", colour= "black", size=2)
+
+A <- ggplot(raw3, aes(x=SPP, y=A, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=A), fun=mean, geom="point", colour= "black", size=2)
+
+P1.R <- ggplot(raw3, aes(x=SPP, y=abs.res.P1.R, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.P1.R), fun=mean, geom="point", colour= "black", size=2)
+
+LLSC <- ggplot(raw3, aes(x=SPP, y=abs.res.LLSC, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 1) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.LLSC), fun=mean, geom="point", colour= "black", size=2)
+
+SALL <- ggplot(raw3, aes(x=SPP, y=SALL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SALL), fun=mean, geom="point", colour= "black", size=2)
+
+SBLL <- ggplot(raw3, aes(x=SPP, y=abs.res.SBLL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.SBLL), fun=mean, geom="point", colour= "black", size=2)  
+
+SBDF <- ggplot(raw3, aes(x=SPP, y=SBDF, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 1) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SBDF), fun=mean, geom="point", colour= "black", size=2)
+
+BD <- ggplot(raw3, aes(x=SPP, y=abs.res.BD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Depth (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.BD), fun=mean, geom="point", colour= "black", size=2)
+
+CPD <- ggplot(raw3, aes(x=SPP, y=abs.res.CPD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.CPD), fun=mean, geom="point", colour= "black", size=2)
+
+CPL <- ggplot(raw3, aes(x=SPP, y=abs.res.CPL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Length (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.CPL), fun=mean, geom="point", colour= "black", size=2)
+
+PreDL <- ggplot(raw3, aes(x=SPP, y=abs.res.PreDL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 35) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.PreDL), fun=mean, geom="point", colour= "black", size=2)  
+
+DbL <- ggplot(raw3, aes(x=SPP, y=abs.res.DbL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.DbL), fun=mean, geom="point", colour= "black", size=2)
+
+HL <- ggplot(raw3, aes(x=SPP, y=abs.res.HL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.HL), fun=mean, geom="point", colour= "black", size=2) 
+
+HD <- ggplot(raw3, aes(x=SPP, y=abs.res.HD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.HD), fun=mean, geom="point", colour= "black", size=2)
+
+HW <- ggplot(raw3, aes(x=SPP, y=abs.res.HW, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Width (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.HW), fun=mean, geom="point", colour= "black", size=2)
+
+SnL <- ggplot(raw3, aes(x=SPP, y=abs.res.SnL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.SnL), fun=mean, geom="point", colour= "black", size=2)
+
+OL <- ggplot(raw3, aes(x=SPP, y=abs.res.OL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 8000000000000000) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.OL), fun=mean, geom="point", colour= "black", size=2)
+
+FLA <- ggplot(raw3, aes(x=SPP, y=FLA, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Pectoral ray count difference") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=FLA), fun=mean, geom="point", colour= "black", size=2)
+  
+par(mfcol=c(7,3))
+
+D
+P1
+A
+P1.R
+LLSC
+SALL
+SBLL
+SBDF
+BD
+CPD
+CPL
+PreDL
+DbL
+HL
+HD
+HW
+SnL
+OL
+FLA
+```
+
+
+
+### Tampico data
+```{r}
+library(stringr)
+library(ggplot2)
+
+T.D <- ggplot(tampico, aes(x=SPP, y=abs.res.D, color=SPP)) +
+  geom_jitter(alpha=0.2,width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 5) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.D), fun=mean, geom="point", colour= "black", size=2)
+
+T.P1 <- ggplot(tampico, aes(x=SPP, y=P1, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=P1), fun=mean, geom="point", colour= "black", size=2)
+
+T.A <- ggplot(tampico, aes(x=SPP, y=A, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 5) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=A), fun=mean, geom="point", colour= "black", size=2)
+
+T.P1.R <- ggplot(tampico, aes(x=SPP, y=abs.res.P1.R, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 6) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.P1.R), fun=mean, geom="point", colour= "black", size=2)
+
+T.LLSC <- ggplot(tampico, aes(x=SPP, y=abs.res.LLSC, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 6) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.LLSC), fun=mean, geom="point", colour= "black", size=2)
+
+T.SALL <- ggplot(tampico, aes(x=SPP, y=SALL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 6) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SALL), fun=mean, geom="point", colour= "black", size=2)
+
+T.SBLL <- ggplot(tampico, aes(x=SPP, y=abs.res.SBLL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 6) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.SBLL), fun=mean, geom="point", colour= "black", size=2)  
+
+T.SBDF <- ggplot(tampico, aes(x=SPP, y=SBDF, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SBDF), fun=mean, geom="point", colour= "black", size=2)
+
+T.BD <- ggplot(tampico, aes(x=SPP, y=abs.res.BD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 45) + theme_classic()+ ylab("Depth (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.BD), fun=mean, geom="point", colour= "black", size=2)
+
+T.CPD <- ggplot(tampico, aes(x=SPP, y=abs.res.CPD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 65) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.CPD), fun=mean, geom="point", colour= "black", size=2)
+
+T.CPL <- ggplot(tampico, aes(x=SPP, y=abs.res.CPL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 50) + theme_classic()+ ylab("Length (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.CPL), fun=mean, geom="point", colour= "black", size=2)
+
+T.PreDL <- ggplot(tampico, aes(x=SPP, y=abs.res.PreDL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 20) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.PreDL), fun=mean, geom="point", colour= "black", size=2)  
+
+T.DbL <- ggplot(tampico, aes(x=SPP, y=abs.res.DbL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 45) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.DbL), fun=mean, geom="point", colour= "black", size=2)
+
+T.HL <- ggplot(tampico, aes(x=SPP, y=abs.res.HL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 50) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.HL), fun=mean, geom="point", colour= "black", size=2) 
+
+T.HD <- ggplot(tampico, aes(x=SPP, y=abs.res.HD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 65) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.HD), fun=mean, geom="point", colour= "black", size=2)
+
+T.HW <- ggplot(tampico, aes(x=SPP, y=abs.res.HW, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 65) + theme_classic()+ ylab("Width (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.HW), fun=mean, geom="point", colour= "black", size=2)
+
+T.SnL <- ggplot(tampico, aes(x=SPP, y=abs.res.SnL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 40) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.SnL), fun=mean, geom="point", colour= "black", size=2)
+
+T.OL <- ggplot(tampico, aes(x=SPP, y=abs.res.OL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 400000000000000000) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.OL), fun=mean, geom="point", colour= "black", size=2)
+
+T.FLA <- ggplot(tampico, aes(x=SPP, y=FLA, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Pectoral ray count difference") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=FLA), fun=mean, geom="point", colour= "black", size=2)
+  
+par(mfcol=c(7,3))
+
+T.D
+T.P1
+T.A
+T.P1.R
+T.LLSC
+T.SALL
+T.SBLL
+T.SBDF
+T.BD
+T.CPD
+T.CPL
+T.PreDL
+T.DbL
+T.HL
+T.HD
+T.HW
+T.SnL
+T.OL
+T.FLA
+```
+
+
+### Filtered data
+
+```{r}
+library(stringr)
+library(ggplot2)
+
+F.D <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.D, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) +  coord_fixed(ratio = 3)+ theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.D), fun=mean, geom="point", colour= "black", size=2)
+
+F.P1 <- ggplot(rawF3, aes(x=SPP, y=P1, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 1) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=P1), fun=mean, geom="point", colour= "black", size=2)
+
+F.A <- ggplot(rawF3, aes(x=SPP, y=A, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=A), fun=mean, geom="point", colour= "black", size=2)
+
+F.P1.R <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.P1.R, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.P1.R), fun=mean, geom="point", colour= "black", size=2)
+
+F.LLSC <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.LLSC, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.LLSC), fun=mean, geom="point", colour= "black", size=2)
+
+F.SALL <- ggplot(rawF3, aes(x=SPP, y=SALL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SALL), fun=mean, geom="point", colour= "black", size=2)
+
+F.SBLL <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.SBLL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.SBLL), fun=mean, geom="point", colour= "black", size=2)  
+
+F.SBDF <- ggplot(rawF3, aes(x=SPP, y=SBDF, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 1) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SBDF), fun=mean, geom="point", colour= "black", size=2)
+
+F.BD <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.BD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Depth (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.BD), fun=mean, geom="point", colour= "black", size=2)
+
+F.CPD <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.CPD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 35) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.CPD), fun=mean, geom="point", colour= "black", size=2)
+
+F.CPL <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.CPL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Length (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.CPL), fun=mean, geom="point", colour= "black", size=2)
+
+F.PreDL <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.PreDL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.PreDL), fun=mean, geom="point", colour= "black", size=2)  
+
+F.DbL <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.DbL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.DbL), fun=mean, geom="point", colour= "black", size=2)
+
+F.HL <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.HL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.HL), fun=mean, geom="point", colour= "black", size=2) 
+
+F.HD <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.HD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.HD), fun=mean, geom="point", colour= "black", size=2)
+
+F.HW <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.HW, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 35) + theme_classic()+ ylab("Width (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.HW), fun=mean, geom="point", colour= "black", size=2)
+
+F.SnL <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.SnL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.SnL), fun=mean, geom="point", colour= "black", size=2)
+
+F.OL <- ggplot(rawF3, aes(x=SPP, y=F.abs.res.OL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 8000000000000000) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.OL), fun=mean, geom="point", colour= "black", size=2)
+
+F.FLA <- ggplot(rawF3, aes(x=SPP, y=FLA, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Pectoral ray count difference") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=FLA), fun=mean, geom="point", colour= "black", size=2)
+  
+par(mfcol=c(7,3))
+
+F.D
+F.P1
+F.A
+F.P1.R
+F.LLSC
+F.SALL
+F.SBLL
+F.SBDF
+F.BD
+F.CPD
+F.CPL
+F.PreDL
+F.DbL
+F.HL
+F.HD
+F.HW
+F.SnL
+F.OL
+F.FLA
+```
+
+### Filtered Tampico data
+
+```{r}
+library(stringr)
+library(ggplot2)
+
+TF.D <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.D, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 5) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.D), fun=mean, geom="point", colour= "black", size=2)
+
+TF.P1 <- ggplot(Ftampico, aes(x=SPP, y=P1, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=P1), fun=mean, geom="point", colour= "black", size=2)
+
+TF.A <- ggplot(Ftampico, aes(x=SPP, y=A, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 5) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=A), fun=mean, geom="point", colour= "black", size=2)
+
+TF.P1.R <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.P1.R, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 7) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.P1.R), fun=mean, geom="point", colour= "black", size=2)
+
+TF.LLSC <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.LLSC, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 6) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.LLSC), fun=mean, geom="point", colour= "black", size=2)
+
+TF.SALL <- ggplot(Ftampico, aes(x=SPP, y=SALL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 5) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SALL), fun=mean, geom="point", colour= "black", size=2)
+
+TF.SBLL <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.SBLL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 8) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.SBLL), fun=mean, geom="point", colour= "black", size=2)  
+
+TF.SBDF <- ggplot(Ftampico, aes(x=SPP, y=SBDF, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Number of scales") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=SBDF), fun=mean, geom="point", colour= "black", size=2)
+
+TF.BD <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.BD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 45) + theme_classic()+ ylab("Depth (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.BD), fun=mean, geom="point", colour= "black", size=2)
+
+TF.CPD <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.CPD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 60) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.CPD), fun=mean, geom="point", colour= "black", size=2)
+
+TF.CPL <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.CPL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 60) + theme_classic()+ ylab("Length (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.CPL), fun=mean, geom="point", colour= "black", size=2)
+
+TF.PreDL <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.PreDL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.PreDL), fun=mean, geom="point", colour= "black", size=2)  
+
+TF.DbL <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.DbL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 55) + theme_classic()+ ylab("Length (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.DbL), fun=mean, geom="point", colour= "black", size=2)
+
+TF.HL <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.HL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 45) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.HL), fun=mean, geom="point", colour= "black", size=2) 
+
+TF.HD <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.HD, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 60) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.HD), fun=mean, geom="point", colour= "black", size=2)
+
+TF.HW <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.HW, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 50) + theme_classic()+ ylab("Width (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.HW), fun=mean, geom="point", colour= "black", size=2)
+
+TF.SnL <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.SnL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.SnL), fun=mean, geom="point", colour= "black", size=2)
+
+TF.OL <- ggplot(Ftampico, aes(x=SPP, y=F.abs.res.OL, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 300000000000000000) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=F.abs.res.OL), fun=mean, geom="point", colour= "black", size=2)
+
+TF.FLA <- ggplot(Ftampico, aes(x=SPP, y=FLA, color=SPP)) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Pectoral ray count difference") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=FLA), fun=mean, geom="point", colour= "black", size=2)
+  
+par(mfcol=c(7,3))
+
+TF.D
+TF.P1
+TF.A
+TF.P1.R
+TF.LLSC
+TF.SALL
+TF.SBLL
+TF.SBDF
+TF.BD
+TF.CPD
+TF.CPL
+TF.PreDL
+TF.DbL
+TF.HL
+TF.HD
+TF.HW
+TF.SnL
+TF.OL
+TF.FLA
 ```
