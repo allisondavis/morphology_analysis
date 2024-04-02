@@ -1467,7 +1467,6 @@ raw1a <- cbind(raw1a, z.scores)
 
 colnames(raw1a)[34:52] <- str_c( "z_", colnames(raw1a)[15:33] )
 
-
 PCA <- prcomp(raw1a[, 34:52])
 
 summary(PCA)
@@ -1548,9 +1547,22 @@ form.p <- raw1.p[raw1.p$SPP == "p.formosa",]
 library(AMR) 
 library(ggplot2)
 library(ggfortify)
+library(ggbiplot)
 
-plot1<- autoplot(PCA, data = raw1a, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal() 
-plot1
+wes.yel <- "#E1AF00"
+wes.blu <- "#78B7C5"
+
+plot1<- autoplot(PCA, data = raw1a, colour="SPP", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+plot1 + theme(
+    panel.background = element_rect(fill='transparent'), #transparent panel bg
+    plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
+    legend.background = element_rect(fill='transparent'), #transparent legend bg
+    legend.box.background = element_rect(fill='transparent') #transparent legend panel
+  )
+
+
+ggsave(plot1, filename = "pc1v2.png", bg="transparent", width = 180, height = 120, units = "mm", dpi = 300)
+
 
 ```
 
@@ -1559,8 +1571,10 @@ plot1
 
 ```{r}
 
-plot5<- autoplot(PCA, x=2, y=3, data = raw1a, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+ ggtitle("PCA Plot of Morphology traits") + theme_minimal()
+plot5<- autoplot(PCA, x=2, y=3, data = raw1a, colour='SPP', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
 plot5
+
+ggsave(plot5, filename = "pc2v3.png", bg="transparent", width = 180, height = 120, units = "mm", dpi = 300)
 
 ```
 
@@ -3702,6 +3716,11 @@ test.form.OL.plot
 ```{r}
 library(stringr)
 library(ggplot2)
+library(wesanderson)
+#sail: #78B7C5
+#amz: #E1AF00
+#dark: #29211F
+#med:  "#8D8680"
 
 D <- ggplot(raw3, aes(x=SPP, y=abs.res.D, color=SPP)) +
   geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.D), fun=mean, geom="point", colour= "black", size=2)
@@ -3712,8 +3731,10 @@ P1 <- ggplot(raw3, aes(x=SPP, y=P1, color=SPP)) +
 A <- ggplot(raw3, aes(x=SPP, y=A, color=SPP)) +
   geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=A), fun=mean, geom="point", colour= "black", size=2)
 
-P1.R <- ggplot(raw3, aes(x=SPP, y=abs.res.P1.R, color=SPP)) +
-  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.P1.R), fun=mean, geom="point", colour= "black", size=2)
+P1.R <- ggplot(raw3, aes(x=SPP, y=abs.res.P1.R, color=SPP)) + scale_color_manual(values = c( "#E1AF00", "#78B7C5")) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 3) + theme_classic()+ ylab("Number of rays (residals)\n") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="#29211F", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.P1.R), fun=mean, geom="point", colour= "#29211F", size=2)
+
+ggsave(P1.R, filename = "right-pect.png", bg="transparent", width = 180, height = 120, units = "mm", dpi = 300)
 
 LLSC <- ggplot(raw3, aes(x=SPP, y=abs.res.LLSC, color=SPP)) +
   geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 1) + theme_classic()+ ylab("Number of scales (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.LLSC), fun=mean, geom="point", colour= "black", size=2)
@@ -3730,8 +3751,10 @@ SBDF <- ggplot(raw3, aes(x=SPP, y=SBDF, color=SPP)) +
 BD <- ggplot(raw3, aes(x=SPP, y=abs.res.BD, color=SPP)) +
   geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Depth (cubed root residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.BD), fun=mean, geom="point", colour= "black", size=2)
 
-CPD <- ggplot(raw3, aes(x=SPP, y=abs.res.CPD, color=SPP)) +
-  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.CPD), fun=mean, geom="point", colour= "black", size=2)
+CPD <- ggplot(raw3, aes(x=SPP, y=abs.res.CPD, color=SPP)) + scale_color_manual(values = c( "#E1AF00", "#78B7C5")) +
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 30) + theme_classic()+ ylab("Depth (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="#29211F", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.CPD), fun=mean, geom="point", colour= "#29211F", size=2)
+
+ggsave(CPD, filename = "cpd.png", bg="transparent", width = 180, height = 120, units = "mm", dpi = 300)
 
 CPL <- ggplot(raw3, aes(x=SPP, y=abs.res.CPL, color=SPP)) +
   geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 25) + theme_classic()+ ylab("Length (residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.CPL), fun=mean, geom="point", colour= "black", size=2)
@@ -3844,8 +3867,10 @@ T.SnL <- ggplot(tampico, aes(x=SPP, y=abs.res.SnL, color=SPP)) +
 T.OL <- ggplot(tampico, aes(x=SPP, y=abs.res.OL, color=SPP)) +
   geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 400000000000000000) + theme_classic()+ ylab("Length (log residals)") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=abs.res.OL), fun=mean, geom="point", colour= "black", size=2)
 
-T.FLA <- ggplot(tampico, aes(x=SPP, y=FLA, color=SPP)) +
-  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Pectoral ray count difference") + xlab("Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="black", width=0.1) + stat_summary(aes(x=SPP, y=FLA), fun=mean, geom="point", colour= "black", size=2)
+T.FLA <- ggplot(tampico, aes(x=SPP, y=FLA, color=SPP))  + scale_color_manual(values = c( "#E1AF00", "#78B7C5", "#9986A5"))+
+  geom_jitter(alpha=0.2, width=0.05, show.legend = FALSE) +  coord_fixed(ratio = 2) + theme_classic()+ ylab("Pectoral ray count difference\n (fluctuating asymmetry)\n") + xlab("\n Species")+ scale_x_discrete(labels=c('Amazon\n molly', 'Sailfin\n molly', 'Atlantic\n molly'))  + stat_summary(fun.data = mean_se, geom = "errorbar", colour="#29211F", width=0.1) + stat_summary(aes(x=SPP, y=FLA), fun=mean, geom="point", colour= "#29211F", size=2)
+
+ggsave(T.FLA, filename = "tampico.png", bg="transparent", width = 180, height = 120, units = "mm", dpi = 300)
   
 par(mfcol=c(7,3))
 
