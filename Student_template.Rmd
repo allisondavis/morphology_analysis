@@ -1,0 +1,325 @@
+---
+title: "Student template"
+author: "Allison Davis Connelly"
+date: "2024-05-23"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 5
+    toc_float:
+      collapsed: FALSE
+  
+      
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Experiment overview
+
+*Purpose:* Briefly outline the purpose of your experiment.
+
+*Hypothesis:* Outline the hypotheses if applicable.
+
+*Predictions:*
+  - Prediction 1 (if applicable).
+  
+  - How it relates to hypothesis: describe how this prediction relates to the hypothesis
+
+*Data:* Briefly describe the type of data collected.
+
+
+***
+
+
+
+
+
+# Data 
+
+You first need to call you data from the internet (github) in order to run stats in Rstudio. Your data should be saved as a csv file, and uploaded to your github repository (github project). On github, click on your project, click on the csv file, then hit "raw" --you will need to copy the html of the raw file to use in Rstudio.
+
+To pull your data into Rstudio, you will need to use the following functions/packages: library(), curl package, curl(), read.csv()
+
+  * If you haven't done so already, install the curl package. You can install a package in two ways:
+      1) use `install.packages()` with the name of the package in the brackets
+      
+      2) go to your packages tab in the lower right corner (Files Plots **Packages** Help Viewer), hit install, and type in the name of the package before hitting the install button again.
+  
+
+
+```{r}
+#load in the curl package
+
+
+#pull the data from the internet using your html and assign a name
+
+
+#force your data to be read as a csv
+
+
+```
+
+Now we want to make sure your data was pulled correctly, and we also want to create two separate data frames for each of the species. This way we can do stats on three data frames: raw data (original file we pulled from the internet), sailfin (all the info but just for P. latipinna), and amazon (all the info but just for P. formosa).
+
+For this step, you will need: head(), data frame selection (aka data frame[data frame$name .....])
+  
+  * Make sure you assign a new name for your new data frames! If you keep the name the same for all three data frames, R will overwrite (aka erase) your data!
+  
+```{r}
+#check the head of your raw dataframe to make sure it was read in correctly
+#NOTE: whenever you read in a csv, R sometimes adds X.U.FEFF to the first column. This is normal!
+
+
+#create a dataframe for sailfin by selecting data from your raw dataframe with P. latipinna as the species.
+
+
+#create a dataframe for amazons by selecting data from your raw dataframe with P. formosa as the species.
+
+
+#check the head of your new sailfin and amazon dataframes to make sure it selected correctly.
+
+
+
+```
+
+You may need to switch from a 'wide' format dataframe to a 'long' format dataframe in order from some of your stat functions to work. For this you will use the 'pivot_longer()' and 'pivot_wider()' functions from tidyverse (don't worry, if you're not familar with tidyverse, you can just follow the info in the link). For more info on how to use, see: https://tidyr.tidyverse.org/articles/pivot.html
+
+```{r}
+#create a dataframe for a 'long' format and a 'wide' format
+
+
+```
+
+***
+
+
+
+# Analysis
+
+Adapt this section as nessesary for your project. The more # in front of the title section means a further indented tab in your html. Can go up to 5.
+
+## Step 1
+
+Briefly describe your first step. If you are unfamiliar with the package or stat used, might be a good idea to take notes on them here as well. NEVER DELETE CODE THAT DOESN'T WORK. Always best to either describe what you did and why it didn't work and what you'll try next here, OR comment out (put a # in front of the lines of code) the code in the code chunk. That way you'll never make the same mistake twice.
+
+For this step I will need: [list packages and functions]
+
+The end goal of this step is: [briefly describe the comparisons you are making/the data manipulations you are looking for etc]
+
+ 
+
+```{r}
+#type in code below [this line is an example of a code comment]
+
+
+
+```
+
+***
+
+### Step 1 plots
+
+While numbers are great, a picture is often easier to understand. Use this section to display all your plots for easy viewing. There are several options for making plots, either using base R [plot() functions] or ggplot [ggplot2 package, functions within]. Either works fine. 
+
+  
+  * Remember to add x and y lables, and a title! 
+
+
+```{r}
+
+
+
+```
+
+
+If applicable, write your results for step 1 below.
+
+<font color="deeporchid4"> ***STEP 1 RESULTS:*** </font>
+
+
+***
+
+
+
+
+
+
+
+## Step 2
+
+
+Briefly describe your next step. If you are unfamiliar with the package or stat used, might be a good idea to take notes on them here as well. NEVER DELETE CODE THAT DOESN'T WORK. Always best to either describe what you did and why it didn't work and what you'll try next here, OR comment out (put a # in front of the lines of code) the code in the code chunk. That way you'll never make the same mistake twice.
+
+For this step I will need: [list packages and functions]
+
+The end goal of this step is: [briefly describe the comparisons you are making/the data manipulations you are looking for etc]
+
+ 
+
+```{r}
+#type in code below [this line is an example of a code comment]
+
+
+
+```
+
+***
+
+### Step 2 plots
+
+While numbers are great, a picture is often easier to understand. Use this section to display all your plots for easy viewing. There are several options for making plots, either using base R [plot() functions] or ggplot [ggplot2 package, functions within]. Either works fine. 
+
+  
+  * Remember to add x and y lables, and a title! 
+
+
+```{r}
+
+
+
+```
+
+
+If applicable, write your results for step 2 below.
+
+<font color="deeporchid4"> ***STEP 2 RESULTS:*** </font>
+
+
+***
+
+
+
+
+
+
+
+## Step 3
+
+
+Briefly describe your next step. If you are unfamiliar with the package or stat used, might be a good idea to take notes on them here as well. NEVER DELETE CODE THAT DOESN'T WORK. Always best to either describe what you did and why it didn't work and what you'll try next here, OR comment out (put a # in front of the lines of code) the code in the code chunk. That way you'll never make the same mistake twice.
+
+For this step I will need: [list packages and functions]
+
+The end goal of this step is: [briefly describe the comparisons you are making/the data manipulations you are looking for etc]
+
+ 
+
+```{r}
+#type in code below [this line is an example of a code comment]
+
+
+
+```
+
+***
+
+### Step 3a
+
+This is an example of how to create further indented tabs under the same section. Say for this analysis you have two alternative stats (a and b) that each have two further steps to them (.1 and .2). Here is how you can tab them out in your html.
+
+```{r}
+#main code for step 3a
+
+
+```
+
+
+#### Step 3a.1
+
+This is where you describe what you are doing in this sub step.
+
+```{r}
+#code for step 3a.1
+
+```
+
+
+#### Step 3a.2
+
+Same for this sub step.
+
+```{r}
+#code for step 3a.2
+
+```
+
+
+#### Step 3b
+
+You can go up to five # for indents, so you can alternatively do the step a or b as a title, then the sub steps as their own indent.
+
+##### Step 3b.1
+
+This sub step is in its own tab under the Step 3b header.
+
+```{r}
+#code for step 3b.1
+
+```
+
+### Step 3 plots
+
+While numbers are great, a picture is often easier to understand. Use this section to display all your plots for easy viewing. There are several options for making plots, either using base R [plot() functions] or ggplot [ggplot2 package, functions within]. Either works fine. 
+
+  
+  * Remember to add x and y lables, and a title! 
+
+
+```{r}
+
+
+
+```
+
+
+If applicable, write your results for step 3 below.
+
+<font color="deeporchid4"> ***STEP 3 RESULTS:*** </font>
+
+
+***
+
+
+
+
+
+
+# Pretty Plots 
+
+This section is for the pretty, final plots we'll use for presentations/publications. You can copy your plot code from the previous plot sections and start playing around with the aesthetics here.
+
+It is always best to have visuals for the analyses you perform. This allows readers to visually grasp the comparisons you are making. Whenever possible, it is also a good idea to overlay the original datapoints so that readers can see how individuals change over trials or how the mean compares to the spread of the data (often this is done with faint grey points so as to not be too crowded on the graph). Lastly, it is important to label axes, add legends (if needed), add titles, and add or remove background grids to ensure the graph is easy to read and interpret. I tend to use ggplot to do all of this, but most can also be done in base R plotting. I'll leave it up to you to decide on which one to use and to google for instructions on how to change the aesthetics. What I'll list below is the plots you should have for your presentation (if you've done the plot already in summary stats, you can just copy it here).
+
+
+```{r}
+
+
+
+
+```
+
+
+***
+
+
+
+
+# Methods 
+
+In this section you will write out your analysis methods. Write it as if it was going into a paper (no bullet points, no 'step1', etc). You can edit this section as your methods change, but again make sure to keep a record of what you did previously/what you changed in the sections above!
+
+
+***
+
+
+
+
+
+
+
+
+
+
