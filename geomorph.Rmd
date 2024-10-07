@@ -39,6 +39,56 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Data 
 
+To get digital distances:
+The TPS coordinates were in a long format, and I thought it would be easiest to locate the values needed to insert into the euclidean distance formula with a wide format. So, I first cleaned up the original TPS file--I removed all curve data, and unnecessary rows (ie. LM=16, image=) to be left with a column of IDs, a column of landmark labels, and two columns for the coordinates.
+
+Importing that into R, I then used the wider fxn to create one column for IDs, 16 columns for the X coordinates of all the landmarks, and 16 columns for all the y coordinates of all the landmarks (originally wanted it to be a coordinates column, so there would be two rows for each specimen to minimize column numbers, but whatever, this works). I separated this into two dataframes, one with just the X coords and one with just the Y, that way it would be easier to call. 
+
+I calculated the euclidean distance (formula: sqrt(sq(X$LM2-X$LM1)+sq(Y$LM2-Y$LM1))) for most of the same measurements (only missing total length, and head width, as this was not possible in the digital photos). For head depth, wasn't sure if 2-> 11 or 2->12 was closer to what I measured by hand; same for body depth, wasn't sure if it was 3->10 or 3->11. I included both. 
+
+finished all of the calculations and added the values into a dataframe with the IDs from the original tps file. Exported it to excel
+
+Once in excel, I realized that the values I had were in pixels (I think?) rather than mm, so I needed to find a way to convert in order to compare to the hand measurements. I found out that the scale factor (included in the original tps file) is mm/pixel, so I added this to the excel, and multiplied it to each value to get the mm. However, it was a bit off (eg 4.5 rather than 45) so I multiplied it by 10 to get to a number that resembled the hand measurements. Not 100% sure if this was correct, or why I would need to multiply by 10, but going with it for now. 
+
+```{r}
+library(tidyverse)
+library(curl)
+
+raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/refs/heads/master/dig-dist.csv")
+
+raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+raw1 <- raw %>%
+  pivot_wider(names_from = LABELS, values_from = c(X.COR, Y.COR))
+
+
+x <- raw1[ , 1:17]
+y <- raw1[, c(1, 18:33)]
+
+HL.dig <- sqrt(((x$X.COR_LM2 -x$X.COR_LM1)^2 + (y$Y.COR_LM2-y$Y.COR_LM1)^2))
+SL.dig <- sqrt(((x$X.COR_LM6 -x$X.COR_LM1)^2 + (y$Y.COR_LM6-y$Y.COR_LM1)^2))
+PreDL.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM2)^2 + (y$Y.COR_LM3-y$Y.COR_LM2)^2))
+DbL.dig <- sqrt(((x$X.COR_LM4 -x$X.COR_LM3)^2 + (y$Y.COR_LM4-y$Y.COR_LM3)^2))
+CPD.dig <- sqrt(((x$X.COR_LM7 -x$X.COR_LM5)^2 + (y$Y.COR_LM7-y$Y.COR_LM5)^2))
+HD1.dig <- sqrt(((x$X.COR_LM11 -x$X.COR_LM2)^2 + (y$Y.COR_LM11-y$Y.COR_LM2)^2))
+HD2.dig <- sqrt(((x$X.COR_LM12 -x$X.COR_LM2)^2 + (y$Y.COR_LM12-y$Y.COR_LM2)^2))
+CPL.dig <- sqrt(((x$X.COR_LM8 -x$X.COR_LM6)^2 + (y$Y.COR_LM8-y$Y.COR_LM6)^2))
+BD1.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM10)^2 + (y$Y.COR_LM3-y$Y.COR_LM10)^2))
+BD2.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM11)^2 + (y$Y.COR_LM3-y$Y.COR_LM11)^2))
+SnL.dig <- sqrt(((x$X.COR_LM15 -x$X.COR_LM1)^2 + (y$Y.COR_LM15-y$Y.COR_LM1)^2))
+OL.dig <- sqrt(((x$X.COR_LM16 -x$X.COR_LM15)^2 + (y$Y.COR_LM16-y$Y.COR_LM15)^2))
+
+raw2 <- cbind(raw1[,1], SL.dig, BD1.dig, BD2.dig, CPD.dig, CPL.dig, PreDL.dig, DbL.dig, HL.dig, HD1.dig, HD2.dig, SnL.dig, OL.dig)
+
+library(writexl)
+
+write_xlsx(raw2, 'C:/Users/allis/OneDrive/Desktop/comparison_data.xlsx')
+
+#AREAS
+#HL.dig <- sqrt(((x$X.COR_LM2 -x$X.COR_LM1)^2 + (y$Y.COR_LM2-y$Y.COR_LM1)^2))
+
+```
+
 Since the data is in tps format, I will read it directly from my current working directory. 
 
 For this step: geomorph() package, readland.tps()
