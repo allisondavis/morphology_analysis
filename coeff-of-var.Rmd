@@ -2,7 +2,12 @@
 title: "coeff of variation"
 author: "Allison Davis Connelly"
 date: "2024-09-17"
-output: html_document
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 6
+    toc_float:
+      collapsed: FALSE
 ---
 
 ```{r setup, include=FALSE}
@@ -1174,6 +1179,10 @@ head(ind$coord[,1:4])
 raw1.p <- raw1[raw1$SPP !="p.mexicana", ]
 raw1.p <- cbind(raw1.p, ind$coord[,1:4])
 
+lat.p <- raw1.p[raw1.p$SPP == "p.latipinna",]
+
+
+form.p <- raw1.p[raw1.p$SPP == "p.formosa",]
 
 ```
 
@@ -1224,8 +1233,130 @@ Since some of my data is raw, some is transformed, and some is corrected for bod
 
 Doesn't look like there is a particular function, just typing in mean and sd for the column you want. Might make my own function??
 
-coef_var <- function(data_frame){
+```{r}
+
+coef_var <- function(x){
+  sd(x)/mean(x)
+}
+
+```
+
+
+Not 100% sure which coeff will be most useful (or correct) for comparison, so for right now, I will do all combinations and remove what is not useful/correct after discussing with Mike. Combinations include:
+
+  (1) Amazon vs Sailfin, each trait, raw data
+  (2) Amazon vs sailfin, each trait, size corrected data
+  (3) Amazon vs sailfin, PC1 data
+  (4) Amazon vs sailfin, PC2 data
+  (5) Amazon vs sailfin, PC3 data
+  (6) Amazon across zones, each trait, raw data
+  (7) Amazon across zones, each trait, size corrected data
+  (8) Amazon across zones, PC1 data
+  (9) Amazon across zones, PC2 data
+  (10) Amazon across zones, PC3 data
+  (11) Sailfin across zones, each trait, raw data
+  (12) Sailfin across zones, each trait, size corrected data
+  (13) Sailfin across zones, PC1 data
+  (14) Sailfin across zones, PC2 data
+  (15) Sailfin across zones, PC3 data
+  (16) Amazon across basins, each trait, raw data
+  (17) Amazon across basins, each trait, size corrected data
+  (18) Amazon across basins, PC1 data
+  (19) Amazon across basins, PC2 data
+  (20) Amazon across basins, PC3 data
+  (21) Sailfin across basins, each trait, raw data
+  (22) Sailfin across basins, each trait, size corrected data
+  (23) Sailfin across basins, PC1 data
+  (24) Sailfin across basins, PC2 data
+  (25) Sailfin across basins, PC3 data
+  
+There are only 4 of the 7 basins that are shared between the species, so I will only do those 4. Additionally, only 4 of the 10 watersheds are shared between the species, so don't think it's a worthwhile comparison to make. Will stick with zones and basins. 
   
 
 
-}
+### Combos 1-5
+
+Amazon vs sailfin, each trait, raw, size corrected, and PCA data
+
+***NOTE***: I'm not sure I can do all the traits by species for PCA data. I think I either get each individuals dimension for each PC axis (so would compare a single value for amz vs sailfin on PC1) OR I get the loadings for each trait, not separated by species. Going to go with the prior option, not sure if this is useful/correct.
+
+```{r}
+## separate species 
+rawA <- raw1[raw1$SPP == "p.formosa",]
+rawA <- rawA[, -c(17:18)]
+
+rawS <- raw1[raw1$SPP == "p.latipinna",]
+rawS <- rawS[, -c(17:18)]
+
+##Amazon, raw data
+amz_cv1 <- lapply(rawA[15:34], coef_var)
+
+##Sailfin, raw data
+lat_cv1 <- lapply(rawS[15:34], coef_var)
+
+###### Not sure, but will do the transformed data as well
+
+## Amazon, transformed (only metric traits)
+amz_cv1a <- lapply(rawA[35:49], coef_var)
+
+## Sailfin, transformed (only metric traits)
+lat_cv1a <- lapply(rawS[35:49], coef_var)
+
+
+######### Residuals (size corrected data)
+## get residuals for each species into a dataframe
+
+res_form <- data.frame(abs.form.D, abs.form.P1, abs.form.P1.R, abs.form.LLSC, abs.form.BD, abs.form.CPD, abs.form.CPL, abs.form.PreDL, abs.form.DbL, abs.form.HL, abs.form.HD, abs.form.HW, abs.form.SnL, abs.form.OL)
+
+res_lat <- data.frame(abs.lat.D, abs.lat.P1, abs.lat.P1.R, abs.lat.LLSC, abs.lat.BD, abs.lat.CPD, abs.lat.CPL, abs.lat.PreDL, abs.lat.DbL, abs.lat.HL, abs.lat.HD, abs.lat.HW, abs.lat.SnL, abs.lat.OL)
+
+## Amazon, size corrected (will not be all traits!)
+amz_cv2 <- lapply(res_form, coef_var)
+
+
+##sailfin, size corrected (will not be all traits!)
+lat_cv2 <- lapply(res_lat, coef_var)
+
+
+########## PCA data (see NOTE above)
+##means are super small since there are neg/pos values, so not sure if this is useful
+
+##Amazon, PC1
+amz_cv3 <- coef_var(form.p$Dim.1)
+
+##Sailfin, PC1
+lat_cv3 <- coef_var(lat.p$Dim.1)
+
+##Amazon, PC2
+amz_cv4 <- coef_var(form.p$Dim.2)
+
+##Sailfin, PC2
+lat_cv4 <- coef_var(lat.p$Dim.2)
+
+##Amazon, PC3
+amz_cv5 <- coef_var(form.p$Dim.3)
+
+##Sailfin, PC3
+lat_cv5 <- coef_var(lat.p$Dim.3)
+
+
+```
+
+
+#### Results as tables
+
+***NOTE***: See link below for full description. CV calculated on data on interval scales (ie can be pos or neg) can be inaccurate due to the mean being at/close to zero. Additionally, CV calculated on log-normal data is uninformative (stationary CV values?). Not sure if my transformed data meet this, as after log transforming they are more normal but not exactly normal, meaning the original data is only approximately log-normal. However, I calculate the CV on the transformed data, so might not matter.
+
+https://cran.r-project.org/web/packages/cvequality/vignettes/how_to_test_CVs.html
+
+```{r}
+(raw_cv <- do.call(rbind, Map(data.frame, A=amz_cv1, S=lat_cv1)))
+
+(trans_cv <- do.call(rbind, Map(data.frame, A=amz_cv1a, S=lat_cv1a)))
+
+(size_cv <-do.call(rbind, Map(data.frame, A=amz_cv2, S=lat_cv2)))
+
+(PCA_cv <- do.call(rbind, Map(data.frame, A.PC1=amz_cv3, S.PC1=lat_cv3, A.PC2=amz_cv4, S.PC2=lat_cv4, A.PC3=amz_cv5, S.PC3=lat_cv5)))
+
+
+```
