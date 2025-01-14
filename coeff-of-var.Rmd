@@ -14,9 +14,9 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Initial steps 
+# Initial steps 
 
-Data collection 
+## Data collection 
 
 ```{r, echo=FALSE}
 library(curl)
@@ -35,7 +35,7 @@ raw1b <- raw1[-c(252), ] #this takes out the monster fish too
 
 ```
 
-### Checking normality 
+## Checking normality 
 
 #### Checking normality {.tabset .tabset-fade .tabset-pills}
 
@@ -974,9 +974,9 @@ ggplot(raw2, aes(SPP, abs.res.OL)) +
 
 ```
 
-## Comparing variation 
+# Comparing variation 
 
-### Variance tests {.tabset .tabset-fade .tabset-pills}
+## Variance tests {.tabset .tabset-fade .tabset-pills}
 
   (1) t-test for residuals, continuous 
   (2) residual discrete will go through glmer
@@ -990,14 +990,14 @@ F-test on residuals doesn't make much sense; the residuals themselves are repres
 ```         
 -   will do two-tailed and check out the residual means to infer direction; for traits in which we use raw data, a one-tailed f-test will be perfomed in both direction to determine which species is varying more. We will also visulize the variation using a histogram to confirm direction results.
 ```
-#### (1) Continuous, residuals
+### (1) Continuous, residuals
 
 
    -    will do two-tailed and check out the means to infer direction (see beginning for trait means w/o body correction)
    -    this will be for the traits that *did* have a significant regression compared to SL; will be using the absolute value residuals. 
    -    For continuous traits, we will be using the transformed data.
     
-##### T-tests
+#### T-tests
 
 ```{r, echo=FALSE}
 
@@ -1054,13 +1054,13 @@ ttest.abs.OL
 
 ***
 
-#### (2) Discrete, residuals
+### (2) Discrete, residuals
 
 Logan suggested doing a glm with poisson distribution (because it is count data) for these relationships. 
 
 Had to remove the poisson part, because the residuals didn't meet the non-integer requirement for poisson (it freaked out and took forever to load).
 
-##### GLMs
+#### GLMs
 
 ```{r}
 
@@ -1091,12 +1091,12 @@ summary(LLSC.aov)
 
 ***
 
-#### (3) Discrete, raw
+### (3) Discrete, raw
 
 This will only be for the traits that did **not** have a significant regression compared to SL (so P2s, A, SALL, SBDF, and FLA); none of these traits were transformed, so just doing raw for now.
 
 
-##### Levene's test
+#### Levene's test
 
 
 Still only performing this on the traits that did **NOT** vary with SL (P2L/R, A, SALL, SBLL [between sail and amz only], SBDF, FLA).
@@ -1124,21 +1124,21 @@ library(carData)
 
 ```
 
-## PCA analysis 
+# PCA analysis 
 
-### PCA {.tabset .tabset-fade .tabset-pills}
+## PCA {.tabset .tabset-fade .tabset-pills}
 
 LOGAN: CHECK THAT EACH VARIABLES IS NEAR NORMALLY DISTRIBUTED. IF NOT, LOG TRANSFORM BEFORE PCA. ALSO CHECK THAT PCA CALCULATES Z SCORES AND PLOTS BASED ON THAT; IF NOT CONVERT TO Z SCORES THEN RUN PCA.
 
 In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine what aspects of morphology influence the variation in our data the most without worrying about differences in scales/measurements. Currently, data consists of **116 Sailfin and 186 Amazon**.
 
-#### Chart
+### Chart
 
 ```{r}
 (chart <- matrix(c("Variable chart:", "D: dorsal ray count", "P1: left pectoral ray count", "P2.R: right pelvic rays", "P2.L: left pelvic rays", "A: anal rays", "P1.R: right pectoral ray count", "LLSC: lateral line scale count", "SALL: scalesabove lateral line", "SBLL: scalesbelow lateral line", "SBDF: scalesbefore dorsal fin", "TL: total length", "SL: standard length", "BD: body depth", "CPD: caudal peduncle depth", "CPL: caudal peduncle length", "PreDL: pre-dorsal length", "DbL: dorsal base length", "HL/HW/HD: head length/width/depth", "SnL: snout length", "OL: ocular length"), ncol=1, byrow=TRUE))
 ```
 
-#### Loadings
+### Loadings
 
 ```{r}
 
@@ -1187,10 +1187,10 @@ form.p <- raw1.p[raw1.p$SPP == "p.formosa",]
 ```
 
 
-#### Plots
+### Plots
 
 
-##### PCA 1v2
+#### PCA 1v2
 
 
 ```{r}
@@ -1210,7 +1210,7 @@ plot1<- autoplot(PCA, data = raw1a, colour="SPP", loadings=FALSE, loadings.label
 ```
 
 
-##### PCA 2v3
+#### PCA 2v3
 
 ```{r}
 
@@ -1225,7 +1225,7 @@ plot5
 
 
 
-## Coefficient of variation
+# Coefficient of variation
 
 Steve mentioned that using coefficient of variation would be able to distinguish adaptability of species across the range to local environments vs genetic drift. If CVs are similar across species then this would suggest adaptability, but if they are different then it's genetic drift. 
 
@@ -1274,7 +1274,7 @@ There are only 4 of the 7 basins that are shared between the species, so I will 
   
 
 
-### Combos 1-5
+## Combos 1-5
 
 Amazon vs sailfin, each trait, raw, size corrected, and PCA data
 
@@ -1343,7 +1343,7 @@ lat_cv5 <- coef_var(lat.p$Dim.3)
 ```
 
 
-#### Results as tables
+### Results as tables
 
 ***NOTE***: See link below for full description. CV calculated on data on interval scales (ie can be pos or neg) can be inaccurate due to the mean being at/close to zero. Additionally, CV calculated on log-normal data is uninformative (stationary CV values?). Not sure if my transformed data meet this, as after log transforming they are more normal but not exactly normal, meaning the original data is only approximately log-normal. However, I calculate the CV on the transformed data, so might not matter.
 
@@ -1360,3 +1360,145 @@ https://cran.r-project.org/web/packages/cvequality/vignettes/how_to_test_CVs.htm
 
 
 ```
+
+
+## Stats
+
+To see if these are statistically different, we can use the cvequality package on the data. This requires all the data I'm interested in testing to be in the same data frame (except PCA data, don't think it's useful to test on this data).
+
+```{r}
+
+#remove lat and form from column names so I can combine
+names(res_lat) = gsub(pattern = ".lat.", replacement = "", x = names(res_lat))
+names(res_form) = gsub(pattern = ".form.", replacement = "", x = names(res_form))
+
+#add species column
+res_lat$SPP <- 'p.latipinna'
+res_form$SPP <- 'p.formosa'
+
+size.corr <- rbind(res_lat, res_form)
+
+#remove mexicana from raw data frame
+
+raw.new <- raw1[raw1$SPP !="p.mexicana", ]
+
+#add size corrected to data frame already with raw & transformed
+
+raw.new <- cbind(raw.new, size.corr)
+
+#also remove pelvic fin stuff
+
+raw.new <- raw.new[, -c(17:18)]
+
+
+```
+
+Now let's test it out.
+
+```{r}
+library(cvequality)
+
+```
+
+***CANNOT FIGURE OUT HOW TO DO THIS EFFICIENTLY*** wILL TRY LATER
+
+
+apply_asymptotic_test <- function(df, id_col, data_cols) {
+   Extract the identifier column
+  identifier_data <- df[[id_col]]
+
+   Loop over the data columns and apply the test
+  results <- lapply(data_cols, function(col_name) {
+    column_data <- df[[col_name]]
+    
+    # Apply asymptotic_test
+    test_result <- asymptotic_test(x = column_data, g = identifier_data)
+    
+    # Store results
+    list(column = col_name, result = test_result)
+  })
+
+  return(results)
+}
+
+ Specify the identifier column and columns to test
+identifier_column <- "SPP"              Species ID column
+columns_to_test <- c("D", "P1", "A", "P1.R", "LLSC", "SALL", "SBLL", "SBDF", "SL", "BD", "CPD", "CPL", "PreDL", "DbL", "HL", "HD", "HW", "SnL", "OL", "FLA")
+
+ Apply the function
+results <- apply_asymptotic_test(df, identifier_column, columns_to_test)
+
+ Print results
+for (res in results) {
+  cat("Column:", res$column, "\n")
+  print(res$result)
+  cat("\n")
+}
+
+
+### one-by-one
+```{r}
+#AvS, raw data
+
+with (raw.new, asymptotic_test(D, SPP))
+with (raw.new, asymptotic_test(P1, SPP))
+with (raw.new, asymptotic_test(A, SPP))
+with (raw.new, asymptotic_test(P1.R, SPP))
+with (raw.new, asymptotic_test(LLSC, SPP))
+with (raw.new, asymptotic_test(SALL, SPP))
+with (raw.new, asymptotic_test(SBLL, SPP))
+with (raw.new, asymptotic_test(SBDF, SPP))
+with (raw.new, asymptotic_test(SL, SPP))
+with (raw.new, asymptotic_test(BD, SPP))
+with (raw.new, asymptotic_test(CPD, SPP))
+with (raw.new, asymptotic_test(CPL, SPP))
+with (raw.new, asymptotic_test(PreDL, SPP))
+with (raw.new, asymptotic_test(DbL, SPP))
+with (raw.new, asymptotic_test(HL, SPP))
+with (raw.new, asymptotic_test(HD, SPP))
+with (raw.new, asymptotic_test(HW, SPP))
+with (raw.new, asymptotic_test(SnL, SPP))
+with (raw.new, asymptotic_test(OL, SPP))
+with (raw.new, asymptotic_test(FLA, SPP))
+
+### AvS, transformed data
+with (raw.new, asymptotic_test(SL_log, SPP))
+with (raw.new, asymptotic_test(BD_log, SPP))
+with (raw.new, asymptotic_test(CPD_log, SPP))
+with (raw.new, asymptotic_test(CPL_log, SPP))
+with (raw.new, asymptotic_test(cbR_PreDL, SPP))
+with (raw.new, asymptotic_test(cbR_DbL, SPP))
+with (raw.new, asymptotic_test(HL_log, SPP))
+with (raw.new, asymptotic_test(HD_log, SPP))
+with (raw.new, asymptotic_test(HW_log, SPP))
+with (raw.new, asymptotic_test(SnL_log, SPP))
+with (raw.new, asymptotic_test(OL_log, SPP))
+
+
+### AvS, size corrected data
+with (raw.new, asymptotic_test(absD, SPP))
+with (raw.new, asymptotic_test(absP1, SPP))
+with (raw.new, asymptotic_test(absP1.R, SPP))
+with (raw.new, asymptotic_test(absLLSC, SPP))
+with (raw.new, asymptotic_test(absBD, SPP))
+with (raw.new, asymptotic_test(absCPD, SPP))
+with (raw.new, asymptotic_test(absCPL, SPP))
+with (raw.new, asymptotic_test(absPreDL, SPP))
+with (raw.new, asymptotic_test(absDbL, SPP))
+with (raw.new, asymptotic_test(absHL, SPP))
+with (raw.new, asymptotic_test(absHD, SPP))
+with (raw.new, asymptotic_test(absHW, SPP))
+with (raw.new, asymptotic_test(absSnL, SPP))
+with (raw.new, asymptotic_test(absOL, SPP))
+
+
+
+```
+
+### quick results
+
+From the raw data: D, LLSC, and CPL were sig, SBLL and PreDL suggestive
+
+From the transformed data: SL_log and OL_log were sig, HW_log suggestive
+
+From the size corrected data: absP1 and absP1.R were sig
