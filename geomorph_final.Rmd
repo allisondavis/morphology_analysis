@@ -1,0 +1,1149 @@
+---
+title: "geomorph_final"
+author: "Allison Davis Connelly"
+date: "2025-02-01"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 5
+    toc_float:
+      collapsed: FALSE
+  
+      
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data 
+
+To get digital distances:
+The TPS coordinates were in a long format, and I thought it would be easiest to locate the values needed to insert into the euclidean distance formula with a wide format. So, I first cleaned up the original TPS file--I removed all curve data, and unnecessary rows (ie. LM=16, image=) to be left with a column of IDs, a column of landmark labels, and two columns for the coordinates.
+
+Importing that into R, I then used the wider fxn to create one column for IDs, 16 columns for the X coordinates of all the landmarks, and 16 columns for all the y coordinates of all the landmarks (originally wanted it to be a coordinates column, so there would be two rows for each specimen to minimize column numbers, but whatever, this works). I separated this into two dataframes, one with just the X coords and one with just the Y, that way it would be easier to call. 
+
+I calculated the euclidean distance (formula: sqrt(sq(X$LM2-X$LM1)+sq(Y$LM2-Y$LM1))) for most of the same measurements (only missing total length, and head width, as this was not possible in the digital photos). For head depth, wasn't sure if 2-> 11 or 2->12 was closer to what I measured by hand; same for body depth, wasn't sure if it was 3->10 or 3->11. I included both. 
+
+finished all of the calculations and added the values into a dataframe with the IDs from the original tps file. Exported it to excel
+
+Once in excel, I realized that the values I had were in pixels rather than mm, so I needed to find a way to convert in order to compare to the hand measurements. I found out that the scale factor (included in the original tps file) is cm/pixel, so I added this to the excel, and multiplied it to each value to get the cm, then by 10 to get mm. 
+
+Below is for reference only. For details on how I formated, see original geomorph rmd.
+
+
+HL.dig <- sqrt(((x$X.COR_LM2 -x$X.COR_LM1)^2 + (y$Y.COR_LM2-y$Y.COR_LM1)^2))
+SL.dig <- sqrt(((x$X.COR_LM6 -x$X.COR_LM1)^2 + (y$Y.COR_LM6-y$Y.COR_LM1)^2))
+PreDL.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM1)^2 + (y$Y.COR_LM3-y$Y.COR_LM1)^2))
+DbL.dig <- sqrt(((x$X.COR_LM4 -x$X.COR_LM3)^2 + (y$Y.COR_LM4-y$Y.COR_LM3)^2))
+CPD.dig <- sqrt(((x$X.COR_LM7 -x$X.COR_LM5)^2 + (y$Y.COR_LM7-y$Y.COR_LM5)^2))
+HD1.dig <- sqrt(((x$X.COR_LM11 -x$X.COR_LM2)^2 + (y$Y.COR_LM11-y$Y.COR_LM2)^2))
+HD2.dig <- sqrt(((x$X.COR_LM12 -x$X.COR_LM2)^2 + (y$Y.COR_LM12-y$Y.COR_LM2)^2))
+CPL.dig <- sqrt(((x$X.COR_LM8 -x$X.COR_LM6)^2 + (y$Y.COR_LM8-y$Y.COR_LM6)^2))
+BD1.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM10)^2 + (y$Y.COR_LM3-y$Y.COR_LM10)^2))
+BD2.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM11)^2 + (y$Y.COR_LM3-y$Y.COR_LM11)^2))
+SnL.dig <- sqrt(((x$X.COR_LM15 -x$X.COR_LM1)^2 + (y$Y.COR_LM15-y$Y.COR_LM1)^2))
+OL.dig <- sqrt(((x$X.COR_LM16 -x$X.COR_LM15)^2 + (y$Y.COR_LM16-y$Y.COR_LM15)^2))
+
+
+
+Performed most analyses in MorphoJ. Analyses here will strictly be for comparing digital vs hand measurements. 
+
+```{r}
+library(tidyverse)
+library(curl)
+
+raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/refs/heads/master/comparison_data2.csv")
+
+raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+#AD20-084 is missing all manual values, so I will remove to avoid issues with NAs
+raw<- raw[raw$ID !="AD20-082", ]
+
+```
+
+## Normality check
+
+I will use Shapiro-wilk, histograms, and QQ plots to determine what traits are normal.
+
+Will separate my raw dataset into the two factors of interest: digital and manual measurements.
+
+```{r}
+library(dplyr)
+
+digital <- raw %>%
+  select(ID, SPP, ends_with(".dig"))
+
+manual <- raw %>%
+  select(ID, SPP, ends_with(".man"))
+
+```
+
+### Digital 
+
+All but OL fail SW test with a slight skew/deviation to the right.
+
+```{r}
+
+##### Shapiro-Wilk test #####
+shapiro.test(digital$SL)
+
+shapiro.test(digital$BD1)
+
+shapiro.test(digital$BD2)
+
+shapiro.test(digital$CPD)
+
+shapiro.test(digital$CPL)
+
+shapiro.test(digital$PreDL)
+
+shapiro.test(digital$DbL)
+
+shapiro.test(digital$HL)
+
+shapiro.test(digital$HD1)
+
+shapiro.test(digital$HD2)
+
+shapiro.test(digital$SnL)
+
+shapiro.test(digital$OL)
+
+##### Histograms #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+hist(digital$SL, breaks=30)
+
+hist(digital$BD1, breaks=30)
+
+hist(digital$BD2, breaks=30)
+
+hist(digital$CPD, breaks=30)
+
+hist(digital$CPL, breaks=30)
+
+hist(digital$PreDL, breaks=30)
+
+hist(digital$DbL, breaks=30)
+
+hist(digital$HL, breaks=30)
+
+hist(digital$HD1, breaks=30)
+
+hist(digital$HD2, breaks=30)
+
+hist(digital$SnL, breaks=30)
+
+hist(digital$OL, breaks=30)
+
+
+##### QQ plots #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+qqnorm(digital$SL)
+qqline(digital$SL)
+
+qqnorm(digital$BD1)
+qqline(digital$BD1)
+
+qqnorm(digital$BD2)
+qqline(digital$BD2)
+
+qqnorm(digital$CPD)
+qqline(digital$CPD)
+
+qqnorm(digital$CPL)
+qqline(digital$CPL)
+
+qqnorm(digital$PreDL)
+qqline(digital$PreDL)
+
+qqnorm(digital$DbL)
+qqline(digital$DbL)
+
+qqnorm(digital$HL)
+qqline(digital$HL)
+
+qqnorm(digital$HD1)
+qqline(digital$HD1)
+
+qqnorm(digital$HD2)
+qqline(digital$HD2)
+
+qqnorm(digital$SnL)
+qqline(digital$SnL)
+
+qqnorm(digital$OL)
+qqline(digital$OL)
+
+
+
+```
+
+
+### Manual
+
+All fail the SW test, with a slight skew/deviation to the right. 
+
+```{r}
+
+##### Shapiro-Wilk test #####
+shapiro.test(manual$SL)
+
+shapiro.test(manual$BD1)
+
+shapiro.test(manual$CPD)
+
+shapiro.test(manual$CPL)
+
+shapiro.test(manual$PreDL)
+
+shapiro.test(manual$DbL)
+
+shapiro.test(manual$HL)
+
+shapiro.test(manual$HD1)
+
+shapiro.test(manual$SnL)
+
+shapiro.test(manual$OL)
+
+##### Histograms #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+hist(manual$SL, breaks=30)
+
+hist(manual$BD1, breaks=30)
+
+hist(manual$CPD, breaks=30)
+
+hist(manual$CPL, breaks=30)
+
+hist(manual$PreDL, breaks=30)
+
+hist(manual$DbL, breaks=30)
+
+hist(manual$HL, breaks=30)
+
+hist(manual$HD1, breaks=30)
+
+hist(manual$SnL, breaks=30)
+
+hist(manual$OL, breaks=30)
+
+
+##### QQ plots #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+qqnorm(manual$SL)
+qqline(manual$SL)
+
+qqnorm(manual$BD1)
+qqline(manual$BD1)
+
+qqnorm(manual$CPD)
+qqline(manual$CPD)
+
+qqnorm(manual$CPL)
+qqline(manual$CPL)
+
+qqnorm(manual$PreDL)
+qqline(manual$PreDL)
+
+qqnorm(manual$DbL)
+qqline(manual$DbL)
+
+qqnorm(manual$HL)
+qqline(manual$HL)
+
+qqnorm(manual$HD1)
+qqline(manual$HD1)
+
+qqnorm(manual$SnL)
+qqline(manual$SnL)
+
+qqnorm(manual$OL)
+qqline(manual$OL)
+
+
+
+```
+
+### Log transform & recheck
+
+While some values are still significant, log transformations vastly improve normality (eg p=2e-16 to p=0.002). The histograms and QQ plots look pretty damn normal, so I will stick with log transformed values. 
+
+Log transformed data sets
+
+```{r}
+dig_trans <- digital
+dig_trans[, c(3:14)] <- log(dig_trans[, c(3:14)])
+
+man_trans <- manual
+man_trans[, c(3:12)] <- log(man_trans[, c(3:12)])
+
+
+```
+
+#### Digital
+
+OL was the only one that was normal in raw check, but since it was not normal in manual, and I want to compare dig to man, I will transform the OL here too (don't want to compare raw to transformed measurements).
+
+```{r}
+##### Shapiro-Wilk test #####
+shapiro.test(dig_trans$SL)
+
+shapiro.test(dig_trans$BD1)
+
+shapiro.test(dig_trans$BD2)
+
+shapiro.test(dig_trans$CPD)
+
+shapiro.test(dig_trans$CPL)
+
+shapiro.test(dig_trans$PreDL)
+
+shapiro.test(dig_trans$DbL)
+
+shapiro.test(dig_trans$HL)
+
+shapiro.test(dig_trans$HD1)
+
+shapiro.test(dig_trans$HD2)
+
+shapiro.test(dig_trans$SnL)
+
+shapiro.test(dig_trans$OL)
+
+##### Histograms #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+hist(dig_trans$SL, breaks=30)
+
+hist(dig_trans$BD1, breaks=30)
+
+hist(dig_trans$BD2, breaks=30)
+
+hist(dig_trans$CPD, breaks=30)
+
+hist(dig_trans$CPL, breaks=30)
+
+hist(dig_trans$PreDL, breaks=30)
+
+hist(dig_trans$DbL, breaks=30)
+
+hist(dig_trans$HL, breaks=30)
+
+hist(dig_trans$HD1, breaks=30)
+
+hist(dig_trans$HD2, breaks=30)
+
+hist(dig_trans$SnL, breaks=30)
+
+hist(dig_trans$OL, breaks=30)
+
+
+##### QQ plots #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+qqnorm(dig_trans$SL)
+qqline(dig_trans$SL)
+
+qqnorm(dig_trans$BD1)
+qqline(dig_trans$BD1)
+
+qqnorm(dig_trans$BD2)
+qqline(dig_trans$BD2)
+
+qqnorm(dig_trans$CPD)
+qqline(dig_trans$CPD)
+
+qqnorm(dig_trans$CPL)
+qqline(dig_trans$CPL)
+
+qqnorm(dig_trans$PreDL)
+qqline(dig_trans$PreDL)
+
+qqnorm(dig_trans$DbL)
+qqline(dig_trans$DbL)
+
+qqnorm(dig_trans$HL)
+qqline(dig_trans$HL)
+
+qqnorm(dig_trans$HD1)
+qqline(dig_trans$HD1)
+
+qqnorm(dig_trans$HD2)
+qqline(dig_trans$HD2)
+
+qqnorm(dig_trans$SnL)
+qqline(dig_trans$SnL)
+
+qqnorm(dig_trans$OL)
+qqline(dig_trans$OL)
+
+
+
+```
+
+
+#### Manual
+
+```{r}
+##### Shapiro-Wilk test #####
+shapiro.test(man_trans$SL)
+
+shapiro.test(man_trans$BD1)
+
+shapiro.test(man_trans$CPD)
+
+shapiro.test(man_trans$CPL)
+
+shapiro.test(man_trans$PreDL)
+
+shapiro.test(man_trans$DbL)
+
+shapiro.test(man_trans$HL)
+
+shapiro.test(man_trans$HD1)
+
+shapiro.test(man_trans$SnL)
+
+shapiro.test(man_trans$OL)
+
+##### Histograms #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+hist(man_trans$SL, breaks=30)
+
+hist(man_trans$BD1, breaks=30)
+
+hist(man_trans$CPD, breaks=30)
+
+hist(man_trans$CPL, breaks=30)
+
+hist(man_trans$PreDL, breaks=30)
+
+hist(man_trans$DbL, breaks=30)
+
+hist(man_trans$HL, breaks=30)
+
+hist(man_trans$HD1, breaks=30)
+
+hist(man_trans$SnL, breaks=30)
+
+hist(man_trans$OL, breaks=30)
+
+
+##### QQ plots #####
+
+par(mfcol=c(2,2), oma = c(0,0,2,0))
+
+qqnorm(man_trans$SL)
+qqline(man_trans$SL)
+
+qqnorm(man_trans$BD1)
+qqline(man_trans$BD1)
+
+qqnorm(man_trans$CPD)
+qqline(man_trans$CPD)
+
+qqnorm(man_trans$CPL)
+qqline(man_trans$CPL)
+
+qqnorm(man_trans$PreDL)
+qqline(man_trans$PreDL)
+
+qqnorm(man_trans$DbL)
+qqline(man_trans$DbL)
+
+qqnorm(man_trans$HL)
+qqline(man_trans$HL)
+
+qqnorm(man_trans$HD1)
+qqline(man_trans$HD1)
+
+qqnorm(man_trans$SnL)
+qqline(man_trans$SnL)
+
+qqnorm(man_trans$OL)
+qqline(man_trans$OL)
+
+```
+
+## Formatting 
+
+I will perform 3 different analyses: Bland-Altman, MANOVA and PCA. These vary in whether they need long or wide formats. Also, the raw data contains columns that are not needed for these analyses (eg location or photo date) so I will remove those to leave just the species, tag ID, and measurements.
+
+Additionally, since we have two measurements for BD and HD, we will create two datasets: one with BD1 and HD1, and another with BD2 and HD2 (this applies to digital only, as manual only has one measurement for each). Once we run BA plots, we can determine which of these measurements is best to continue analysis with.
+
+
+**Long format**
+
+```{r}
+library(tidyr)
+
+#log transform entire data set
+
+raw2 <- raw
+raw2[, c(3:24)] <- log(raw2[, c(3:24)])
+
+# this will create a data frame with species, ID, characteristic, method and value
+df_long <- raw2 %>%
+  pivot_longer(
+    cols = ends_with(".dig") | ends_with(".man"),
+    names_to = c("characteristic", "method"),
+    names_sep = "\\.",
+    values_to = "value"
+  )
+
+# method and characteristic are initially a character; need to be a factor
+df_long$method <- as.factor(df_long$method)
+df_long$characteristic <- as.factor(df_long$characteristic)
+
+
+#create data frames that only have one measurement for BD and HD
+
+## BD1 and HD1 for both digital and manual measurements 
+df_long2 <- df_long[-grep("BD2", df_long$characteristic),]
+df_long2 <- df_long2[-grep("HD2", df_long2$characteristic),]#only contains BD1 & HD1
+
+## BD1/HD1 for manual (since they only have one) and BD2/HD2 for digital
+df_long3 <- df_long %>%
+    filter(
+    # Keep everything for Hand measurements
+    method == "man" |
+    # Keep all digital measurements except BD1 and HD1
+    !(method == "dig" & characteristic %in% c("BD1", "HD1"))
+  )
+
+#to ensure comparisons between BD2 and BD1 in this new data frame, will combine characteristic names to just BD or HD
+
+df_long3<- df_long3 %>%
+  mutate(
+    characteristic = case_when(
+      characteristic %in% c("BD1", "BD2") ~ "BD",
+      characteristic %in% c("HD1", "HD2") ~ "HD",
+      TRUE ~ characteristic  # Leave other characteristics unchanged
+    )
+  )
+
+
+```
+
+
+**Wide format**
+
+```{r}
+df_wide <- df_long2 %>%
+  pivot_wider(
+    names_from = method,
+    values_from = value
+  )
+
+
+df_wide2 <- df_long3 %>%
+  pivot_wider(
+    names_from = method,
+    values_from = value
+  )
+
+```
+
+
+
+# Bland-Altman Plot
+
+Used to assess agreement between two measurement methods.
+
+## BD/HD plots
+
+We're first interested in how BD1, HD1, BD2, and HD2 compare, so let's isolate those.
+
+
+```{r}
+
+data_BD1 <- df_wide %>%
+  filter(characteristic == "BD1")
+data_BD1 <- data_BD1 %>%
+  mutate(
+    average = (dig + man) / 2,
+    difference = dig - man
+  )
+
+data_HD1 <- df_wide %>%
+  filter(characteristic == "HD1")
+data_HD1 <- data_HD1 %>%
+  mutate(
+    average = (dig + man) / 2,
+    difference = dig - man
+  )
+
+
+data_BD2 <- df_wide2 %>%
+  filter(characteristic == "BD")
+data_BD2 <- data_BD2 %>%
+  mutate(
+    average = (dig + man) / 2,
+    difference = dig - man
+  )
+
+
+data_HD2 <- df_wide2 %>%
+  filter(characteristic == "HD")
+data_HD2 <- data_HD2 %>%
+  mutate(
+    average = (dig + man) / 2,
+    difference = dig - man
+  )
+
+
+ba_BD1 <- ggplot(data_BD1, aes(x = average, y = difference, color=SPP)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(data_BD1$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(data_BD1$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_BD1$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "BD1",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+
+ba_HD1 <- ggplot(data_HD1, aes(x = average, y = difference, color=SPP)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(data_HD1$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(data_HD1$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_HD1$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "HD1",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+ba_BD2 <- ggplot(data_BD2, aes(x = average, y = difference, color=SPP)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(data_BD2$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(data_BD2$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_BD2$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "BD2",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+
+ba_HD2 <- ggplot(data_HD2, aes(x = average, y = difference, color=SPP)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(data_HD2$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(data_HD2$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_HD2$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "HD2",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+library(gridExtra)
+
+grid.arrange(ba_BD1, ba_BD2, ba_HD1, ba_HD2)
+
+
+
+
+
+
+```
+
+We see that BD1 has less scatter, less outside LOA and a smaller bias compared to BD2 (0.12 vs 0.36). In addition, BD2's LOA don't include 0, so BD1 is more appropriate to use. In contrast, HD1, while it has less scatter with fewer points outside the LOA, it has a bias further away from 0 compared to HD2 (which has slightly more scatter and more points outside LOA), so HD2 is more appropriate to use (0.06 vs -0.008). 
+
+I will therefore create a final dataset with BD1 and HD2 for all subsequent analyses. 
+
+## BA plots
+
+### Final data frame
+
+```{r, echo=FALSE}
+###create final dataset
+df_long_fin <- df_long[-grep("BD2", df_long$characteristic),] #removes BD2
+
+df_long_fin <- df_long_fin %>%
+    filter(
+    # Keep everything for Hand measurements
+    method == "man" |
+    # Keep all digital measurements except HD1
+    !(method == "dig" & characteristic %in% c("HD1"))
+  )
+
+df_long_fin<- df_long_fin %>%
+  mutate(
+    characteristic = case_when(
+      characteristic %in% c("BD1", "BD2") ~ "BD",
+      characteristic %in% c("HD1", "HD2") ~ "HD",
+      TRUE ~ characteristic  # Leave other characteristics unchanged
+    )
+  )
+
+df_wide_fin <- df_long_fin %>%
+  pivot_wider(
+    names_from = method,
+    values_from = value
+  )
+
+
+```
+
+### All traits
+
+We see major clusters on the BA plot for all the data. When colored by species, we see that this does not differentiate the clusters, so it is not a species difference we're seeing. When colored by characteristic, we see this nicely corresponds to the clustering. This is due to differences in range of the measurements we used (eg standard length can range from 14-40mm but snout length ranges from 1-3mm). 
+
+```{r}
+
+df_ba_fin <- df_wide_fin %>%
+  mutate(
+    average = (dig + man) / 2,
+    difference = dig - man
+  )
+
+ba_full_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+ba_full_fin
+
+
+##### Species
+
+ba_full_SPP_fin <- ggplot(df_ba_fin, aes(x = average, y = difference, color=SPP)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+ba_full_SPP_fin
+
+
+##### Characteristics
+
+ba_full_CR_fin <- ggplot(df_ba_fin, aes(x = average, y = difference, color=characteristic)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+ba_full_CR_fin
+
+```
+
+
+### By trait
+
+```{r}
+ba_by_char_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  facet_wrap(~ characteristic, scales = "free") +
+  theme_minimal()
+
+ba_by_char_fin
+
+```
+
+
+## BA Stats
+
+We can extract the important information (bias, LOAs, confidence intervals, and p-value after a one-sided t-test to see if bias is different from 0) using the blandr package. Contacted the author, and there may be a way to loop this, but for now will run on individual stats. 
+
+```{r}
+
+library(blandr)
+
+### Whole dataset
+
+(bar_full <- blandr.statistics(df_wide_fin$dig, df_wide_fin$man))
+
+### By characteristic
+
+df_SL <- df_wide_fin %>%
+  filter(characteristic == "SL")
+(bar_SL <- blandr.statistics(df_SL$dig, df_SL$man))
+
+df_BD <- df_wide_fin %>%
+  filter(characteristic == "BD")
+(bar_BD <- blandr.statistics(df_BD$dig, df_BD$man))
+
+df_CPD <- df_wide_fin %>%
+  filter(characteristic == "CPD")
+(bar_CPD <- blandr.statistics(df_CPD$dig, df_CPD$man))
+
+df_CPL <- df_wide_fin %>%
+  filter(characteristic == "CPL")
+(bar_CPL <- blandr.statistics(df_CPL$dig, df_CPL$man))
+
+df_PreDL <- df_wide_fin %>%
+  filter(characteristic == "PreDL")
+(bar_PreDL <- blandr.statistics(df_PreDL$dig, df_PreDL$man))
+
+df_DbL <- df_wide_fin %>%
+  filter(characteristic == "DbL")
+(bar_DbL <- blandr.statistics(df_DbL$dig, df_DbL$man))
+
+df_HL <- df_wide_fin %>%
+  filter(characteristic == "HL")
+(bar_HL <- blandr.statistics(df_HL$dig, df_HL$man))
+
+df_HD <- df_wide_fin %>%
+  filter(characteristic == "HD")
+(bar_HD <- blandr.statistics(df_HD$dig, df_HD$man))
+
+df_SnL <- df_wide_fin %>%
+  filter(characteristic == "SnL")
+(bar_SnL <- blandr.statistics(df_SnL$dig, df_SnL$man))
+
+df_OL <- df_wide_fin %>%
+  filter(characteristic == "OL")
+(bar_OL <- blandr.statistics(df_OL$dig, df_OL$man))
+
+
+
+```
+
+
+While p-values for just about all of the characteristics are significant, we see that the bias itself is incredibly close to zero. The significant t-test may be a result of very little deviation, so any deviation is flagged as significant, but is not methodilogically relevent (ie there is not actual difference in methods).
+
+
+# MANOVA
+
+We will run a repeated measures MANOVA on our data to corroborate our Bland-Altman results. We will follow up our MANOVA with an effect size calculation to see if any statistical significance is methodilogically relevent. 
+
+## Data frame
+
+First, need a data frame with two rows per individual (one for digital and one for manual), plust 10 columns corresponding to each characteristic. Will create new long/wide formats since the ones above don't have separate columns for the characteristics. 
+
+```{r}
+
+library(car)
+raw3 <- raw2 %>%
+  rename(HD.dig = HD2.dig, HD.man = HD1.man)
+
+raw3<- raw3[-5] #removes BD2
+raw3<- raw3[-10] #removes HD1 for digital
+
+df_long_ex <- raw3 %>%
+  pivot_longer(cols = -c(ID, SPP), 
+               names_to = "Measurement", 
+               values_to = "Value") %>%
+  mutate(Method = ifelse(str_detect(Measurement, ".dig"), "Digital", "Manual"),
+         Character = str_remove_all(Measurement, ".dig|.man")) %>%
+  select(ID, Method, Character, Value)
+
+df_wide_ex <- df_long_ex %>%
+  pivot_wider(names_from = Character, values_from = Value)
+
+
+```
+
+## Results
+
+Similar to our BA stats, we see a significant but not practical difference between methods. The MANOVA is statistically significant (p<0.001) but have a small effect size (0.0267). This means that method only explains 2.67% of the variance in our data. 
+
+```{r}
+
+manova_mod <- manova(cbind(SL, BD1, CPD, CPL, PreDL, DbL, HL, HD, SnL, OL) ~ Method + Error(ID/Method), data=df_wide_ex)
+
+summary(manova_mod, test= "Pillai")
+
+# resutls from summary
+pillai_method <- 0.90343
+num_df_method <- 10
+den_df_method <- 329
+
+# Calculate partial eta-squared for Method
+eta_squared_method <- pillai_method / (pillai_method + (den_df_method / num_df_method))
+
+# Print the result
+cat("Partial Eta-Squared (Method):", eta_squared_method, "\n")
+
+
+```
+
+
+# PCA
+
+In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine which methodology influence the variation in our data the most without worrying about differences in scales/measurements.
+
+
+## Data sets
+
+In order to compare dimensions 1-4 between manual and digital measurements, I need to actually run a PCA on digital only and manual only data sets, then perform a paired t-test.
+
+Let's create the data sets
+
+```{r}
+
+library(stringr)
+
+z.scores <- raw3
+
+z.scores[, c(3:22)] <- scale(z.scores[, 3:22], center = TRUE, scale = TRUE)
+
+
+dig_p_long <- z.scores %>%
+  select(ID, SPP, ends_with(".dig"))
+
+
+man_p_long <- z.scores %>%
+  select(ID, SPP, ends_with(".man"))
+
+
+
+```
+
+## PCAs
+
+Now let's run the individual PCAs
+
+### Digital PCA
+
+```{r}
+library(factoextra)
+
+PCA_dig <- prcomp(dig_p_long[, 3:12])
+
+summary(PCA_dig)
+
+(loadings_dig <- PCA_dig$rotation[, 1:5])
+
+dig.sorted.loadings.1 <- loadings_dig[order(loadings_dig[, 1]), 1]
+dig.myTitle <- "Loadings Plot for PC1" 
+dig.myXlab  <- "Variable Loadings"
+dotchart(dig.sorted.loadings.1, main=dig.myTitle, xlab=dig.myXlab, cex=1.5, col="red")
+
+dig.sorted.loadings.2 <- loadings_dig[order(loadings_dig[, 2]), 2]
+dig.myTitle <- "Loadings Plot for PC2" 
+dig.myXlab  <- "Variable Loadings"
+dotchart(dig.sorted.loadings.2, main=dig.myTitle, xlab=dig.myXlab, cex=1.5, col="red")
+
+dig.sorted.loadings.3 <- loadings_dig[order(loadings_dig[, 3]), 3]
+dig.myTitle <- "Loadings Plot for PC3" 
+dig.myXlab  <- "Variable Loadings"
+dotchart(dig.sorted.loadings.3, main=dig.myTitle, xlab=dig.myXlab, cex=1.5, col="red")
+
+
+dig.VM_PCA <- varimax(PCA_dig$rotation[, 1:3]) 
+
+dig.VM_PCA
+
+
+(dig.eig.val <- get_eigenvalue(PCA_dig))
+
+dig.ind <- get_pca_ind(PCA_dig)
+head(dig.ind$coord[,1:4])
+
+
+dig.p <- cbind(dig_p_long, dig.ind$coord[,1:4])
+
+```
+
+
+### Manual PCA
+
+```{r}
+PCA_man <- prcomp(man_p_long[, 3:12])
+
+summary(PCA_man)
+
+(loadings_man <- PCA_man$rotation[, 1:5])
+
+man.sorted.loadings.1 <- loadings_man[order(loadings_man[, 1]), 1]
+man.myTitle <- "Loadings Plot for PC1" 
+man.myXlab  <- "Variable Loadings"
+dotchart(man.sorted.loadings.1, main=man.myTitle, xlab=man.myXlab, cex=1.5, col="red")
+
+man.sorted.loadings.2 <- loadings_man[order(loadings_man[, 2]), 2]
+man.myTitle <- "Loadings Plot for PC2" 
+man.myXlab  <- "Variable Loadings"
+dotchart(man.sorted.loadings.2, main=man.myTitle, xlab=man.myXlab, cex=1.5, col="red")
+
+man.sorted.loadings.3 <- loadings_man[order(loadings_man[, 3]), 3]
+man.myTitle <- "Loadings Plot for PC3" 
+man.myXlab  <- "Variable Loadings"
+dotchart(man.sorted.loadings.3, main=man.myTitle, xlab=man.myXlab, cex=1.5, col="red")
+
+
+man.VM_PCA <- varimax(PCA_man$rotation[, 1:3]) 
+
+man.VM_PCA
+
+
+library(factoextra)
+
+(man.eig.val <- get_eigenvalue(PCA_man))
+
+man.ind <- get_pca_ind(PCA_man)
+head(man.ind$coord[,1:4])
+
+
+man.p <- cbind(man_p_long, man.ind$coord[,1:4])
+
+
+```
+
+
+## Comparisons
+
+Now let's do the comparisons
+
+### T-tests
+
+No significant differences.
+
+```{r}
+(pc1 <- t.test(dig.p$Dim.1, man.p$Dim.1, paired= TRUE, alternative = "two.sided"))
+
+(pc2 <- t.test(dig.p$Dim.2, man.p$Dim.2, paired= TRUE, alternative = "two.sided"))
+
+(pc3 <- t.test(dig.p$Dim.3, man.p$Dim.3, paired= TRUE, alternative = "two.sided"))
+
+
+```
+
+### Levene's tests
+
+No significant differences. 
+
+```{r}
+combined_p <- data.frame(
+  ID = rep(man.p$ID, 2),  # Ensure IDs match
+  Method = rep(c("Digital", "Manual"), each = nrow(man.p)),  
+  Dim.1 = c(dig.p$Dim.1, man.p$Dim.1),
+  Dim.2 = c(dig.p$Dim.2, man.p$Dim.2), 
+  Dim.3 = c(dig.p$Dim.3, man.p$Dim.3)
+)
+
+(pc1V <- leveneTest(Dim.1~Method, data=combined_p))
+
+(pc2V <- leveneTest(Dim.2~Method, data=combined_p))
+
+(pc3V <- leveneTest(Dim.3~Method, data=combined_p))
+
+
+
+```
+
+## Plots
+
+Need to combine digital and manual PCs to get them on one plot.
+
+```{r}
+#PC scores for digital
+PCA.scores.dig <- as.data.frame(PCA_dig$x)
+PCA.scores.dig$method <- "dig"
+PCA.scores.dig$ID <- dig_p_long$ID
+PCA.scores.dig$SPP <- dig_p_long$SPP
+
+#PC scores for manual
+PCA.scores.man <- as.data.frame(PCA_man$x)
+PCA.scores.man$method <- "man"
+PCA.scores.man$ID <- man_p_long$ID
+PCA.scores.man$SPP <- man_p_long$SPP
+
+PCA.comb <- rbind(PCA.scores.dig, PCA.scores.man)
+
+
+
+```
+
+
+### PCA 1v2
+
+
+```{r}
+
+ggplot(data = PCA.comb, aes(x = PC1, y = PC2, color = method)) +
+  geom_point(alpha = 0.8, size = 3) +
+  stat_ellipse(aes(group = method), level = 0.95) +
+  scale_color_manual(values=c("#E1AF00","#78B7C5"))+
+  scale_fill_manual(values=c("#E1AF00","#78B7C5")) +
+  labs(
+    title = "PCA of Digital and Manual Measurements",
+    x = "Principal Component 1",
+    y = "Principal Component 2",
+    color = "Method"
+  ) +
+  theme_minimal()
+
+
+```
+
+
+### PCA 2v3
+
+
+```{r}
+ggplot(data = PCA.comb, aes(x = PC2, y = PC3, color = method)) +
+  geom_point(alpha = 0.8, size = 3) +
+  stat_ellipse(aes(group = method), level = 0.95) +
+  scale_color_manual(values=c("#E1AF00","#78B7C5"))+
+  scale_fill_manual(values=c("#E1AF00","#78B7C5")) +
+  labs(
+    title = "PCA of Digital and Manual Measurements",
+    x = "Principal Component 2",
+    y = "Principal Component 3",
+    color = "Method"
+  ) +
+  theme_minimal()
+
+
+```
+
+
+
+# Overall Results
+
+Our main goal with this R analysis was to compare the precision of manual and digital measurements. 
+
+We first use Bland-Altman plots which compares how closely two methods are to each other. We see that for each characteristic and for our combined data, the bias is close to zero (range: -0.1 to 0.1) with LOAs that include zero, indicating little to no difference between the two methods. Note that for biases greater than zero, this indicates digital measurements were on average larger, whereas biases less than zero indicate larger manual measurements. While the statistical tests for the Bland-Altman plots (one-sided t-test to see if bias is different than zero) indicate a significant difference between the methods, we feel that the biases and LOAs themselves indicate no practical difference. The significant results are likely due to small deviations in an otherwise consistent data set that will statistically indicate a difference, but these differences in reality are minuscule. 
+
+Since these characteristics are no independent of each other, a more robust statistical test (than the t-tests on individual characteristics) is a repeated measures MANOVA. This allowed us to compare the manual and digital methods while treating all the characteristics as related variables. Similar to our Bland-Altman results, we see a significant difference (p<0.001). However, when we calculate the effect size, we see a small effect size (0.0267). This again illustrates that while there is a statistical difference between the two methods, this difference is not practical. Only 2.67% of the variance in our data is explained by the difference in measurement method. 
+
+Lastly, to characterize the overall shape difference and compare variation among the methods, we performed a principal component analysis. Both paired t-tests and Levene's tests on the PC scores showed no significant difference between the two methods, corroborating our interpretation of the practical results from our previous analyses.
+
+
+Overall, we conclude there is no practical difference between manual and digital measurements. 
+
+
+
+
