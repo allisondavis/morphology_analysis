@@ -178,6 +178,293 @@ plot3
 
 ```
 
+## Geographic analysis
+
+Here, we'll separate the amazon and sailfin (not the atlantic, since they're all from the same location) and see if they vary by zone or basin. 
+
+### Sailfin
+
+#### Loadings
+
+```{r}
+lat.df <- lat.p[, 1:38]
+
+PCA.lat <- prcomp(lat.df[, 7:38], center = TRUE, scale. = FALSE) #false uses covariance matrix like in MorphoJ; scale=true only useful if variables are measured on different scales
+
+summary(PCA.lat)
+
+ev.lat <- PCA.lat$sdev^2 
+evplot(ev.lat) #visually confirms that the first 4 PCs are best to use, not sure if this is a great test though
+
+
+(eig.val.lat <- get_eigenvalue(PCA.lat))
+
+ind.lat <- get_pca_ind(PCA.lat)
+head(ind.lat$coord[,1:4])
+
+
+lat.df <- cbind(lat.df, ind.lat$coord[,1:4])
+
+(loadings <- PCA.lat$rotation[, 1:5])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.4 <- loadings[order(loadings[, 4]), 4]
+myTitle <- "Loadings Plot for PC4" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+
+```
+
+#### Post PCA tests
+
+```{r}
+
+lat.df$Basin <- as.factor(lat.df$Basin)
+
+
+### ZONE
+
+(pc1V <- leveneTest(Dim.1~Zone, data=lat.df))
+
+(pc2V <- leveneTest(Dim.2~Zone, data=lat.df))
+
+(pc3V <- leveneTest(Dim.3~Zone, data=lat.df))
+
+(pc4V <- leveneTest(Dim.4~Zone, data=lat.df))
+
+
+lat.df %>%
+  group_by(Zone) %>%
+  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
+            sd_dim2=sd(Dim.2, na.rm = TRUE),
+            sd_dim3=sd(Dim.3, na.rm = TRUE),
+            sd_dim4=sd(Dim.4, na.rm = TRUE))
+
+lat.df %>%
+  group_by(Zone) %>%
+  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
+            var_dim2=var(Dim.2, na.rm = TRUE),
+            var_dim3=var(Dim.3, na.rm = TRUE),
+            var_dim4=var(Dim.4, na.rm = TRUE))
+
+### BASIN
+
+(pc1V <- leveneTest(Dim.1~Basin, data=lat.df))
+
+(pc2V <- leveneTest(Dim.2~Basin, data=lat.df))
+
+(pc3V <- leveneTest(Dim.3~Basin, data=lat.df))
+
+(pc4V <- leveneTest(Dim.4~Basin, data=lat.df))
+
+
+lat.df %>%
+  group_by(Basin) %>%
+  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
+            sd_dim2=sd(Dim.2, na.rm = TRUE),
+            sd_dim3=sd(Dim.3, na.rm = TRUE),
+            sd_dim4=sd(Dim.4, na.rm = TRUE))
+
+lat.df %>%
+  group_by(Basin) %>%
+  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
+            var_dim2=var(Dim.2, na.rm = TRUE),
+            var_dim3=var(Dim.3, na.rm = TRUE),
+            var_dim4=var(Dim.4, na.rm = TRUE))
+
+
+
+
+```
+
+
+#### Plots
+
+```{r}
+
+plot1.lat<- autoplot(PCA.lat, data = lat.df, colour="Zone", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+plot1.lat
+
+
+plot2.lat<- autoplot(PCA.lat, x=2, y=3, data = lat.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot2.lat
+
+
+plot3.lat<- autoplot(PCA.lat, x=3, y=4, data = lat.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot3.lat
+
+
+plot4.lat<- autoplot(PCA.lat, data = lat.df, colour="Basin", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+plot4.lat
+
+
+plot5.lat<- autoplot(PCA.lat, x=2, y=3, data = lat.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot5.lat
+
+
+plot6.lat<- autoplot(PCA.lat, x=3, y=4, data = lat.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot6.lat
+
+
+```
+
+
+### Amazon
+
+#### Loadings
+
+```{r}
+form.df <- form.p[, 1:38]
+
+PCA.form <- prcomp(form.df[, 7:38], center = TRUE, scale. = FALSE) #false uses covariance matrix like in MorphoJ; scale=true only useful if variables are measured on different scales
+
+summary(PCA.form)
+
+ev.form <- PCA.form$sdev^2 
+evplot(ev.form) #visually confirms that the first 4 PCs are best to use, not sure if this is a great test though
+
+
+(eig.val.form <- get_eigenvalue(PCA.form))
+
+ind.form <- get_pca_ind(PCA.form)
+head(ind.form$coord[,1:4])
+
+
+form.df <- cbind(form.df, ind.form$coord[,1:4])
+
+(loadings <- PCA.form$rotation[, 1:5])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.4 <- loadings[order(loadings[, 4]), 4]
+myTitle <- "Loadings Plot for PC4" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+
+
+
+```
+
+#### Post PCA tests
+
+```{r}
+
+form.df$Basin <- as.factor(form.df$Basin)
+
+### ZONE
+
+(pc1V <- leveneTest(Dim.1~Zone, data=form.df))
+
+(pc2V <- leveneTest(Dim.2~Zone, data=form.df))
+
+(pc3V <- leveneTest(Dim.3~Zone, data=form.df))
+
+(pc4V <- leveneTest(Dim.4~Zone, data=form.df))
+
+
+form.df %>%
+  group_by(Zone) %>%
+  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
+            sd_dim2=sd(Dim.2, na.rm = TRUE),
+            sd_dim3=sd(Dim.3, na.rm = TRUE),
+            sd_dim4=sd(Dim.4, na.rm = TRUE))
+
+form.df %>%
+  group_by(Zone) %>%
+  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
+            var_dim2=var(Dim.2, na.rm = TRUE),
+            var_dim3=var(Dim.3, na.rm = TRUE),
+            var_dim4=var(Dim.4, na.rm = TRUE))
+
+### BASIN
+
+(pc1V <- leveneTest(Dim.1~Basin, data=form.df))
+
+(pc2V <- leveneTest(Dim.2~Basin, data=form.df))
+
+(pc3V <- leveneTest(Dim.3~Basin, data=form.df))
+
+(pc4V <- leveneTest(Dim.4~Basin, data=form.df))
+
+
+form.df %>%
+  group_by(Basin) %>%
+  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
+            sd_dim2=sd(Dim.2, na.rm = TRUE),
+            sd_dim3=sd(Dim.3, na.rm = TRUE),
+            sd_dim4=sd(Dim.4, na.rm = TRUE))
+
+form.df %>%
+  group_by(Basin) %>%
+  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
+            var_dim2=var(Dim.2, na.rm = TRUE),
+            var_dim3=var(Dim.3, na.rm = TRUE),
+            var_dim4=var(Dim.4, na.rm = TRUE))
+
+
+```
+
+
+#### Plots
+
+
+```{r}
+
+plot1.form<- autoplot(PCA.form, data = form.df, colour="Zone", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+plot1.form
+
+
+plot2.form<- autoplot(PCA.form, x=2, y=3, data = form.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot2.form
+
+
+plot3.form<- autoplot(PCA.form, x=3, y=4, data = form.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot3.form
+
+
+plot4.form<- autoplot(PCA.form, data = form.df, colour="Basin", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+plot4.form
+
+
+plot5.form<- autoplot(PCA.form, x=2, y=3, data = form.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot5.form
+
+
+plot6.form<- autoplot(PCA.form, x=3, y=4, data = form.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot6.form
+
+
+```
+
 
 ## Overall results
 
@@ -186,6 +473,14 @@ As expected, we see that Amazons are intermediate to both parents in overall sha
 When we perform our Levene's test, we see that there is no significant difference in variation among the species for PC1, but there is a signifiant difference for PC2 (p=0.0006) and PC3 (p=0.0135). Landmarks 3, 9, and 10 all load heavily on PC2, which correspond to dorsal position and body depth. We see that sailfins vary more than amazons and atlantics for PC2. For PC3, it is only landmark 2 that loads heavily (all others pretty similar), which could correspond to dorsal position and head depth. Here we see that amazons are more variable than the two parental species. For PC4, we see landmarks 3 and 11 loading heavily, which again can correspond to dorsal position and head depth, with Amazons again more variable than parental species. 
 
 It is good to remember though, that while PC 2-4 shows diffrences in variation, and interesting results regarding amazons varying more than parentals, these PCs explain much less variation than PC1, which shows no significant difference. 
+
+***
+
+When looking at geographic differences in variation, we see that variation among zones is significant for PC1 (p=0.003) and PC4 (0.019) in sailfin, suggestive for PC3 (p=0.054) and not significant for PC2 (0.558). For PC1 we see that zone 2 is most variable, whereas for PC4 we see zone 3 as most variable. Zone 3 is also slightly more variable in PC3. This result is NOT held up when we look at basin. There is only a suggestive difference in variation of PC1 when using basin as our geographic factor (p=0.059), but no significant differences for PC2-4. 
+
+For amazons, we see that PC1 (p=0.043) and PC2 (p=0.0006) show significant differences in variation among zones, with a suggestive difference for PC3 (p=0.051) and no significant difference for PC4 (0.243). PC1 shows zone 2 as most variable, whereas PC2 shows zone 1 as most variable. Zone 1 is also slightly more variable for PC3. These results are only partially held up when using basin as our geographic factor. PC1 shows a significant difference (p=0.038) and PC4 shows a suggestive difference (p=0.050), but PC2 and PC3 show no significant difference in variation. For PC1, basin 7040048420 is most variable, whereas basin 7040049280 is most variable for PC4. 
+
+While basin produced less differences in variation within each species, it did create better grouping than zones. This just hits on the fact that basin is probably a better geographic classifier than zone (since our zones were wildly different in lat/area). 
 
 
 
