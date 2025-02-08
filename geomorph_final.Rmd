@@ -17,7 +17,187 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Data 
+# VARIATION ANALYSIS
+
+Analyses here will be for comparing variation among the species. 
+
+## Data
+
+We tried importing TPS files into R to perform all analyses, but could not get it to work. SO we instead imported into MorphoJ, performed a procrustes analysis and a multivariate regression on shape (procrustes coordinates) and size (centroid size) to correct for overall body size differences between the species. We import the residuals of this regression below to perform our analyses.
+
+```{r}
+library(tidyverse)
+library(curl)
+
+
+test.df <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/refs/heads/master/MV%20regression%2C%20results.txt")
+
+test.df <- read.table(test.df, header = TRUE, sep = "\t")
+
+```
+
+## PCA
+
+We'll create a PCA to visualize overall shape differences. We'll then perform Levene's tests on the PC scores to assess differences in variation among the species. 
+
+### Loadings 
+
+```{r}
+
+PCA.test <- prcomp(test.df[, 7:38], center = TRUE, scale. = FALSE) #false uses covariance matrix like in MorphoJ; scale=true only useful if variables are measured on different scales
+
+summary(PCA.test)
+
+
+evplot <- function(ev)
+{
+    # Broken stick model (MacArthur 1957)
+    n <- length(ev)
+    bsm <- data.frame(j=seq(1:n), p=0)
+    bsm$p[1] <- 1/n
+    for (i in 2:n) bsm$p[i] <- bsm$p[i-1] + (1/(n + 1 - i))
+    bsm$p <- 100*bsm$p/n
+    # Plot eigenvalues and % of variation for each axis
+    op <- par(mfrow=c(2,1))
+    barplot(ev, main="Eigenvalues", col="bisque", las=2)
+    abline(h=mean(ev), col="red")
+    legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
+    barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
+        main="% variation", col=c("bisque",2), las=2)
+    legend("topright", c("% eigenvalue", "Broken stick model"), 
+        pch=15, col=c("bisque",2), bty="n")
+    par(op)
+}
+
+
+ev <- PCA.test$sdev^2 
+evplot(ev) #visually confirms that the first 4 PCs are best to use, not sure if this is a great test though
+
+library(factoextra)
+library(car)
+
+(eig.val.test <- get_eigenvalue(PCA.test))
+
+ind.test <- get_pca_ind(PCA.test)
+head(ind.test$coord[,1:4])
+
+
+test.df <- cbind(test.df, ind.test$coord[,1:4])
+
+(loadings <- PCA.test$rotation[, 1:5])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.4 <- loadings[order(loadings[, 4]), 4]
+myTitle <- "Loadings Plot for PC4" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+```
+
+### Post PCA tests
+
+```{r}
+lat.p <- test.df[test.df$Species == "p.latipinna",]
+
+
+form.p <- test.df[test.df$Species == "p.formosa",]
+
+(pc1 <- t.test(lat.p$Dim.1, form.p$Dim.1, alternative = "two.sided"))
+
+(pc2 <- t.test(lat.p$Dim.2, form.p$Dim.2, alternative = "two.sided"))
+
+(pc3 <- t.test(lat.p$Dim.3, form.p$Dim.3, alternative = "two.sided"))
+
+(pc4 <- t.test(lat.p$Dim.3, form.p$Dim.4, alternative = "two.sided"))
+
+
+(pc1V <- leveneTest(Dim.1~Species, data=test.df))
+
+(pc2V <- leveneTest(Dim.2~Species, data=test.df))
+
+(pc3V <- leveneTest(Dim.3~Species, data=test.df))
+
+(pc4V <- leveneTest(Dim.4~Species, data=test.df))
+
+
+library(dplyr)
+
+test.df %>%
+  group_by(Species) %>%
+  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
+            sd_dim2=sd(Dim.2, na.rm = TRUE),
+            sd_dim3=sd(Dim.3, na.rm = TRUE),
+            sd_dim4=sd(Dim.4, na.rm = TRUE))
+
+test.df %>%
+  group_by(Species) %>%
+  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
+            var_dim2=var(Dim.2, na.rm = TRUE),
+            var_dim3=var(Dim.3, na.rm = TRUE),
+            var_dim4=var(Dim.4, na.rm = TRUE))
+
+
+
+```
+
+### Plots
+
+```{r}
+library(AMR) 
+library(ggplot2)
+library(ggfortify)
+library(ggbiplot)
+
+
+plot1<- autoplot(PCA.test, data = test.df, colour="Species", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+plot1
+
+
+plot2<- autoplot(PCA.test, x=2, y=3, data = test.df, colour='Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot2
+
+
+plot3<- autoplot(PCA.test, x=3, y=4, data = test.df, colour='Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot3
+
+
+
+```
+
+
+## Overall results
+
+As expected, we see that Amazons are intermediate to both parents in overall shape. This is most evident in PC1, but in PC 2-4, there is a lot of overlap between the species. This is likely due to PC 2-4 explaining much less variation, so there is less that distinguishes the groups. 
+
+When we perform our Levene's test, we see that there is no significant difference in variation among the species for PC1, but there is a signifiant difference for PC2 (p=0.0006) and PC3 (p=0.0135). Landmarks 3, 9, and 10 all load heavily on PC2, which correspond to dorsal position and body depth. We see that sailfins vary more than amazons and atlantics for PC2. For PC3, it is only landmark 2 that loads heavily (all others pretty similar), which could correspond to dorsal position and head depth. Here we see that amazons are more variable than the two parental species. For PC4, we see landmarks 3 and 11 loading heavily, which again can correspond to dorsal position and head depth, with Amazons again more variable than parental species. 
+
+It is good to remember though, that while PC 2-4 shows diffrences in variation, and interesting results regarding amazons varying more than parentals, these PCs explain much less variation than PC1, which shows no significant difference. 
+
+
+
+***
+***
+***
+
+# COMPARISON ANALYSIS
+
+Analyses here will strictly be for comparing digital vs hand measurements. 
+
+## Data 
 
 To get digital distances:
 The TPS coordinates were in a long format, and I thought it would be easiest to locate the values needed to insert into the euclidean distance formula with a wide format. So, I first cleaned up the original TPS file--I removed all curve data, and unnecessary rows (ie. LM=16, image=) to be left with a column of IDs, a column of landmark labels, and two columns for the coordinates.
@@ -47,8 +227,9 @@ SnL.dig <- sqrt(((x$X.COR_LM15 -x$X.COR_LM1)^2 + (y$Y.COR_LM15-y$Y.COR_LM1)^2))
 OL.dig <- sqrt(((x$X.COR_LM16 -x$X.COR_LM15)^2 + (y$Y.COR_LM16-y$Y.COR_LM15)^2))
 
 
-
-Performed most analyses in MorphoJ. Analyses here will strictly be for comparing digital vs hand measurements. 
+***
+***
+***
 
 ```{r}
 library(tidyverse)
@@ -63,7 +244,7 @@ raw<- raw[raw$ID !="AD20-082", ]
 
 ```
 
-## Normality check
+### Normality check
 
 I will use Shapiro-wilk, histograms, and QQ plots to determine what traits are normal.
 
@@ -80,7 +261,7 @@ manual <- raw %>%
 
 ```
 
-### Digital 
+#### Digital 
 
 All but OL fail SW test with a slight skew/deviation to the right.
 
@@ -185,7 +366,7 @@ qqline(digital$OL)
 ```
 
 
-### Manual
+#### Manual
 
 All fail the SW test, with a slight skew/deviation to the right. 
 
@@ -275,7 +456,7 @@ qqline(manual$OL)
 
 ```
 
-### Log transform & recheck
+#### Log transform & recheck
 
 While some values are still significant, log transformations vastly improve normality (eg p=2e-16 to p=0.002). The histograms and QQ plots look pretty damn normal, so I will stick with log transformed values. 
 
@@ -291,7 +472,7 @@ man_trans[, c(3:12)] <- log(man_trans[, c(3:12)])
 
 ```
 
-#### Digital
+##### Digital
 
 OL was the only one that was normal in raw check, but since it was not normal in manual, and I want to compare dig to man, I will transform the OL here too (don't want to compare raw to transformed measurements).
 
@@ -395,7 +576,7 @@ qqline(dig_trans$OL)
 ```
 
 
-#### Manual
+##### Manual
 
 ```{r}
 ##### Shapiro-Wilk test #####
@@ -480,7 +661,7 @@ qqline(man_trans$OL)
 
 ```
 
-## Formatting 
+### Formatting 
 
 I will perform 3 different analyses: Bland-Altman, MANOVA and PCA. These vary in whether they need long or wide formats. Also, the raw data contains columns that are not needed for these analyses (eg location or photo date) so I will remove those to leave just the species, tag ID, and measurements.
 
@@ -561,11 +742,11 @@ df_wide2 <- df_long3 %>%
 
 
 
-# Bland-Altman Plot
+## Bland-Altman Plot
 
 Used to assess agreement between two measurement methods.
 
-## BD/HD plots
+### BD/HD plots
 
 We're first interested in how BD1, HD1, BD2, and HD2 compare, so let's isolate those.
 
@@ -668,9 +849,9 @@ We see that BD1 has less scatter, less outside LOA and a smaller bias compared t
 
 I will therefore create a final dataset with BD1 and HD2 for all subsequent analyses. 
 
-## BA plots
+### BA plots
 
-### Final data frame
+#### Final data frame
 
 ```{r, echo=FALSE}
 ###create final dataset
@@ -702,7 +883,7 @@ df_wide_fin <- df_long_fin %>%
 
 ```
 
-### All traits
+#### All traits
 
 We see major clusters on the BA plot for all the data. When colored by species, we see that this does not differentiate the clusters, so it is not a species difference we're seeing. When colored by characteristic, we see this nicely corresponds to the clustering. This is due to differences in range of the measurements we used (eg standard length can range from 14-40mm but snout length ranges from 1-3mm). 
 
@@ -762,7 +943,7 @@ ba_full_CR_fin
 ```
 
 
-### By trait
+#### By trait
 
 ```{r}
 ba_by_char_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
@@ -782,7 +963,7 @@ ba_by_char_fin
 ```
 
 
-## BA Stats
+### BA Stats
 
 We can extract the important information (bias, LOAs, confidence intervals, and p-value after a one-sided t-test to see if bias is different from 0) using the blandr package. Contacted the author, and there may be a way to loop this, but for now will run on individual stats. 
 
@@ -844,11 +1025,11 @@ df_OL <- df_wide_fin %>%
 While p-values for just about all of the characteristics are significant, we see that the bias itself is incredibly close to zero. The significant t-test may be a result of very little deviation, so any deviation is flagged as significant, but is not methodilogically relevent (ie there is not actual difference in methods).
 
 
-# MANOVA
+## MANOVA
 
 We will run a repeated measures MANOVA on our data to corroborate our Bland-Altman results. We will follow up our MANOVA with an effect size calculation to see if any statistical significance is methodilogically relevent. 
 
-## Data frame
+### Data frame
 
 First, need a data frame with two rows per individual (one for digital and one for manual), plust 10 columns corresponding to each characteristic. Will create new long/wide formats since the ones above don't have separate columns for the characteristics. 
 
@@ -875,7 +1056,7 @@ df_wide_ex <- df_long_ex %>%
 
 ```
 
-## Results
+### Results
 
 Similar to our BA stats, we see a significant but not practical difference between methods. The MANOVA is statistically significant (p<0.001) but have a small effect size (0.0267). This means that method only explains 2.67% of the variance in our data. 
 
@@ -900,12 +1081,12 @@ cat("Partial Eta-Squared (Method):", eta_squared_method, "\n")
 ```
 
 
-# PCA
+## PCA
 
 In this analysis, I will compare the principle components after centering and scaling the data. A PCA analysis will help us determine which methodology influence the variation in our data the most without worrying about differences in scales/measurements.
 
 
-## Data sets
+### Data sets
 
 In order to compare dimensions 1-4 between manual and digital measurements, I need to actually run a PCA on digital only and manual only data sets, then perform a paired t-test.
 
@@ -931,11 +1112,11 @@ man_p_long <- z.scores %>%
 
 ```
 
-## PCAs
+### PCAs
 
 Now let's run the individual PCAs
 
-### Digital PCA
+#### Digital PCA
 
 ```{r}
 library(factoextra)
@@ -978,7 +1159,7 @@ dig.p <- cbind(dig_p_long, dig.ind$coord[,1:4])
 ```
 
 
-### Manual PCA
+#### Manual PCA
 
 ```{r}
 PCA_man <- prcomp(man_p_long[, 3:12])
@@ -1022,11 +1203,11 @@ man.p <- cbind(man_p_long, man.ind$coord[,1:4])
 ```
 
 
-## Comparisons
+### Comparisons
 
 Now let's do the comparisons
 
-### T-tests
+#### T-tests
 
 No significant differences.
 
@@ -1040,7 +1221,7 @@ No significant differences.
 
 ```
 
-### Levene's tests
+#### Levene's tests
 
 No significant differences. 
 
@@ -1063,7 +1244,7 @@ combined_p <- data.frame(
 
 ```
 
-## Plots
+### Plots
 
 Need to combine digital and manual PCs to get them on one plot.
 
@@ -1087,7 +1268,7 @@ PCA.comb <- rbind(PCA.scores.dig, PCA.scores.man)
 ```
 
 
-### PCA 1v2
+#### PCA 1v2
 
 
 ```{r}
@@ -1109,7 +1290,7 @@ ggplot(data = PCA.comb, aes(x = PC1, y = PC2, color = method)) +
 ```
 
 
-### PCA 2v3
+#### PCA 2v3
 
 
 ```{r}
@@ -1131,7 +1312,7 @@ ggplot(data = PCA.comb, aes(x = PC2, y = PC3, color = method)) +
 
 
 
-# Overall Results
+## Overall Results
 
 Our main goal with this R analysis was to compare the precision of manual and digital measurements. 
 

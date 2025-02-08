@@ -17,6 +17,121 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# QUICK TEST
+
+want to test if i can import the procrustes info from morphoJ to do the PCA here instead.
+
+got the procrustes info to import, but couldn't get the multivariate to work here. So, I'll just import the regression residuals and work with that
+
+
+```{r}
+library(tidyverse)
+library(curl)
+
+
+test.df <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/refs/heads/master/MV%20regression%2C%20results.txt")
+
+test.df <- read.table(test.df, header = TRUE, sep = "\t")
+
+##### PCA
+
+PCA.test <- prcomp(test.df[, 7:38], center = TRUE, scale. = FALSE) #false uses covariance matrix like in MorphoJ; scale=true only useful if variables are measured on different scales
+
+summary(PCA.test)
+
+
+library(factoextra)
+library(car)
+
+(eig.val.test <- get_eigenvalue(PCA.test))
+
+ind.test <- get_pca_ind(PCA.test)
+head(ind.test$coord[,1:4])
+
+
+test.df <- cbind(test.df, ind.test$coord[,1:4])
+
+(loadings <- PCA.test$rotation[, 1:5])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+
+
+##### POST PCA TESTS
+
+lat.p <- test.df[test.df$Species == "p.latipinna",]
+
+
+form.p <- test.df[test.df$Species == "p.formosa",]
+
+(pc1 <- t.test(lat.p$Dim.1, form.p$Dim.1, alternative = "two.sided"))
+
+(pc2 <- t.test(lat.p$Dim.2, form.p$Dim.2, alternative = "two.sided"))
+
+(pc3 <- t.test(lat.p$Dim.3, form.p$Dim.3, alternative = "two.sided"))
+
+
+(pc1V <- leveneTest(Dim.1~Species, data=test.df))
+
+(pc2V <- leveneTest(Dim.2~Species, data=test.df))
+
+(pc3V <- leveneTest(Dim.3~Species, data=test.df))
+
+library(dplyr)
+
+test.df %>%
+  group_by(Species) %>%
+  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
+            sd_dim2=sd(Dim.2, na.rm = TRUE),
+            sd_dim3=sd(Dim.3, na.rm = TRUE))
+
+test.df %>%
+  group_by(Species) %>%
+  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
+            var_dim2=var(Dim.2, na.rm = TRUE),
+            var_dim3=var(Dim.3, na.rm = TRUE))
+
+
+##### PLOTS
+
+library(AMR) 
+library(ggplot2)
+library(ggfortify)
+library(ggbiplot)
+
+wes.yel <- "#E1AF00"
+wes.blu <- "#78B7C5"
+
+plot1<- autoplot(PCA.test, data = test.df, colour="Species", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+
+plot1
+
+
+plot2<- autoplot(PCA.test, x=2, y=3, data = test.df, colour='Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+plot2
+
+
+```
+
+
+
+
+
+
+
+
 # Experiment overview
 
 *Purpose:* Briefly outline the purpose of your experiment.
@@ -50,7 +165,7 @@ finished all of the calculations and added the values into a dataframe with the 
 
 Once in excel, I realized that the values I had were in pixels (I think?) rather than mm, so I needed to find a way to convert in order to compare to the hand measurements. I found out that the scale factor (included in the original tps file) is mm/pixel, so I added this to the excel, and multiplied it to each value to get the mm. However, it was a bit off (eg 4.5 rather than 45) so I multiplied it by 10 to get to a number that resembled the hand measurements. Not 100% sure if this was correct, or why I would need to multiply by 10, but going with it for now. 
 
-
+```{r}
 library(tidyverse)
 library(curl)
 
@@ -67,7 +182,7 @@ y <- raw1[, c(1, 18:33)]
 
 HL.dig <- sqrt(((x$X.COR_LM2 -x$X.COR_LM1)^2 + (y$Y.COR_LM2-y$Y.COR_LM1)^2))
 SL.dig <- sqrt(((x$X.COR_LM6 -x$X.COR_LM1)^2 + (y$Y.COR_LM6-y$Y.COR_LM1)^2))
-PreDL.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM2)^2 + (y$Y.COR_LM3-y$Y.COR_LM2)^2))
+PreDL.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM1)^2 + (y$Y.COR_LM3-y$Y.COR_LM1)^2))
 DbL.dig <- sqrt(((x$X.COR_LM4 -x$X.COR_LM3)^2 + (y$Y.COR_LM4-y$Y.COR_LM3)^2))
 CPD.dig <- sqrt(((x$X.COR_LM7 -x$X.COR_LM5)^2 + (y$Y.COR_LM7-y$Y.COR_LM5)^2))
 HD1.dig <- sqrt(((x$X.COR_LM11 -x$X.COR_LM2)^2 + (y$Y.COR_LM11-y$Y.COR_LM2)^2))
@@ -82,9 +197,9 @@ raw2 <- cbind(raw1[,1], SL.dig, BD1.dig, BD2.dig, CPD.dig, CPL.dig, PreDL.dig, D
 
 library(writexl)
 
-write_xlsx(raw2, 'C:/Users/allis/OneDrive/Desktop/comparison_data.xlsx')
+write_xlsx(raw2, 'C:/Users/allis/OneDrive/Desktop/comparison_data2.xlsx')
 
-
+```
 
 Performed most analyses in MorphoJ. Analyses here will strictly be for comparing digital vs hand measurements. 
 
@@ -960,7 +1075,180 @@ grid.arrange(ba_BD1, ba_BD2, ba_HD1, ba_HD2)
 
 ```
 
-We see that using BD2 and HD2 increase scatter and increase points beyond the LOAs. This suggests that BD2 and HD2 are not as comprable as BD1 and HD1. 
+We see that BD1 has less scatter, less outside LOA and a smaller bias compared to BD2 (0.12 vs 0.36). In addition, BD2's LOA don't include 0, so BD1 is more appropriate to use. In contrast, HD1, while it has less scatter with fewer points outside the LOA, it has a bias further away from 0 compared to HD2 (which has slightly more scatter and more points outside LOA), so HD2 is more appropriate to use (0.06 vs -0.008). 
+
+I will therefore create a final dataset with BD1 and HD2, and re-run the ANOVAs and overall Bland-Altman plots. 
+
+### Re-run
+
+```{r, echo=FALSE}
+###create final dataset
+df_long_fin <- df_long[-grep("BD2", df_long$characteristic),] #removes BD2
+
+df_long_fin <- df_long_fin %>%
+    filter(
+    # Keep everything for Hand measurements
+    method == "man" |
+    # Keep all digital measurements except HD1
+    !(method == "dig" & characteristic %in% c("HD1"))
+  )
+
+df_long_fin<- df_long_fin %>%
+  mutate(
+    characteristic = case_when(
+      characteristic %in% c("BD1", "BD2") ~ "BD",
+      characteristic %in% c("HD1", "HD2") ~ "HD",
+      TRUE ~ characteristic  # Leave other characteristics unchanged
+    )
+  )
+
+df_wide_fin <- df_long_fin %>%
+  pivot_wider(
+    names_from = method,
+    values_from = value
+  )
+
+
+```
+
+#### Rep-measures MANOVA
+
+Shows a significant difference between methods (p<0.0001) BUT when we calculate effect sizes, the effect size is SUPER small (0.00132). This suggests that while there is a detectable difference between the means of the two methods, this differences is negligible. 
+
+```{r}
+
+library(car)
+raw3 <- raw2 %>%
+  rename(HD.dig = HD2.dig, HD.man = HD1.man)
+
+char <- cbind(raw3$SL.dig, raw3$BD1.dig, raw3$CPD.dig, raw3$CPL.dig, raw3$PreDL.dig, raw3$DbL.dig, raw3$HL.dig, raw3$HD.dig, raw3$SnL.dig, raw3$OL.dig, raw3$SL.man, raw3$BD1.man, raw3$CPD.man, raw3$CPL.man, raw3$PreDL.man, raw3$DbL.man, raw3$HL.man, raw3$HD.man, raw3$SnL.man, raw3$OL.man)
+
+method <- factor(c(rep("dig", 10), rep("man", 10)))
+characteristics <- factor(c(
+  "SL", "BD1", "CPD", "CPL", "PreDL", "DbL", "HL", "HD", "SnL", "OL"
+))
+
+manova_model <- Anova(
+  lm(char ~ 1),  # No predictors, as we're only modeling within-subject effects
+  idata = data.frame(method = method, characteristics = characteristics),
+  idesign = ~ method * characteristics,
+  type = "III"
+)
+
+# View results
+summary(manova_model, multivariate = TRUE)
+
+pillai_method <- 0.4467077
+num_df_method <- 1
+den_df_method <- 338
+
+# Calculate partial eta-squared for Method
+eta_squared_method <- pillai_method / (pillai_method + (den_df_method / num_df_method))
+
+# Print the result
+cat("Partial Eta-Squared (Method):", eta_squared_method, "\n")
+
+
+
+
+```
+
+#### Repeated measures ANOVA
+
+Shows a significant difference between methods (p<0.0001) with a large effect size (0.447) BUT this is on all the data. Not sure if this makes sense to do. Would be better to run repeated measures ANOVA on one trait at a time...
+
+```{r}
+
+anova_fin <- aov(value~method + Error(ID/method), data=df_long_fin)
+summary(anova_fin)
+
+SS_method <- 2.885  # Sum of squares for method
+SS_error <- 3.574   # Sum of squares for residuals (error) from ID:method
+
+# Calculate Partial Eta-Squared for Method
+eta_squared_method <- SS_method / (SS_method + SS_error)
+
+# Print the result
+cat("Partial Eta-Squared (Method):", eta_squared_method, "\n")
+
+```
+
+
+#### Bland-Alt plots
+
+
+```{r}
+
+df_ba_fin <- df_wide_fin %>%
+  mutate(
+    average = (dig + man) / 2,
+    difference = dig - man
+  )
+
+ba_full_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+ba_full_fin
+
+
+##### Species
+
+ba_full_SPP_fin <- ggplot(df_ba_fin, aes(x = average, y = difference, color=SPP)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+ba_full_SPP_fin
+
+
+##### Characteristics
+
+ba_full_CR_fin <- ggplot(df_ba_fin, aes(x = average, y = difference, color=characteristic)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  theme_minimal()
+
+ba_full_CR_fin
+
+
+##### individual characteristics
+
+ba_by_char_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
+             color = "blue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman Plots for All Characteristics",
+       x = "Average of Digital and Hand Measurements",
+       y = "Difference (Digital - Hand)") +
+  facet_wrap(~ characteristic, scales = "free") +
+  theme_minimal()
+
+ba_by_char_fin
+
+
+```
 
 
 
@@ -1073,6 +1361,13 @@ df_OL <- df_wide %>%
 
 ```
 
+### Pre-dorsal
+
+Closer look at the pre-dorsal measurement, since the values lie around the lower LOA, suggesting a difference in manual and digital measurements. 
+
+#### BA plots
+
+We see that the bias is close to zero () and the LOAs include zero and aren't a wide range (), BUT all the points are at or below the lower LOA. This suggests that while the two methods are close on average, there is a systematic difference where manual measurements consistently yielded larger values than the digital ones. 
 
 ```{r}
 
@@ -1130,6 +1425,27 @@ blandr.statistics(df_PreDL$dig, df_PreDL$man)
 
 ```
 
+#### Rep-measures ANOVA
+
+Significant (p<0.001) with a large effect size (0.943) meaning there is a significant difference in Pre-dorsal measurements between digital and manual. Based on the BA plot, it appears the manual measurements were higher than the digital measurements. 
+
+```{r}
+df_predl2 <- df_long %>%
+  filter(characteristic == "PreDL")
+
+anova_predl <- aov(value~method + Error(ID/method), data=df_predl2)
+summary(anova_predl)
+
+SS_method <- 36.23  # Sum of squares for method
+SS_error <- 2.17   # Sum of squares for residuals (error) from ID:method
+
+# Calculate Partial Eta-Squared for Method
+eta_squared_method <- SS_method / (SS_method + SS_error)
+
+# Print the result
+cat("Partial Eta-Squared (Method):", eta_squared_method, "\n")
+
+```
 
 # PCA
 
