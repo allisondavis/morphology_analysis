@@ -1759,6 +1759,280 @@ ggplot(data = PCA.comb2, aes(x = PC2, y = PC3, color = method)) +
 
 
 
+EXTRAS
+
+Didn't actually need to run separate PCAs on the different methods, not sure why I thought I had to. Will keep that info below for prosterity. 
+
+### Data sets
+
+In order to compare dimensions 1-4 between manual and digital measurements, I need to actually run a PCA on digital only and manual only data sets, then perform a paired t-test.
+
+Let's create the data sets
+
+```{r}
+
+library(stringr)
+
+z.scores <- raw3
+
+z.scores[, c(3:22)] <- scale(z.scores[, 3:22], center = TRUE, scale = TRUE)
+
+z.long <- z.scores %>%
+  pivot_longer(cols = -c(ID, SPP), 
+               names_to = "Measurement", 
+               values_to = "Value") %>%
+  mutate(Method = ifelse(str_detect(Measurement, ".dig"), "Digital", "Manual"),
+         Character = str_remove_all(Measurement, ".dig|.man")) %>%
+  select(ID, Method, Character, Value)
+
+z.wide <- z.long %>%
+  pivot_wider(names_from = Character, values_from = Value)
+
+PCA_z <- prcomp(z.wide[, 3:12])
+
+summary(PCA_z)
+
+(loadings_z <- PCA_z$rotation[, 1:5])
+
+(z.eig.val <- get_eigenvalue(PCA_z))
+
+z.ind <- get_pca_ind(PCA_z)
+
+z.wide <- cbind(z.wide, z.ind$coord[,1:3])
+
+autoplot(PCA_z, data = z.wide, colour="Method", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5"))+ ggtitle("PCA Plot of Methods") + theme_classic() 
+
+(pc1V <- leveneTest(Dim.1~Method, data=z.wide))
+(pc1V <- leveneTest(Dim.2~Method, data=z.wide))
+(pc1V <- leveneTest(Dim.3~Method, data=z.wide))
+
+zw.dig <- z.wide %>%
+  filter(Method == "Digital")
+
+zw.man <- z.wide %>%
+  filter(Method == "Manual")
+
+
+(pc1 <- t.test(zw.dig$Dim.1, zw.man$Dim.1, paired= TRUE, alternative = "two.sided"))
+
+(pc2 <- t.test(zw.dig$Dim.2, zw.man$Dim.2, paired= TRUE, alternative = "two.sided"))
+
+(pc3 <- t.test(zw.dig$Dim.3, zw.man$Dim.3, paired= TRUE, alternative = "two.sided"))
+
+
+dig_p_long <- z.scores %>%
+  select(ID, SPP, ends_with(".dig"))
+
+
+man_p_long <- z.scores %>%
+  select(ID, SPP, ends_with(".man"))
+
+
+
+```
+
+### PCAs
+
+Now let's run the individual PCAs
+
+#### Digital PCA
+
+```{r}
+library(factoextra)
+
+PCA_dig <- prcomp(dig_p_long[, 3:12])
+
+summary(PCA_dig)
+
+(loadings_dig <- PCA_dig$rotation[, 1:5])
+
+dig.sorted.loadings.1 <- loadings_dig[order(loadings_dig[, 1]), 1]
+dig.myTitle <- "Loadings Plot for PC1" 
+dig.myXlab  <- "Variable Loadings"
+dotchart(dig.sorted.loadings.1, main=dig.myTitle, xlab=dig.myXlab, cex=1.5, col="red")
+
+dig.sorted.loadings.2 <- loadings_dig[order(loadings_dig[, 2]), 2]
+dig.myTitle <- "Loadings Plot for PC2" 
+dig.myXlab  <- "Variable Loadings"
+dotchart(dig.sorted.loadings.2, main=dig.myTitle, xlab=dig.myXlab, cex=1.5, col="red")
+
+dig.sorted.loadings.3 <- loadings_dig[order(loadings_dig[, 3]), 3]
+dig.myTitle <- "Loadings Plot for PC3" 
+dig.myXlab  <- "Variable Loadings"
+dotchart(dig.sorted.loadings.3, main=dig.myTitle, xlab=dig.myXlab, cex=1.5, col="red")
+
+
+dig.VM_PCA <- varimax(PCA_dig$rotation[, 1:3]) 
+
+dig.VM_PCA
+
+
+(dig.eig.val <- get_eigenvalue(PCA_dig))
+
+dig.ind <- get_pca_ind(PCA_dig)
+head(dig.ind$coord[,1:4])
+
+
+dig.p <- cbind(dig_p_long, dig.ind$coord[,1:4])
+
+```
+
+
+#### Manual PCA
+
+```{r}
+PCA_man <- prcomp(man_p_long[, 3:12])
+
+summary(PCA_man)
+
+(loadings_man <- PCA_man$rotation[, 1:5])
+
+man.sorted.loadings.1 <- loadings_man[order(loadings_man[, 1]), 1]
+man.myTitle <- "Loadings Plot for PC1" 
+man.myXlab  <- "Variable Loadings"
+dotchart(man.sorted.loadings.1, main=man.myTitle, xlab=man.myXlab, cex=1.5, col="red")
+
+man.sorted.loadings.2 <- loadings_man[order(loadings_man[, 2]), 2]
+man.myTitle <- "Loadings Plot for PC2" 
+man.myXlab  <- "Variable Loadings"
+dotchart(man.sorted.loadings.2, main=man.myTitle, xlab=man.myXlab, cex=1.5, col="red")
+
+man.sorted.loadings.3 <- loadings_man[order(loadings_man[, 3]), 3]
+man.myTitle <- "Loadings Plot for PC3" 
+man.myXlab  <- "Variable Loadings"
+dotchart(man.sorted.loadings.3, main=man.myTitle, xlab=man.myXlab, cex=1.5, col="red")
+
+
+man.VM_PCA <- varimax(PCA_man$rotation[, 1:3]) 
+
+man.VM_PCA
+
+
+library(factoextra)
+
+(man.eig.val <- get_eigenvalue(PCA_man))
+
+man.ind <- get_pca_ind(PCA_man)
+head(man.ind$coord[,1:4])
+
+
+man.p <- cbind(man_p_long, man.ind$coord[,1:4])
+
+
+```
+
+
+### Comparisons
+
+Now let's do the comparisons
+
+#### T-tests
+
+No significant differences.
+
+```{r}
+(pc1 <- t.test(dig.p$Dim.1, man.p$Dim.1, paired= TRUE, alternative = "two.sided"))
+
+(pc2 <- t.test(dig.p$Dim.2, man.p$Dim.2, paired= TRUE, alternative = "two.sided"))
+
+(pc3 <- t.test(dig.p$Dim.3, man.p$Dim.3, paired= TRUE, alternative = "two.sided"))
+
+
+```
+
+#### Levene's tests
+
+No significant differences. 
+
+```{r}
+combined_p <- data.frame(
+  ID = rep(man.p$ID, 2),  # Ensure IDs match
+  Method = rep(c("Digital", "Manual"), each = nrow(man.p)),  
+  Dim.1 = c(dig.p$Dim.1, man.p$Dim.1),
+  Dim.2 = c(dig.p$Dim.2, man.p$Dim.2), 
+  Dim.3 = c(dig.p$Dim.3, man.p$Dim.3)
+)
+
+(pc1V <- leveneTest(Dim.1~Method, data=combined_p))
+
+(pc2V <- leveneTest(Dim.2~Method, data=combined_p))
+
+(pc3V <- leveneTest(Dim.3~Method, data=combined_p))
+
+
+
+```
+
+### Plots
+
+Need to combine digital and manual PCs to get them on one plot.
+
+```{r}
+#PC scores for digital
+PCA.scores.dig <- as.data.frame(PCA_dig$x)
+PCA.scores.dig$method <- "dig"
+PCA.scores.dig$ID <- dig_p_long$ID
+PCA.scores.dig$SPP <- dig_p_long$SPP
+
+#PC scores for manual
+PCA.scores.man <- as.data.frame(PCA_man$x)
+PCA.scores.man$method <- "man"
+PCA.scores.man$ID <- man_p_long$ID
+PCA.scores.man$SPP <- man_p_long$SPP
+
+PCA.comb <- rbind(PCA.scores.dig, PCA.scores.man)
+
+
+
+```
+
+
+#### PCA 1v2
+
+
+```{r}
+
+ggplot(data = PCA.comb, aes(x = PC1, y = PC2, color = method)) +
+  geom_point(alpha = 0.8, size = 3) +
+  stat_ellipse(aes(group = method), level = 0.95) +
+  scale_color_manual(values=c("#E1AF00","#78B7C5"))+
+  scale_fill_manual(values=c("#E1AF00","#78B7C5")) +
+  labs(
+    title = "PCA of Digital and Manual Measurements",
+    x = "Principal Component 1",
+    y = "Principal Component 2",
+    color = "Method"
+  ) +
+  theme_minimal()
+
+digVman <- autoplot(PCA.comb, data = form.df, colour="Zone", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+plot1.form
+
+
+```
+
+
+#### PCA 2v3
+
+
+```{r}
+ggplot(data = PCA.comb, aes(x = PC2, y = PC3, color = method)) +
+  geom_point(alpha = 0.8, size = 3) +
+  stat_ellipse(aes(group = method), level = 0.95) +
+  scale_color_manual(values=c("#E1AF00","#78B7C5"))+
+  scale_fill_manual(values=c("#E1AF00","#78B7C5")) +
+  labs(
+    title = "PCA of Digital and Manual Measurements",
+    x = "Principal Component 2",
+    y = "Principal Component 3",
+    color = "Method"
+  ) +
+  theme_minimal()
+
+
+```
+
+
 
 
 
