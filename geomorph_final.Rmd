@@ -17,481 +17,650 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# VARIATION ANALYSIS
+# Purpose
 
-Analyses here will be for comparing variation among the species. 
+There are two main goals of this analysis. First, we want to compare morphological variation among the asexual Amazon molly and their two parental species (sailfin and Atlantic molly) across their native and introduced geographic range [PART 1]. Second, we want to compare the precision between the two data collection methods used (manual measurements versus digital geomorphometrics) [PART 2]. 
+
+# PART 1: variation analysis
+
+The following analyses will compare variation among the species. 
 
 ## Data
 
-We tried importing TPS files into R to perform all analyses, but could not get it to work. SO we instead imported into MorphoJ, performed a procrustes analysis and a multivariate regression on shape (procrustes coordinates) and size (centroid size) to correct for overall body size differences between the species. We import the residuals of this regression below to perform our analyses.
+Original TPS files were imported into MorphoJ (CITE?) where we performed a procrustes analysis and a multivariate regression on shape (procrustes coordinates) and size (centroid size) to correct for overall body size differences between the species. We then imported the residuals of this regression below to perform our analyses.
+
+All analyses were conducted using R version 4.4.2
+
+
+### Load required libraries
+
+Remove the '#' in the code below if it is the first time installing library. 
 
 ```{r}
-library(tidyverse)
+
+#install.packages("curl")             #v5.2.1
 library(curl)
 
+#install.packages("dplyr")            #v1.1.4
+library(dplyr)
+
+#install.packages("tidyverse")        #v2.0.0
+library(tidyverse)
+
+#install.packages("tidyr")            #v1.3.1
+library(tidyr)
+
+#install.packages("gt")               #v0.11.1
+library(gt)
+
+#install.packages("factoextra")       #v1.0.7
+library(factoextra)
+
+#install.packages("car")              #v3.1-2
+library(car)
+
+#install.packages("AMR")              #v2.1.1 DOUBLE CHECK I NEED ALL OF THE FOLLOWING 4
+library(AMR)
+
+#install.packages("ggplot2")          #v3.5.1
+library(ggplot2)
+
+#install.packages("ggfortify")        #v0.4.17
+library(ggfortify)
+
+#install.packages("ggbiplot")         #v0.6.2
+library(ggbiplot)
+
+#install.packages("gridExtra")        #v2.3
+library(gridExtra)
+
+#install.packages("blandr")           #v0.6.0
+library(blandr)
+
+#install.packages("stringr")          #v1.5.1
+library(stringr)
+
+```
+
+
+### Read in data
+
+```{r}
 
 test.df <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/refs/heads/master/MV%20regression%2C%20results.txt")
 
 test.df <- read.table(test.df, header = TRUE, sep = "\t")
 
+# Replace HydroBASIN basin codes with basin names
+test.df$Basin <- factor(test.df$Basin,
+                        levels = c("7040048420", "7040049270", "7040048310", "7040049990", "7040049280"),
+                        labels = c("Nueces-Rio Grande Costal", "Rio Grande", "Brazos-Colorado Costal", "Panuco", "San Fernando-Soto la Marina"))
+
+# Replace default residual column names with the corresponding landmark (x,y). This will make it easier to interpret which size-corrected shape coordinates influence our results later on.
+
+n_landmarks <- 16
+
+coord_names <- as.vector(rbind(
+  paste0("LM", 1:n_landmarks, ".X"),
+  paste0("LM", 1:n_landmarks, ".Y")
+))
+
+colnames(test.df)[7:(6 + length(coord_names))] <- coord_names
+
+
+
 ```
 
-## PCA
+
+## Analysis
+
+### PCA
 
 We'll create a PCA to visualize overall shape differences. We'll then perform Levene's tests on the PC scores to assess differences in variation among the species. 
 
-### Loadings 
+#### Loadings MAKE SURE I NEED ALL OF THIS
 
 ```{r}
 
-PCA.test <- prcomp(test.df[, 7:38], center = TRUE, scale. = FALSE) #false uses covariance matrix like in MorphoJ; scale=true only useful if variables are measured on different scales
+PCA.test <- prcomp(test.df[, 7:38], center = TRUE, scale. = FALSE) 
+#NOTE: scale=false uses covariance matrix like in MorphoJ (what we imported); scale=true only useful if variables are measured on different scales
 
 summary(PCA.test)
+(eig.val.test <- get_eigenvalue(PCA.test))
 
 
-evplot <- function(ev)
-{
-    # Broken stick model (MacArthur 1957)
-    n <- length(ev)
-    bsm <- data.frame(j=seq(1:n), p=0)
-    bsm$p[1] <- 1/n
-    for (i in 2:n) bsm$p[i] <- bsm$p[i-1] + (1/(n + 1 - i))
-    bsm$p <- 100*bsm$p/n
-    # Plot eigenvalues and % of variation for each axis
-    op <- par(mfrow=c(2,1))
-    barplot(ev, main="Eigenvalues", col="bisque", las=2)
-    abline(h=mean(ev), col="red")
-    legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
-    barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
-        main="% variation", col=c("bisque",2), las=2)
-    legend("topright", c("% eigenvalue", "Broken stick model"), 
-        pch=15, col=c("bisque",2), bty="n")
-    par(op)
+# the first 3 dimensions account for over half of the variation. We will extract the individual scores for the first 3 dimensions and attach it to the original data frame.
+
+ind.test <- get_pca_ind(PCA.test)
+head(ind.test$coord[,1:3])
+
+
+test.df <- cbind(test.df, ind.test$coord[,1:3])
+
+
+# Will investigate the influence of each landmark coordinates on the first 3 dimensions
+(loadings <- PCA.test$rotation[, 1:3])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+```
+
+#### Post PCA tests
+
+We perform a Levene's Test for each dimension to assess variation among the species. This will inform us if the spread of shape variation is different among the species. 
+
+```{r}
+
+pc1V <- leveneTest(Dim.1~Species, data=test.df) # not significant (p=0.708)
+
+pc2V <- leveneTest(Dim.2~Species, data=test.df) # significant (p<0.001)
+
+pc3V <- leveneTest(Dim.3~Species, data=test.df) # significant (p=0.01)
+
+
+# Will display results in a table
+levene_result <- tibble(
+  Dimension = c("PC1", "PC2", "PC3"),
+  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1], pc3V$`F value`[1]),
+  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1], pc3V$`Pr(>F)`[1])
+) %>%
+  mutate(Significance = case_when(
+    p_value < 0.001 ~ "***",
+    p_value < 0.01 ~ "**",
+    p_value < 0.05 ~ "*",
+    TRUE ~ "ns"
+  ))
+
+levene_result %>%
+  gt() %>%
+  cols_label(
+    Dimension = "Dimension",
+    F_value = "F-value",
+    p_value = "p-value",
+    Significance = "Significance") %>%
+  fmt_number(columns = c("F_value"), decimals = 3) %>%
+  fmt(columns = vars(p_value), fns = function(x) {  
+    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))
+  }) 
+
+
+
+# Summary of variation for each dimension in each species
+  ## Sailfin mollies have highest amount of variation in PC1 and PC2 (followed by Atlantic and then Amazon); Amazon's have highest amount of variation in PC3 (followed by Atlantic then sailfins).
+
+test.df %>%
+  group_by(Species) %>%
+  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
+            var_dim2=var(Dim.2, na.rm = TRUE),
+            var_dim3=var(Dim.3, na.rm=TRUE)) %>%
+  mutate(Species = case_when(
+    Species == "p.latipinna" ~ "Sailfin molly",
+    Species == "p.formosa" ~ "Amazon molly",
+    Species == "p.mexicana" ~ "Atlantic molly")) %>%
+  gt() %>% tab_header(title = "Variation of Dimensions 1-3") %>%
+  cols_label(Species = "Species",
+             var_dim1 = "Dimension 1",
+             var_dim2 = "Dimension 2",
+             var_dim3 = "Dimension 3") %>%
+  fmt_scientific(columns = c("var_dim1", "var_dim2", "var_dim3"), decimals = 2) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c("Species", "var_dim1", "var_dim2")))
+
+
+
+# pairwise comparisons for significant dimensions
+  ## Only significant pairwise comparison (even after Holms correction) is between Amazon's and Sailfins for both PC2 and PC3
+
+
+# will create a function to group all pairwise comparisons into one table
+
+pairwise_variance_test <- function(df, pcs = c("PC1", "PC2"), group = "Species", adjust = "holm", digits = 5) {
+  
+  if (!group %in% names(df)) stop(paste("Grouping variable", group, "not found in data frame."))
+  
+  groups <- unique(df[[group]])
+  
+  all_results <- list()
+  
+  for (pc in pcs) {
+    if (!pc %in% names(df)) {
+      warning(paste("Column", pc, "not found in data-skipping."))
+    }
+  
+    pairs <- combn(groups, 2, simplify = FALSE)
+    
+    res_list <- lapply(pairs, function(pair) {
+      sp1 <- df[[pc]][df[[group]] == pair[1]]
+      sp2 <- df[[pc]][df[[group]] == pair[2]]
+      
+      # Look for possible errors (e.g., too few values)
+      test <- tryCatch(var.test(sp1, sp2), error = function(e) NULL)
+      if (is.null(test)) return(NULL)
+      
+      data.frame(
+        PC = pc,
+        group1 = pair[1],
+        group2 = pair[2],
+        F.value = as.numeric(test$statistic),
+        p.value = test$p.value
+      )
+    }) 
+    
+    pc_results <- do.call(rbind, res_list)
+    all_results[[pc]] <- pc_results
+    
+    results <- do.call(rbind, all_results)
+  }
+  
+  # P-value adjustment and formatting
+  results$p.adjusted <- p.adjust(results$p.value, method = adjust)
+  results$p.value <- round(results$p.value, digits)
+  results$p.adjusted <- round(results$p.adjusted, digits)
+  results$F.value <- round(results$F.value, digits)
+  
+  attr(results, "adjustment_method") <- adjust
+  attr(results, "grouping_variable") <- group
+  
+  return(results)
 }
 
 
-ev <- PCA.test$sdev^2 
-evplot(ev) #visually confirms that the first 4 PCs are best to use, not sure if this is a great test though
-
-library(factoextra)
-library(car)
-
-(eig.val.test <- get_eigenvalue(PCA.test))
-
-ind.test <- get_pca_ind(PCA.test)
-head(ind.test$coord[,1:4])
+# run test
+(PW_results <- pairwise_variance_test(test.df, pcs = c("Dim.2", "Dim.3")))
 
 
-test.df <- cbind(test.df, ind.test$coord[,1:4])
 
-(loadings <- PCA.test$rotation[, 1:5])
-
-sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
-myTitle <- "Loadings Plot for PC1" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
-myTitle <- "Loadings Plot for PC2" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
-myTitle <- "Loadings Plot for PC3" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.4 <- loadings[order(loadings[, 4]), 4]
-myTitle <- "Loadings Plot for PC4" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-```
-
-### Post PCA tests
-
-```{r}
-lat.p <- test.df[test.df$Species == "p.latipinna",]
-
-
-form.p <- test.df[test.df$Species == "p.formosa",]
-
-(pc1 <- t.test(lat.p$Dim.1, form.p$Dim.1, alternative = "two.sided"))
-
-(pc2 <- t.test(lat.p$Dim.2, form.p$Dim.2, alternative = "two.sided"))
-
-(pc3 <- t.test(lat.p$Dim.3, form.p$Dim.3, alternative = "two.sided"))
-
-(pc4 <- t.test(lat.p$Dim.3, form.p$Dim.4, alternative = "two.sided"))
-
-
-(pc1V <- leveneTest(Dim.1~Species, data=test.df))
-
-(pc2V <- leveneTest(Dim.2~Species, data=test.df))
-
-(pc3V <- leveneTest(Dim.3~Species, data=test.df))
-
-(pc4V <- leveneTest(Dim.4~Species, data=test.df))
-
-
-library(dplyr)
-
-test.df %>%
-  group_by(Species) %>%
-  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
-            sd_dim2=sd(Dim.2, na.rm = TRUE),
-            sd_dim3=sd(Dim.3, na.rm = TRUE),
-            sd_dim4=sd(Dim.4, na.rm = TRUE))
-
-test.df %>%
-  group_by(Species) %>%
-  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
-            var_dim2=var(Dim.2, na.rm = TRUE),
-            var_dim3=var(Dim.3, na.rm = TRUE),
-            var_dim4=var(Dim.4, na.rm = TRUE))
-
+# Results in a prettier table 
+PW_results %>%
+  arrange(PC, group1, group2) %>%
+  group_by(PC) %>%
+  mutate(
+    group1 = dplyr::recode(group1, "p.latipinna" = "Sailfin", "p.formosa" = "Amazon", "p.mexicana" = "Atlantic"),
+    group2 = dplyr::recode(group2, "p.latipinna" = "Sailfin", "p.formosa" = "Amazon", "p.mexicana" = "Atlantic"),
+    PC = dplyr::recode(PC, "Dim.2" = "PC2", "Dim.3" = "PC3"),
+    PC = if_else(row_number() == 2, PC, ""),
+    significance = case_when(
+      p.adjusted < 0.001 ~ "***",
+      p.adjusted < 0.005 ~ "**",
+      p.adjusted < 0.01 ~ "*",
+      TRUE ~ "ns")) %>%
+  ungroup() %>%
+  gt() %>% 
+  tab_header(title = "Pairwise Comparisons of Variation") %>%
+  cols_label(PC = "PC",
+             group1 = "Species A",
+             group2 = "Species B",
+             F.value = "F Statistic",
+             p.value = "p-value",
+             p.adjusted = "Adjusted p-value",
+             significance = "Significance") %>%
+  fmt_number(columns = c(F.value, p.value, p.adjusted), decimals = 4) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c("PC", "group2", "F.value", "p.value", "p.adjusted"))) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
+    locations = cells_body(columns = c("group1"))) %>%
+  tab_style(
+  style = cell_borders(sides = c("top","bottom"), color = "white", weight = px(1)),
+  locations = cells_body(columns = "PC")) %>%
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "darkgray", weight = px(2)),
+    locations = cells_body(
+      rows = 3,  
+      columns = everything()))
+  
+  
 
 
 ```
 
-### Plots
+#### Plots
 
 ```{r}
-library(AMR) 
-library(ggplot2)
-library(ggfortify)
-library(ggbiplot)
 
 
-plot1<- autoplot(PCA.test, data = test.df, colour="Species", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+
+plot1<- autoplot(PCA.test, data = test.df, colour="Species", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= TRUE)+
+  scale_color_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) + 
+   guides(fill = guide_legend(override.aes = list(fill = NA)))+
+  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
 plot1
 
 
-plot2<- autoplot(PCA.test, x=2, y=3, data = test.df, colour='Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
+
+plot2<- autoplot(PCA.test, x=2, y=3, data = test.df, colour='Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) + 
+   guides(fill = guide_legend(override.aes = list(fill = NA)))+
+  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
 plot2
 
 
-plot3<- autoplot(PCA.test, x=3, y=4, data = test.df, colour='Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot3
-
-
 
 ```
 
-## Geographic analysis
+### Geographic analysis
 
-Here, we'll separate the amazon and sailfin (not the atlantic, since they're all from the same location) and see if they vary by zone or basin. 
+We are also interested in how the present variation is partitioned across the sampled geographic range. We have two geographic factors to categorize samples: zones (as determined by latitudes) and river basins. While the zone categories allowed us avoid sampling bias, basins may be a better indicator of gene flow. Therfore, we will repeat the above analyses for both zone and basins.  
 
-### Sailfin
+As our Atlantic molly (*P.mexicana*) samples are from one geographic location, we excluded them from our geographic analyses.
 
-#### Loadings
-
-```{r}
-lat.df <- lat.p[, 1:38]
-
-PCA.lat <- prcomp(lat.df[, 7:38], center = TRUE, scale. = FALSE) #false uses covariance matrix like in MorphoJ; scale=true only useful if variables are measured on different scales
-
-summary(PCA.lat)
-
-ev.lat <- PCA.lat$sdev^2 
-evplot(ev.lat) #visually confirms that the first 4 PCs are best to use, not sure if this is a great test though
-
-
-(eig.val.lat <- get_eigenvalue(PCA.lat))
-
-ind.lat <- get_pca_ind(PCA.lat)
-head(ind.lat$coord[,1:4])
-
-
-lat.df <- cbind(lat.df, ind.lat$coord[,1:4])
-
-(loadings <- PCA.lat$rotation[, 1:5])
-
-sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
-myTitle <- "Loadings Plot for PC1" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
-myTitle <- "Loadings Plot for PC2" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
-myTitle <- "Loadings Plot for PC3" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.4 <- loadings[order(loadings[, 4]), 4]
-myTitle <- "Loadings Plot for PC4" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-
-```
-
-#### Post PCA tests
+#### Species across Zones
 
 ```{r}
 
-lat.df$Basin <- as.factor(lat.df$Basin)
+geo.df <- test.df[test.df$Species !="p.mexicana", ]
+
+pc1V <- leveneTest(Dim.1~Species*Zone, data=geo.df) # not significant (p=0.223)
+
+pc2V <- leveneTest(Dim.2~Species*Zone, data=geo.df) # significant (p<0.001)
+
+pc3V <- leveneTest(Dim.3~Species*Zone, data=geo.df) # significant (p=0.020)
 
 
-### ZONE
+# Will display results in a table
 
-(pc1V <- leveneTest(Dim.1~Zone, data=lat.df))
+levene_result <- tibble(
+  Dimension = c("PC1", "PC2", "PC3"),
+  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1], pc3V$`F value`[1]),
+  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1], pc3V$`Pr(>F)`[1])
+) %>%
+  mutate(Significance = case_when(
+    p_value < 0.001 ~ "***",
+    p_value < 0.01 ~ "**",
+    p_value < 0.05 ~ "*",
+    TRUE ~ "ns"
+  ))
 
-(pc2V <- leveneTest(Dim.2~Zone, data=lat.df))
-
-(pc3V <- leveneTest(Dim.3~Zone, data=lat.df))
-
-(pc4V <- leveneTest(Dim.4~Zone, data=lat.df))
-
-
-lat.df %>%
-  group_by(Zone) %>%
-  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
-            sd_dim2=sd(Dim.2, na.rm = TRUE),
-            sd_dim3=sd(Dim.3, na.rm = TRUE),
-            sd_dim4=sd(Dim.4, na.rm = TRUE))
-
-lat.df %>%
-  group_by(Zone) %>%
-  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
-            var_dim2=var(Dim.2, na.rm = TRUE),
-            var_dim3=var(Dim.3, na.rm = TRUE),
-            var_dim4=var(Dim.4, na.rm = TRUE))
-
-### BASIN
-
-(pc1V <- leveneTest(Dim.1~Basin, data=lat.df))
-
-(pc2V <- leveneTest(Dim.2~Basin, data=lat.df))
-
-(pc3V <- leveneTest(Dim.3~Basin, data=lat.df))
-
-(pc4V <- leveneTest(Dim.4~Basin, data=lat.df))
+levene_result %>%
+  gt() %>%
+  cols_label(
+    Dimension = "Dimension",
+    F_value = "F-value",
+    p_value = "p-value",
+    Significance = "Significance") %>%
+  fmt_number(columns = c("F_value"), decimals = 3) %>%
+  fmt(columns = vars(p_value), fns = function(x) {  
+    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))
+  }) 
 
 
-lat.df %>%
-  group_by(Basin) %>%
-  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
-            sd_dim2=sd(Dim.2, na.rm = TRUE),
-            sd_dim3=sd(Dim.3, na.rm = TRUE),
-            sd_dim4=sd(Dim.4, na.rm = TRUE))
+# Summary of variation for each dimension in each species
+  ## Sailfin mollies contain more variation than Amazon mollies for zones 2-4 in PC1, zones 1-4 in PC2, and zone 4 in PC3. 
 
-lat.df %>%
-  group_by(Basin) %>%
-  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
-            var_dim2=var(Dim.2, na.rm = TRUE),
-            var_dim3=var(Dim.3, na.rm = TRUE),
-            var_dim4=var(Dim.4, na.rm = TRUE))
+table_zone <- geo.df %>%
+  group_by(Species, Zone) %>%
+  summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
+            var_dim2 = var(Dim.2, na.rm = TRUE),
+            var_dim3 = var(Dim.3, na.rm = TRUE),
+            .groups = "drop") %>%
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2, var_dim3)) 
 
-
+table_zone %>%
+  gt()  %>%
+  cols_label(var_dim1_p.latipinna = "Sailfin", var_dim1_p.formosa = "Amazon",
+             var_dim2_p.latipinna = "Sailfin", var_dim2_p.formosa = "Amazon",
+             var_dim3_p.latipinna = "Sailfin", var_dim3_p.formosa = "Amazon") %>%
+  tab_spanner(label = "Dimension 1", columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa")) %>%
+  tab_spanner(label = "Dimension 2", columns = c("var_dim2_p.latipinna", "var_dim2_p.formosa")) %>%
+  tab_spanner(label = "Dimension 3", columns = c("var_dim3_p.latipinna", "var_dim3_p.formosa")) %>%
+  fmt_scientific(columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa", "var_dim2_p.latipinna", "var_dim2_p.formosa", "var_dim3_p.latipinna", "var_dim3_p.formosa"), decimals = 2) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c("Zone", "var_dim1_p.formosa", "var_dim2_p.formosa"))) %>%
+  tab_style(style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+            locations = cells_column_labels(columns = c("var_dim1_p.formosa", "var_dim2_p.formosa"))) %>% 
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_column_spanners(spanners = c("Dimension 1", "Dimension 2"))) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
+    locations = cells_body(columns = c("var_dim1_p.latipinna", "var_dim2_p.latipinna", "var_dim3_p.latipinna"))
+  )
 
 ```
 
-
-#### Plots
+##### Plots
 
 ```{r}
 
-plot1.lat<- autoplot(PCA.lat, data = lat.df, colour="Zone", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-plot1.lat
+# Define the zone backgrounds (alternating light gray)
+zone_backgrounds <- data.frame(
+  Zone = c("Z1", "Z2", "Z3", "Z4"),
+  fill_color = c("white", "lightgray", "lightgray", "white")
+)
 
+ggplot(geo.df, aes(x = Species, y = Dim.1, fill = Species)) +
+  geom_rect(data = zone_backgrounds %>% filter(Zone %in% c("Z2", "Z3")), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
+  geom_boxplot() +
+  facet_wrap(~ Zone) +
+  theme_classic() + theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) +
+  xlab("") +
+  ylab("PC1") +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
-plot2.lat<- autoplot(PCA.lat, x=2, y=3, data = lat.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot2.lat
+ggplot(geo.df, aes(x = Species, y = Dim.2, fill = Species)) +
+  geom_rect(data = zone_backgrounds %>% filter(Zone %in% c("Z2", "Z3")), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
+  geom_boxplot() +
+  facet_wrap(~ Zone) +
+  theme_classic() + theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) + 
+  xlab("") +
+  ylab("PC2") +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
-
-plot3.lat<- autoplot(PCA.lat, x=3, y=4, data = lat.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot3.lat
-
-
-plot4.lat<- autoplot(PCA.lat, data = lat.df, colour="Basin", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-plot4.lat
-
-
-plot5.lat<- autoplot(PCA.lat, x=2, y=3, data = lat.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot5.lat
-
-
-plot6.lat<- autoplot(PCA.lat, x=3, y=4, data = lat.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012", "#083CA0"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot6.lat
+ggplot(geo.df, aes(x = Species, y = Dim.3, fill = Species)) +
+  geom_rect(data = zone_backgrounds %>% filter(Zone %in% c("Z2", "Z3")), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
+  geom_boxplot() +
+  facet_wrap(~ Zone) +
+  theme_classic() + theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) + 
+  xlab("") +
+  ylab("PC3") +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
 
 ```
 
 
-### Amazon
+#### Species across basins
 
-#### Loadings
+Note that Brazos-Colorado Coastal is only represented by sailfin mollies and not Amazon mollies.
 
 ```{r}
-form.df <- form.p[, 1:38]
+pc1V <- leveneTest(Dim.1~Species*Basin, data=geo.df) # not significant (p=0.182)
 
-PCA.form <- prcomp(form.df[, 7:38], center = TRUE, scale. = FALSE) #false uses covariance matrix like in MorphoJ; scale=true only useful if variables are measured on different scales
+pc2V <- leveneTest(Dim.2~Species*Basin, data=geo.df) # significant (p<0.001)
 
-summary(PCA.form)
-
-ev.form <- PCA.form$sdev^2 
-evplot(ev.form) #visually confirms that the first 4 PCs are best to use, not sure if this is a great test though
+pc3V <- leveneTest(Dim.3~Species*Basin, data=geo.df) # significant (p=0.001)
 
 
-(eig.val.form <- get_eigenvalue(PCA.form))
+# Will display results in a table
 
-ind.form <- get_pca_ind(PCA.form)
-head(ind.form$coord[,1:4])
+levene_result <- tibble(
+  Dimension = c("PC1", "PC2", "PC3"),
+  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1], pc3V$`F value`[1]),
+  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1], pc3V$`Pr(>F)`[1])
+) %>%
+  mutate(Significance = case_when(
+    p_value < 0.001 ~ "***",
+    p_value < 0.01 ~ "**",
+    p_value < 0.05 ~ "*",
+    TRUE ~ "ns"
+  ))
 
-
-form.df <- cbind(form.df, ind.form$coord[,1:4])
-
-(loadings <- PCA.form$rotation[, 1:5])
-
-sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
-myTitle <- "Loadings Plot for PC1" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
-myTitle <- "Loadings Plot for PC2" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
-myTitle <- "Loadings Plot for PC3" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
-
-sorted.loadings.4 <- loadings[order(loadings[, 4]), 4]
-myTitle <- "Loadings Plot for PC4" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=1.5, col="red")
+levene_result %>%
+  gt() %>%
+  cols_label(
+    Dimension = "Dimension",
+    F_value = "F-value",
+    p_value = "p-value",
+    Significance = "Significance") %>%
+  fmt_number(columns = c("F_value"), decimals = 3) %>%
+  fmt(columns = c("p_value"), fns = function(x) {  
+    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))
+  }) 
 
 
+# Summary of variation for each dimension in each species
+  ## 
 
+table_basin <- geo.df %>%
+  group_by(Species, Basin) %>%
+  summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
+            var_dim2 = var(Dim.2, na.rm = TRUE),
+            var_dim3 = var(Dim.3, na.rm = TRUE),
+            .groups = "drop") %>%
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2, var_dim3)) 
 
-```
-
-#### Post PCA tests
-
-```{r}
-
-form.df$Basin <- as.factor(form.df$Basin)
-
-### ZONE
-
-(pc1V <- leveneTest(Dim.1~Zone, data=form.df))
-
-(pc2V <- leveneTest(Dim.2~Zone, data=form.df))
-
-(pc3V <- leveneTest(Dim.3~Zone, data=form.df))
-
-(pc4V <- leveneTest(Dim.4~Zone, data=form.df))
-
-
-form.df %>%
-  group_by(Zone) %>%
-  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
-            sd_dim2=sd(Dim.2, na.rm = TRUE),
-            sd_dim3=sd(Dim.3, na.rm = TRUE),
-            sd_dim4=sd(Dim.4, na.rm = TRUE))
-
-form.df %>%
-  group_by(Zone) %>%
-  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
-            var_dim2=var(Dim.2, na.rm = TRUE),
-            var_dim3=var(Dim.3, na.rm = TRUE),
-            var_dim4=var(Dim.4, na.rm = TRUE))
-
-### BASIN
-
-(pc1V <- leveneTest(Dim.1~Basin, data=form.df))
-
-(pc2V <- leveneTest(Dim.2~Basin, data=form.df))
-
-(pc3V <- leveneTest(Dim.3~Basin, data=form.df))
-
-(pc4V <- leveneTest(Dim.4~Basin, data=form.df))
-
-
-form.df %>%
-  group_by(Basin) %>%
-  summarise(sd_dim1=sd(Dim.1, na.rm = TRUE),
-            sd_dim2=sd(Dim.2, na.rm = TRUE),
-            sd_dim3=sd(Dim.3, na.rm = TRUE),
-            sd_dim4=sd(Dim.4, na.rm = TRUE))
-
-form.df %>%
-  group_by(Basin) %>%
-  summarise(var_dim1=var(Dim.1, na.rm = TRUE),
-            var_dim2=var(Dim.2, na.rm = TRUE),
-            var_dim3=var(Dim.3, na.rm = TRUE),
-            var_dim4=var(Dim.4, na.rm = TRUE))
+table_basin %>%
+  gt()  %>%
+  cols_label(var_dim1_p.latipinna = "Sailfin", var_dim1_p.formosa = "Amazon",
+             var_dim2_p.latipinna = "Sailfin", var_dim2_p.formosa = "Amazon",
+             var_dim3_p.latipinna = "Sailfin", var_dim3_p.formosa = "Amazon") %>%
+  tab_spanner(label = "Dimension 1", columns = c(var_dim1_p.latipinna, var_dim1_p.formosa)) %>%
+  tab_spanner(label = "Dimension 2", columns = c(var_dim2_p.latipinna, var_dim2_p.formosa)) %>%
+  tab_spanner(label = "Dimension 3", columns = c(var_dim3_p.latipinna, var_dim3_p.formosa)) %>%
+  fmt_scientific(columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa","var_dim2_p.latipinna", "var_dim2_p.formosa", "var_dim3_p.latipinna", "var_dim3_p.formosa"), decimals = 2) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(Basin, var_dim1_p.formosa, var_dim2_p.formosa))) %>%
+  tab_style(style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+            locations = cells_column_labels(columns = c("var_dim1_p.formosa", "var_dim2_p.formosa"))) %>% 
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_column_spanners(spanners = c("Dimension 1", "Dimension 2"))) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
+    locations = cells_body(columns = c("var_dim1_p.latipinna", "var_dim2_p.latipinna", "var_dim3_p.latipinna"))
+  )
 
 
 ```
 
-
-#### Plots
-
+##### Plots
 
 ```{r}
 
-plot1.form<- autoplot(PCA.form, data = form.df, colour="Zone", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-plot1.form
+# Define alternating background colors for basins
+basin_backgrounds <- data.frame(
+  Basin = factor(c("Nueces-Rio Grande Costal", "Rio Grande", "Brazos-Colorado Costal", "Panuco", "San Fernando-Soto la Marina")),
+  fill_color = rep(c("white", "lightgray"), length.out = 5)  # Alternating colors
+)
 
 
-plot2.form<- autoplot(PCA.form, x=2, y=3, data = form.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot2.form
 
+ggplot(geo.df, aes(x = Species, y = Dim.1, fill = Species)) +
+  geom_rect(data = basin_backgrounds %>% filter(fill_color == "lightgray"), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
+  geom_boxplot() +
+  facet_wrap(~ Basin) +
+  theme_classic() + theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) + xlab("") +
+  ylab("PC1") +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
-plot3.form<- autoplot(PCA.form, x=3, y=4, data = form.df, colour='Zone', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot3.form
+ggplot(geo.df, aes(x = Species, y = Dim.2, fill = Species)) +
+  geom_rect(data = basin_backgrounds %>% filter(fill_color == "lightgray"), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
+  geom_boxplot() +
+  facet_wrap(~ Basin) +
+  theme_classic() + theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) + xlab("") +
+  ylab("PC2") +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
-
-plot4.form<- autoplot(PCA.form, data = form.df, colour="Basin", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-plot4.form
-
-
-plot5.form<- autoplot(PCA.form, x=2, y=3, data = form.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot5.form
-
-
-plot6.form<- autoplot(PCA.form, x=3, y=4, data = form.df, colour='Basin', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5", "#9986A5", "#902012"))+ ggtitle("PCA Plot of Morphology traits") + theme_classic()
-plot6.form
+ggplot(geo.df, aes(x = Species, y = Dim.3, fill = Species)) +
+  geom_rect(data = basin_backgrounds %>% filter(fill_color == "lightgray"), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
+  geom_boxplot() +
+  facet_wrap(~ Basin) +
+  theme_classic() + theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) + xlab("") +
+  ylab("PC3") +
+  scale_fill_manual(name="Species",
+                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
 
 ```
 
 
-## Overall results
 
-As expected, we see that Amazons are intermediate to both parents in overall shape. This is most evident in PC1, but in PC 2-4, there is a lot of overlap between the species. This is likely due to PC 2-4 explaining much less variation, so there is less that distinguishes the groups. 
+## Summary of variation analyses
 
-When we perform our Levene's test, we see that there is no significant difference in variation among the species for PC1, but there is a signifiant difference for PC2 (p=0.0006) and PC3 (p=0.0135). Landmarks 3, 9, and 10 all load heavily on PC2, which correspond to dorsal position and body depth. We see that sailfins vary more than amazons and atlantics for PC2. For PC3, it is only landmark 2 that loads heavily (all others pretty similar), which could correspond to dorsal position and head depth. Here we see that amazons are more variable than the two parental species. For PC4, we see landmarks 3 and 11 loading heavily, which again can correspond to dorsal position and head depth, with Amazons again more variable than parental species. 
+As expected, we see that Amazons are intermediate to both parents in overall shape. This is most evident in PC1, but in PC 2 & 3, there is a lot of overlap between the species. This is likely due to PC 2 & 3 explaining much less variation, so there is less that distinguishes the groups. 
 
-It is good to remember though, that while PC 2-4 shows diffrences in variation, and interesting results regarding amazons varying more than parentals, these PCs explain much less variation than PC1, which shows no significant difference. 
+When we perform our Levene's test, we see that there is no significant difference in variation among the species for PC1, but there is a significant difference for PC2 (p=0.0006) and PC3 (p=0.0135). Landmarks 3 (x-coor), 9 (x-coor), and 10 (y-coor) all load heavily on PC2, which correspond to dorsal position and body depth. We see that sailfins contain significantly more variation than Amazons and more variation (NS) than Atlantics for PC2 (note: PC1 included in table but only PC2 had significant difference). For PC3, it is only landmark 2 that loads heavily, which could correspond to head depth. Here we see that Amazons are significantly more variable than sailfin mollies, and more variable (NS) than Atlantics. 
+
+It is good to remember though, that while PC 2 & 3 shows significant differences in PC shape variation, and interesting results regarding Amazons varying more than parentals, these PCs explain much less variation than PC1, which shows no significant difference. 
 
 ***
 
-When looking at geographic differences in variation, we see that variation among zones is significant for PC1 (p=0.003) and PC4 (0.019) in sailfin, suggestive for PC3 (p=0.054) and not significant for PC2 (0.558). For PC1 we see that zone 2 is most variable, whereas for PC4 we see zone 3 as most variable. Zone 3 is also slightly more variable in PC3. This result is NOT held up when we look at basin. There is only a suggestive difference in variation of PC1 when using basin as our geographic factor (p=0.059), but no significant differences for PC2-4. 
-
-For amazons, we see that PC1 (p=0.043) and PC2 (p=0.0006) show significant differences in variation among zones, with a suggestive difference for PC3 (p=0.051) and no significant difference for PC4 (0.243). PC1 shows zone 2 as most variable, whereas PC2 shows zone 1 as most variable. Zone 1 is also slightly more variable for PC3. These results are only partially held up when using basin as our geographic factor. PC1 shows a significant difference (p=0.038) and PC4 shows a suggestive difference (p=0.050), but PC2 and PC3 show no significant difference in variation. For PC1, basin 7040048420 is most variable, whereas basin 7040049280 is most variable for PC4. 
-
-While basin produced less differences in variation within each species, it did create better grouping than zones. This just hits on the fact that basin is probably a better geographic classifier than zone (since our zones were wildly different in lat/area). 
-
+Previous results are echoed in the geographic analysis, regardless of whether 'zones' or 'basins' was selected as the geographic characteristic. PC1 was not different between species across zones (p=0.223) or basins (p=0.182). PC2 and PC3 were significantly different between species across both zones (PC2: p<0.001; PC3: p=0.020) and basins (PC2: p<0.001; PC3: p=0.001). For zones, sailfin mollies contained more variation than Amazons in all zones for PC2 but only in zone 4 in PC3. For basins, sailfins contained more variation than Amazons in all river basins for PC2 and in 2 of the 4 river basins in PC3 (note: one river basin only contained sailfins). 
 
 
 ***
 ***
 ***
 
-# COMPARISON ANALYSIS
+# PART 2: methodology analysis
 
-Analyses here will strictly be for comparing digital vs hand measurements. 
+The following analyses will compare the ACCURACY/PRECISION? of digital versus manual measurements. 
 
 ## Data 
+
+Manual measurement data were collected for a separate study (PAPER?). Data include # merestic and # metric traits. In order to compare to the digital measurements, only # metric traits from the manual measured data were included. 
+
+Digital morpohometric data consisted of # landmarks and # semi-landmarks. To obtain comparable distance measurements, we calculated the euclidean distance between the landmark coordinates that best matched the features used in manual measurement; see table below for associated landmarks and manual measurements. Digital distance is originally formatted in pixels so using the scale factor for each image in the original TPS files, we converted the distance into millimeters. 
+
+For more details on data inclusion and distance calculation, please see Methods in the associated paper. 
+
+TABLE WITH LANDMARKS AND HAND MEASUREMENT TYPE
+
 
 To get digital distances:
 The TPS coordinates were in a long format, and I thought it would be easiest to locate the values needed to insert into the euclidean distance formula with a wide format. So, I first cleaned up the original TPS file--I removed all curve data, and unnecessary rows (ie. LM=16, image=) to be left with a column of IDs, a column of landmark labels, and two columns for the coordinates.
@@ -525,9 +694,10 @@ OL.dig <- sqrt(((x$X.COR_LM16 -x$X.COR_LM15)^2 + (y$Y.COR_LM16-y$Y.COR_LM15)^2))
 ***
 ***
 
+### Read in Data
+
 ```{r}
-library(tidyverse)
-library(curl)
+
 
 raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/refs/heads/master/comparison_data2.csv")
 
@@ -540,12 +710,11 @@ raw<- raw[raw$ID !="AD20-082", ]
 
 ### Normality check
 
-I will use Shapiro-wilk, histograms, and QQ plots to determine what traits are normal.
+We used Shapiro-Wilk tests, histograms, and QQ plots to determine what traits were normal, and performed transformations as needed. The original raw data set was separated into the two factors of interest: digital and manual measurements.
 
-Will separate my raw dataset into the two factors of interest: digital and manual measurements.
 
 ```{r}
-library(dplyr)
+
 
 digital <- raw %>%
   select(ID, SPP, ends_with(".dig"))
@@ -557,7 +726,7 @@ manual <- raw %>%
 
 #### Digital 
 
-All but OL fail SW test with a slight skew/deviation to the right.
+All but OL fail the Shapiro-Wilk test with a slight skew/deviation to the right.
 
 ```{r}
 
@@ -965,7 +1134,7 @@ Additionally, since we have two measurements for BD and HD, we will create two d
 **Long format**
 
 ```{r}
-library(tidyr)
+
 
 #log transform entire data set
 
@@ -1128,7 +1297,7 @@ ba_HD2 <- ggplot(data_HD2, aes(x = average, y = difference, color=SPP)) +
        y = "Difference (Digital - Hand)") +
   theme_minimal()
 
-library(gridExtra)
+
 
 grid.arrange(ba_BD1, ba_BD2, ba_HD1, ba_HD2)
 
@@ -1263,7 +1432,7 @@ We can extract the important information (bias, LOAs, confidence intervals, and 
 
 ```{r}
 
-library(blandr)
+
 
 ### Whole dataset
 
@@ -1329,7 +1498,7 @@ First, need a data frame with two rows per individual (one for digital and one f
 
 ```{r}
 
-library(car)
+
 raw3 <- raw2 %>%
   rename(HD.dig = HD2.dig, HD.man = HD1.man)
 
@@ -1388,7 +1557,7 @@ Let's create the data sets
 
 ```{r}
 
-library(stringr)
+
 
 z.scores <- raw3
 
@@ -1415,7 +1584,7 @@ Now let's run the individual PCAs
 #### Digital PCA
 
 ```{r}
-library(factoextra)
+
 
 PCA_z <- prcomp(z.wide[, 3:12])
 
@@ -1433,17 +1602,17 @@ z.wide <- cbind(z.wide, z.ind$coord[,1:3])
 z.sorted.loadings.1 <- loadings_z[order(loadings_z[, 1]), 1]
 z.myTitle <- "Loadings Plot for PC1" 
 z.myXlab  <- "Variable Loadings"
-dotchart(z.sorted.loadings.1, main=z.myTitle, xlab=z.myXlab, cex=1.5, col="red")
+dotchart(z.sorted.loadings.1, main=z.myTitle, xlab=z.myXlab, cex=0.5, col="blue")
 
 z.sorted.loadings.2 <- loadings_z[order(loadings_z[, 2]), 2]
 z.myTitle <- "Loadings Plot for PC2" 
 z.myXlab  <- "Variable Loadings"
-dotchart(z.sorted.loadings.2, main=z.myTitle, xlab=z.myXlab, cex=1.5, col="red")
+dotchart(z.sorted.loadings.2, main=z.myTitle, xlab=z.myXlab, cex=0.5, col="blue")
 
 z.sorted.loadings.3 <- loadings_z[order(loadings_z[, 3]), 3]
 z.myTitle <- "Loadings Plot for PC3" 
 z.myXlab  <- "Variable Loadings"
-dotchart(z.sorted.loadings.3, main=z.myTitle, xlab=z.myXlab, cex=1.5, col="red")
+dotchart(z.sorted.loadings.3, main=z.myTitle, xlab=z.myXlab, cex=0.5, col="blue")
 
 ```
 
