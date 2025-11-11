@@ -649,50 +649,44 @@ Previous results are echoed in the geographic analysis, regardless of whether 'z
 
 # PART 2: methodology analysis
 
-The following analyses will compare the ACCURACY/PRECISION? of digital versus manual measurements. 
+The following analyses will compare the precision of digital versus manual measurements. 
 
 ## Data 
 
-Manual measurement data were collected for a separate study (PAPER?). Data include # merestic and # metric traits. In order to compare to the digital measurements, only # metric traits from the manual measured data were included. 
+Manual measurement data were collected for a separate study (Connelly & Ryan, in prep). Data include 12 merestic and 10 metric traits. In order to compare to the digital measurements, only 10 metric traits from the manual measured data were included. 
 
-Digital morpohometric data consisted of # landmarks and # semi-landmarks. To obtain comparable distance measurements, we calculated the euclidean distance between the landmark coordinates that best matched the features used in manual measurement; see table below for associated landmarks and manual measurements. Digital distance is originally formatted in pixels so using the scale factor for each image in the original TPS files, we converted the distance into millimeters. 
+Digital morpohometric data consisted of 16 landmarks and 2 curves. To obtain comparable distance measurements, we calculated the euclidean distance between the landmark coordinates that best matched the features used in manual measurement; see table below for associated landmarks and manual measurements. Digital distance is originally formatted in pixels so using the scale factor for each image in the original TPS files, we converted the distance into millimeters. 
 
 For more details on data inclusion and distance calculation, please see Methods in the associated paper. 
 
-TABLE WITH LANDMARKS AND HAND MEASUREMENT TYPE
+```{r}
+dig.meas <- data.frame(
+  type= c("Standard length (SL)", "Body depth 1 (BD1)", "Body depth 2 (BD2)", "Caudal peduncle depth (CPD)", "Caudal peduncle length (CPL)", "Predorsal length (PreDL)", "Dorsal base length (DbL)", "Head length (HL)", "Head depth 1 (HD1)", "Head depth 2 (HD2)", "Snout length (SnL)", "Orbital length (OL)"),
+  First.landmark = c("LM1", "LM3", "LM3", "LM5", "LM6", "LM1", "LM3", "LM1", "LM2", "LM2", "LM1", "LM15"),
+  Second.landmark= c("LM6", "LM10", "LM11", "LM7", "LM8", "LM3", "LM4", "LM2", "LM11", "LM12", "LM15", "LM16"))
+
+dig.meas %>%
+  gt() %>%
+  cols_label(
+    type = "", 
+    First.landmark = "First Landmark", 
+    Second.landmark = "Second Landmark") %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_column_labels(columns = c(type, First.landmark))) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = type)) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
+    locations = cells_body(columns = c(First.landmark, Second.landmark))) %>%
+  cols_align(
+    align = "center",
+    columns = everything())
 
 
-To get digital distances:
-The TPS coordinates were in a long format, and I thought it would be easiest to locate the values needed to insert into the euclidean distance formula with a wide format. So, I first cleaned up the original TPS file--I removed all curve data, and unnecessary rows (ie. LM=16, image=) to be left with a column of IDs, a column of landmark labels, and two columns for the coordinates.
+```
 
-Importing that into R, I then used the wider fxn to create one column for IDs, 16 columns for the X coordinates of all the landmarks, and 16 columns for all the y coordinates of all the landmarks (originally wanted it to be a coordinates column, so there would be two rows for each specimen to minimize column numbers, but whatever, this works). I separated this into two dataframes, one with just the X coords and one with just the Y, that way it would be easier to call. 
-
-I calculated the euclidean distance (formula: sqrt(sq(X$LM2-X$LM1)+sq(Y$LM2-Y$LM1))) for most of the same measurements (only missing total length, and head width, as this was not possible in the digital photos). For head depth, wasn't sure if 2-> 11 or 2->12 was closer to what I measured by hand; same for body depth, wasn't sure if it was 3->10 or 3->11. I included both. 
-
-finished all of the calculations and added the values into a dataframe with the IDs from the original tps file. Exported it to excel
-
-Once in excel, I realized that the values I had were in pixels rather than mm, so I needed to find a way to convert in order to compare to the hand measurements. I found out that the scale factor (included in the original tps file) is cm/pixel, so I added this to the excel, and multiplied it to each value to get the cm, then by 10 to get mm. 
-
-Below is for reference only. For details on how I formated, see original geomorph rmd.
-
-
-HL.dig <- sqrt(((x$X.COR_LM2 -x$X.COR_LM1)^2 + (y$Y.COR_LM2-y$Y.COR_LM1)^2))
-SL.dig <- sqrt(((x$X.COR_LM6 -x$X.COR_LM1)^2 + (y$Y.COR_LM6-y$Y.COR_LM1)^2))
-PreDL.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM1)^2 + (y$Y.COR_LM3-y$Y.COR_LM1)^2))
-DbL.dig <- sqrt(((x$X.COR_LM4 -x$X.COR_LM3)^2 + (y$Y.COR_LM4-y$Y.COR_LM3)^2))
-CPD.dig <- sqrt(((x$X.COR_LM7 -x$X.COR_LM5)^2 + (y$Y.COR_LM7-y$Y.COR_LM5)^2))
-HD1.dig <- sqrt(((x$X.COR_LM11 -x$X.COR_LM2)^2 + (y$Y.COR_LM11-y$Y.COR_LM2)^2))
-HD2.dig <- sqrt(((x$X.COR_LM12 -x$X.COR_LM2)^2 + (y$Y.COR_LM12-y$Y.COR_LM2)^2))
-CPL.dig <- sqrt(((x$X.COR_LM8 -x$X.COR_LM6)^2 + (y$Y.COR_LM8-y$Y.COR_LM6)^2))
-BD1.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM10)^2 + (y$Y.COR_LM3-y$Y.COR_LM10)^2))
-BD2.dig <- sqrt(((x$X.COR_LM3 -x$X.COR_LM11)^2 + (y$Y.COR_LM3-y$Y.COR_LM11)^2))
-SnL.dig <- sqrt(((x$X.COR_LM15 -x$X.COR_LM1)^2 + (y$Y.COR_LM15-y$Y.COR_LM1)^2))
-OL.dig <- sqrt(((x$X.COR_LM16 -x$X.COR_LM15)^2 + (y$Y.COR_LM16-y$Y.COR_LM15)^2))
-
-
-***
-***
-***
 
 ### Read in Data
 
@@ -921,7 +915,9 @@ qqline(manual$OL)
 
 #### Log transform & recheck
 
-While some values are still significant, log transformations vastly improve normality (eg p=2e-16 to p=0.002). The histograms and QQ plots look pretty damn normal, so I will stick with log transformed values. 
+While some values are still significant, log transformations vastly improve normality (eg p=2e-16 to p=0.002). The histograms and QQ plots look close to normal, so I will stick with log transformed values. 
+
+Orbital length (OL) was normal in the raw check of the digital measurements, but since it was not normal in manual measurements, and I want to compare the two data sets, I will transform the digital OL data.
 
 Log transformed data sets
 
@@ -935,9 +931,7 @@ man_trans[, c(3:12)] <- log(man_trans[, c(3:12)])
 
 ```
 
-##### Digital
-
-OL was the only one that was normal in raw check, but since it was not normal in manual, and I want to compare dig to man, I will transform the OL here too (don't want to compare raw to transformed measurements).
+##### Digital Recheck
 
 ```{r}
 ##### Shapiro-Wilk test #####
@@ -1039,7 +1033,7 @@ qqline(dig_trans$OL)
 ```
 
 
-##### Manual
+##### Manual Recheck
 
 ```{r}
 ##### Shapiro-Wilk test #####
@@ -1126,7 +1120,7 @@ qqline(man_trans$OL)
 
 ### Formatting 
 
-I will perform 3 different analyses: Bland-Altman, MANOVA and PCA. These vary in whether they need long or wide formats. Also, the raw data contains columns that are not needed for these analyses (eg location or photo date) so I will remove those to leave just the species, tag ID, and measurements.
+I will perform 3 different analyses: Bland-Altman (BA), MANOVA and PCA. These vary in whether they need long or wide formats. Also, the raw data contains columns that are not needed for these analyses (eg location or photo date) so I will remove those to leave just the species, tag ID, and measurements.
 
 Additionally, since we have two measurements for BD and HD, we will create two datasets: one with BD1 and HD1, and another with BD2 and HD2 (this applies to digital only, as manual only has one measurement for each). Once we run BA plots, we can determine which of these measurements is best to continue analysis with.
 
@@ -1211,26 +1205,26 @@ Used to assess agreement between two measurement methods.
 
 ### BD/HD plots
 
-We're first interested in how BD1, HD1, BD2, and HD2 compare, so let's isolate those.
+We're first interested in how BD1, HD1, BD2, and HD2 compare, so we isolated those.
 
 
 ```{r}
 
+## Isolate data for each characteristic (BD1, BD2, HD1, HD2)
 data_BD1 <- df_wide %>%
   filter(characteristic == "BD1")
 data_BD1 <- data_BD1 %>%
   mutate(
     average = (dig + man) / 2,
-    difference = dig - man
-  )
+    difference = dig - man)
+
 
 data_HD1 <- df_wide %>%
   filter(characteristic == "HD1")
 data_HD1 <- data_HD1 %>%
   mutate(
     average = (dig + man) / 2,
-    difference = dig - man
-  )
+    difference = dig - man)
 
 
 data_BD2 <- df_wide2 %>%
@@ -1238,8 +1232,7 @@ data_BD2 <- df_wide2 %>%
 data_BD2 <- data_BD2 %>%
   mutate(
     average = (dig + man) / 2,
-    difference = dig - man
-  )
+    difference = dig - man)
 
 
 data_HD2 <- df_wide2 %>%
@@ -1247,74 +1240,63 @@ data_HD2 <- df_wide2 %>%
 data_HD2 <- data_HD2 %>%
   mutate(
     average = (dig + man) / 2,
-    difference = dig - man
-  )
+    difference = dig - man)
 
 
-ba_BD1 <- ggplot(data_BD1, aes(x = average, y = difference, color=SPP)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(data_BD1$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+## Create Bland-Altman plots for each characteristic 
+
+ba.BD1 <- blandr.draw(data_BD1$dig, data_BD1$man, ciDisplay = FALSE) +
+  geom_hline(yintercept = mean(data_BD1$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
   geom_hline(yintercept = mean(data_BD1$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_BD1$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "BD1",
-       x = "Average of Digital and Hand Measurements",
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Body depth 1",
+       x = "",
        y = "Difference (Digital - Hand)") +
   theme_minimal()
+#ba.BD1
 
 
-ba_HD1 <- ggplot(data_HD1, aes(x = average, y = difference, color=SPP)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(data_HD1$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
-  geom_hline(yintercept = mean(data_HD1$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_HD1$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "HD1",
-       x = "Average of Digital and Hand Measurements",
-       y = "Difference (Digital - Hand)") +
-  theme_minimal()
-
-ba_BD2 <- ggplot(data_BD2, aes(x = average, y = difference, color=SPP)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(data_BD2$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+ba.BD2 <- blandr.draw(data_BD2$dig, data_BD2$man, ciDisplay = FALSE) +
+  geom_hline(yintercept = mean(data_BD2$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
   geom_hline(yintercept = mean(data_BD2$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_BD2$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "BD2",
-       x = "Average of Digital and Hand Measurements",
-       y = "Difference (Digital - Hand)") +
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Body depth 2",
+       x = "",
+       y = "") +
   theme_minimal()
+#ba.BD2
 
 
-ba_HD2 <- ggplot(data_HD2, aes(x = average, y = difference, color=SPP)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(data_HD2$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+ba.HD1 <- blandr.draw(data_HD1$dig, data_HD1$man, ciDisplay = FALSE) +
+  geom_hline(yintercept = mean(data_HD1$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(data_HD1$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_HD1$difference, na.rm = TRUE),
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Head depth 1",
+       x = "Means",
+       y = "Differences (digital-manual)") +
+  theme_minimal()
+#ba.HD1
+
+
+ba.HD2 <- blandr.draw(data_HD2$dig, data_HD2$man, ciDisplay = FALSE) +
+  geom_hline(yintercept = mean(data_HD2$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
   geom_hline(yintercept = mean(data_HD2$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(data_HD2$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "HD2",
-       x = "Average of Digital and Hand Measurements",
-       y = "Difference (Digital - Hand)") +
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Head depth 2",
+       x = "Means",
+       y = "") +
   theme_minimal()
+#ba.HD2
 
 
-
-grid.arrange(ba_BD1, ba_BD2, ba_HD1, ba_HD2)
-
-
-
-
-
-
+grid.arrange(ba.BD1, ba.BD2, ba.HD1, ba.HD2)
 ```
 
-We see that BD1 has less scatter, less outside LOA and a smaller bias compared to BD2 (0.12 vs 0.36). In addition, BD2's LOA don't include 0, so BD1 is more appropriate to use. In contrast, HD1, while it has less scatter with fewer points outside the LOA, it has a bias further away from 0 compared to HD2 (which has slightly more scatter and more points outside LOA), so HD2 is more appropriate to use (0.06 vs -0.008). 
+We see that BD1 has less scatter, less outside the limits of agreement (blue dashed lines; LOA) and a smaller bias compared to BD2 (red dashed line; 0.12 vs 0.36 respectively). In addition, BD2's LOA don't include 0, so BD1 is more appropriate to use. In contrast, HD1, while it has less scatter with fewer points outside the LOA, it has a bias further away from 0 compared to HD2 (red dashed line; 0.06 vs -0.008 respectively), so HD2 is more appropriate to use. 
 
-I will therefore create a final dataset with BD1 and HD2 for all subsequent analyses. 
+I will therefore create a final data set with BD1 and HD2 for all subsequent analyses. 
 
 ### BA plots
-
-#### Final data frame
 
 ```{r, echo=FALSE}
 ###create final dataset
@@ -1358,29 +1340,30 @@ df_ba_fin <- df_wide_fin %>%
     difference = dig - man
   )
 
-ba_full_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+ba_full_fin <- blandr.draw(df_ba_fin$dig, df_ba_fin$man, ciDisplay = FALSE) +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
   geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "Bland-Altman Plots for All Characteristics",
-       x = "Average of Digital and Hand Measurements",
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman plot for all characteristics",
+       x = "Means",
        y = "Difference (Digital - Hand)") +
   theme_minimal()
 
 ba_full_fin
 
 
-##### Species
+##### By species
 
-ba_full_SPP_fin <- ggplot(df_ba_fin, aes(x = average, y = difference, color=SPP)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+ba_full_SPP_fin <- blandr.draw(df_ba_fin$dig, df_ba_fin$man, ciDisplay = FALSE) +
+  geom_point(data = df_ba_fin, aes(color=SPP)) +
+  scale_color_manual(
+    name = "Species",
+    values=c("#E1AF00","#78B7C5", "#564670"),
+    labels = c("Amazon", "Sailfin", "Atlantic")) +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
   geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "Bland-Altman Plots for All Characteristics",
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman plot for all characteristics",
        x = "Average of Digital and Hand Measurements",
        y = "Difference (Digital - Hand)") +
   theme_minimal()
@@ -1388,16 +1371,18 @@ ba_full_SPP_fin <- ggplot(df_ba_fin, aes(x = average, y = difference, color=SPP)
 ba_full_SPP_fin
 
 
-##### Characteristics
+##### By characteristics
 
-ba_full_CR_fin <- ggplot(df_ba_fin, aes(x = average, y = difference, color=characteristic)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+ba_full_CR_fin <- blandr.draw(df_ba_fin$dig, df_ba_fin$man, ciDisplay = FALSE) +
+  geom_point(data = df_ba_fin, aes(color=characteristic)) +
+  scale_color_manual(
+    name = "Traits",
+    values= hcl.colors(10, palette = "Roma")) +
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
   geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "Bland-Altman Plots for All Characteristics",
-       x = "Average of Digital and Hand Measurements",
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman plot for all characteristics",
+       x = "Means",
        y = "Difference (Digital - Hand)") +
   theme_minimal()
 
@@ -1409,17 +1394,21 @@ ba_full_CR_fin
 #### By trait
 
 ```{r}
+
+# NOTE: could not figure out how to facet wrap with blandr.draw, so created a Bland-Altman plot through ggplot instead
+
 ba_by_char_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
-  geom_point(alpha = 0.6) +
+  geom_point(color= "slategrey", alpha = 0.4) +
   geom_hline(yintercept = 0, linetype = "solid", color = "black") +
-  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "red", linetype = "dashed") +  # Mean line
+  geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE), color = "#b22d11", linetype = "dashed") +  # Mean line
   geom_hline(yintercept = mean(df_ba_fin$difference, na.rm = TRUE) + c(-1.96, 1.96) * sd(df_ba_fin$difference, na.rm = TRUE),
-             color = "blue", linetype = "dashed") +  # Limits of agreement
-  labs(title = "Bland-Altman Plots for All Characteristics",
-       x = "Average of Digital and Hand Measurements",
+             color = "dodgerblue", linetype = "dashed") +  # Limits of agreement
+  labs(title = "Bland-Altman plots for each characteristic",
+       x = "Means",
        y = "Difference (Digital - Hand)") +
   facet_wrap(~ characteristic, scales = "free") +
   theme_minimal()
+
 
 ba_by_char_fin
 
@@ -1480,7 +1469,38 @@ df_OL <- df_wide_fin %>%
   filter(characteristic == "OL")
 (bar_OL <- blandr.statistics(df_OL$dig, df_OL$man))
 
+##########
 
+
+ba_stats_all <- df_wide_fin %>%
+  group_by(characteristic) %>%
+  summarise(
+    stats = list(blandr.statistics(dig, man)),
+    .groups = "drop") %>%
+  rowwise() %>% 
+  mutate(
+    t_value = stats$bias / stats$biasSEM,
+    p_value = 2 * pt(-abs(stats$bias / stats$biasSEM), df = stats$no.of.observations - 1),
+    bias_CI = paste0(round(stats$bias,3),
+                     " (", round(stats$biasLowerCI,3),
+                     ", ", round(stats$biasUpperCI,3), ")"),
+    LOA_range = paste0(round(stats$lowerLOA,3), " to ", round(stats$upperLOA,3))) %>%
+  ungroup() %>%
+  select(characteristic, t_value, p_value, bias_CI, LOA_range) %>%
+  gt() %>%
+  tab_header(title = "Bland–Altman Statistics by Trait") %>%
+  cols_label(
+    characteristic = "Trait",
+    t_value = "t value",
+    p_value = "p-value",
+    bias_CI = "Bias (CI)",
+    LOA_range = "Limit of Agreement Range") %>%
+  fmt_number(columns = c(t_value, p_value), decimals = 3) %>%
+  fmt(columns = c("p_value"), fns = function(x) {  
+    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))}) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(characteristic, t_value, p_value, bias_CI)))
 
 ```
 
