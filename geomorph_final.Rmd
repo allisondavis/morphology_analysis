@@ -27,7 +27,7 @@ The following analyses will compare variation among the species.
 
 ## **Data**
 
-Original TPS files were imported into MorphoJ (CITE?) where we performed a procrustes analysis and a multivariate regression on shape (procrustes coordinates) and size (centroid size) to correct for overall body size differences between the species. We then imported the residuals of this regression below to perform our analyses.
+Original TPS files were imported into MorphoJ where we performed a procrustes analysis and a multivariate regression on shape (procrustes coordinates) and size (centroid size) to correct for overall body size differences between the species. We then imported the residuals of this regression below to perform our analyses.
 
 All analyses were conducted using R version 4.4.2
 
@@ -129,17 +129,17 @@ summary(PCA.test)
 (eig.val.test <- get_eigenvalue(PCA.test))
 
 
-# the first 3 dimensions account for over half of the variation. We will extract the individual scores for the first 3 dimensions and attach it to the original data frame.
+# the first 2 dimensions account for nearly half of the variation (45.2%). We will extract the individual scores for the first 2 dimensions and attach it to the original data frame.
 
 ind.test <- get_pca_ind(PCA.test)
-head(ind.test$coord[,1:3])
+head(ind.test$coord[,1:2])
 
 
-test.df <- cbind(test.df, ind.test$coord[,1:3])
+test.df <- cbind(test.df, ind.test$coord[,1:2])
 
 
-# Will investigate the influence of each landmark coordinates on the first 3 dimensions
-(loadings <- PCA.test$rotation[, 1:3])
+# Will investigate the influence of each landmark coordinates on the first 2 dimensions
+(loadings <- PCA.test$rotation[, 1:2])
 
 sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
 myTitle <- "Loadings Plot for PC1" 
@@ -151,10 +151,6 @@ myTitle <- "Loadings Plot for PC2"
 myXlab  <- "Variable Loadings"
 dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
 
-sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
-myTitle <- "Loadings Plot for PC3" 
-myXlab  <- "Variable Loadings"
-dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
 
 ```
 
@@ -168,59 +164,65 @@ pc1V <- leveneTest(Dim.1~Species, data=test.df) # not significant (p=0.708)
 
 pc2V <- leveneTest(Dim.2~Species, data=test.df) # significant (p<0.001)
 
-pc3V <- leveneTest(Dim.3~Species, data=test.df) # significant (p=0.01)
-
 
 # Will display results in a table
 levene_result <- tibble(
-  Dimension = c("PC1", "PC2", "PC3"),
-  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1], pc3V$`F value`[1]),
-  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1], pc3V$`Pr(>F)`[1])
-) %>%
-  mutate(Significance = case_when(
-    p_value < 0.001 ~ "***",
-    p_value < 0.01 ~ "**",
-    p_value < 0.05 ~ "*",
-    TRUE ~ "ns"
-  ))
+  Dimension = c("PC1", "PC2"),
+  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1]),
+  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1])) %>%
+  mutate(
+    p_display = if_else(
+      p_value < 0.001,
+      "*p* < 0.001^*^",
+      sprintf("%.3f", p_value))
+  )
 
-levene_result %>%
+levenes_PCA_results <- levene_result %>%
   gt() %>%
+  cols_hide(columns = c("p_value")) %>%
   cols_label(
     Dimension = "Dimension",
     F_value = "F-value",
-    p_value = "p-value",
-    Significance = "Significance") %>%
-  fmt_number(columns = c("F_value"), decimals = 3) %>%
-  fmt(columns = vars(p_value), fns = function(x) {  
-    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))
-  }) 
+    p_display = "p-value") %>%
+  fmt_markdown(columns = p_display) %>%
+  fmt_number(columns = F_value, decimals = 3) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything()) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      columns = "p_display",
+      rows = p_value < 0.05))
+levenes_PCA_results
+
 
 
 
 # Summary of variation for each dimension in each species
-  ## Sailfin mollies have highest amount of variation in PC1 and PC2 (followed by Atlantic and then Amazon); Amazon's have highest amount of variation in PC3 (followed by Atlantic then sailfins).
+  ## Sailfin mollies have highest amount of variation in PC1 and PC2 (followed by Atlantic and then Amazon)
 
-test.df %>%
+var.PCA.spp <- test.df %>%
   group_by(Species) %>%
   summarise(var_dim1=var(Dim.1, na.rm = TRUE),
-            var_dim2=var(Dim.2, na.rm = TRUE),
-            var_dim3=var(Dim.3, na.rm=TRUE)) %>%
+            var_dim2=var(Dim.2, na.rm = TRUE)) %>%
   mutate(Species = case_when(
     Species == "p.latipinna" ~ "Sailfin molly",
     Species == "p.formosa" ~ "Amazon molly",
     Species == "p.mexicana" ~ "Atlantic molly")) %>%
-  gt() %>% tab_header(title = "Variation of Dimensions 1-3") %>%
+  gt() %>% tab_header(title = "Variation of Pricipal Components 1 & 2") %>%
   cols_label(Species = "Species",
-             var_dim1 = "Dimension 1",
-             var_dim2 = "Dimension 2",
-             var_dim3 = "Dimension 3") %>%
-  fmt_scientific(columns = c("var_dim1", "var_dim2", "var_dim3"), decimals = 2) %>%
+             var_dim1 = "PC1",
+             var_dim2 = "PC2") %>%
+  fmt_scientific(columns = c("var_dim1", "var_dim2"), decimals = 2) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c("Species", "var_dim1", "var_dim2")))
+    locations = cells_body(columns = c("Species", "var_dim1"))) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything())
 
+var.PCA.spp
 
+gtsave(var.PCA.spp, "TB5_var-pca-spp.png")
 
 # pairwise comparisons for significant dimensions
   ## Only significant pairwise comparison (even after Holms correction) is between Amazon's and Sailfins for both PC2 and PC3
@@ -282,52 +284,58 @@ pairwise_variance_test <- function(df, pcs = c("PC1", "PC2"), group = "Species",
 
 
 # run test
-(PW_results <- pairwise_variance_test(test.df, pcs = c("Dim.2", "Dim.3")))
+(PW_results <- pairwise_variance_test(test.df, pcs = c("Dim.2")))
 
 
 
 # Results in a prettier table 
-PW_results %>%
+pairwise.results <- PW_results %>%
+  filter(PC == "Dim.2") %>%
   arrange(PC, group1, group2) %>%
-  group_by(PC) %>%
   mutate(
     group1 = dplyr::recode(group1, "p.latipinna" = "Sailfin", "p.formosa" = "Amazon", "p.mexicana" = "Atlantic"),
     group2 = dplyr::recode(group2, "p.latipinna" = "Sailfin", "p.formosa" = "Amazon", "p.mexicana" = "Atlantic"),
-    PC = dplyr::recode(PC, "Dim.2" = "PC2", "Dim.3" = "PC3"),
+    PC = dplyr::recode(PC, "Dim.2" = "PC2"),
     PC = if_else(row_number() == 2, PC, ""),
-    significance = case_when(
-      p.adjusted < 0.001 ~ "***",
-      p.adjusted < 0.005 ~ "**",
-      p.adjusted < 0.01 ~ "*",
-      TRUE ~ "ns")) %>%
+    p_display = if_else(
+      p.value < 0.001,
+      "*p* < 0.001^*^",
+      sprintf("%.3f", p.value)), 
+    p_display.adj = if_else(
+      p.adjusted < 0.001,
+      "*p* < 0.001^*^",
+      sprintf("%.3f", p.adjusted))) %>%
   ungroup() %>%
   gt() %>% 
   tab_header(title = "Pairwise Comparisons of Variation") %>%
+  cols_hide(columns = c("p.value", "p.adjusted")) %>%
   cols_label(PC = "PC",
              group1 = "Species A",
              group2 = "Species B",
              F.value = "F Statistic",
-             p.value = "p-value",
-             p.adjusted = "Adjusted p-value",
-             significance = "Significance") %>%
-  fmt_number(columns = c(F.value, p.value, p.adjusted), decimals = 4) %>%
+             p_display = "p-value",
+             p_display.adj = "Adjusted p-value") %>%
+  fmt_number(columns = c(F.value), decimals = 3) %>%
+  fmt_markdown(columns = c("p_display", "p_display.adj")) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c("PC", "group2", "F.value", "p.value", "p.adjusted"))) %>%
+    locations = cells_body(columns = c("PC", "group2", "F.value", "p_display"))) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
     locations = cells_body(columns = c("group1"))) %>%
   tab_style(
-  style = cell_borders(sides = c("top","bottom"), color = "white", weight = px(1)),
+  style = cell_borders(sides = c("top"), color = "white", weight = px(1)),
   locations = cells_body(columns = "PC")) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything()) %>%
   tab_style(
-    style = cell_borders(sides = "bottom", color = "darkgray", weight = px(2)),
+    style = cell_text(weight = "bold"),
     locations = cells_body(
-      rows = 3,  
-      columns = everything()))
-  
-  
+      columns = c(p_display, p_display.adj),
+      rows = p.value < 0.05 | p.adjusted < 0.05))
+pairwise.results
 
+gtsave(pairwise.results, "TB4_pairwise-results.png")
 
 ```
 
@@ -337,7 +345,7 @@ PW_results %>%
 
 
 
-plot1<- autoplot(PCA.test, data = test.df, colour="Species", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= TRUE)+
+plot1<- autoplot(PCA.test, data = test.df, colour="Species", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
   scale_color_manual(name="Species",
                     values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
                     labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) +
@@ -380,34 +388,39 @@ pc1V <- leveneTest(Dim.1~Species*Zone, data=geo.df) # not significant (p=0.223)
 
 pc2V <- leveneTest(Dim.2~Species*Zone, data=geo.df) # significant (p<0.001)
 
-pc3V <- leveneTest(Dim.3~Species*Zone, data=geo.df) # significant (p=0.020)
-
 
 # Will display results in a table
 
-levene_result <- tibble(
-  Dimension = c("PC1", "PC2", "PC3"),
-  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1], pc3V$`F value`[1]),
-  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1], pc3V$`Pr(>F)`[1])
+zone_result <- tibble(
+  Classifier = "Zone", #used when combining tables later
+  Dimension = c("PC1", "PC2"),
+  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1]),
+  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1])
 ) %>%
-  mutate(Significance = case_when(
-    p_value < 0.001 ~ "***",
-    p_value < 0.01 ~ "**",
-    p_value < 0.05 ~ "*",
-    TRUE ~ "ns"
-  ))
+  mutate(p_display = if_else(
+      p_value < 0.001,
+      "*p* < 0.001^*^",
+      sprintf("%.3f", p_value)))
 
-levene_result %>%
+zone_result %>%
   gt() %>%
+  cols_hide(columns = c(Classifier, p_value)) %>%
   cols_label(
     Dimension = "Dimension",
     F_value = "F-value",
-    p_value = "p-value",
-    Significance = "Significance") %>%
-  fmt_number(columns = c("F_value"), decimals = 3) %>%
-  fmt(columns = vars(p_value), fns = function(x) {  
-    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))
-  }) 
+    p_display = "p-value") %>%
+  fmt_markdown(columns = p_display) %>%
+  fmt_number(columns = c("F_value"), decimals = 3)  %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything()) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      columns = "p_display",
+      rows = p_value < 0.05)
+  )
+
+
 
 
 # Summary of variation for each dimension in each species
@@ -417,31 +430,33 @@ table_zone <- geo.df %>%
   group_by(Species, Zone) %>%
   summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
             var_dim2 = var(Dim.2, na.rm = TRUE),
-            var_dim3 = var(Dim.3, na.rm = TRUE),
             .groups = "drop") %>%
-  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2, var_dim3)) 
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2)) 
 
-table_zone %>%
+var.geo.zone <- table_zone %>%
   gt()  %>%
   cols_label(var_dim1_p.latipinna = "Sailfin", var_dim1_p.formosa = "Amazon",
-             var_dim2_p.latipinna = "Sailfin", var_dim2_p.formosa = "Amazon",
-             var_dim3_p.latipinna = "Sailfin", var_dim3_p.formosa = "Amazon") %>%
-  tab_spanner(label = "Dimension 1", columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa")) %>%
-  tab_spanner(label = "Dimension 2", columns = c("var_dim2_p.latipinna", "var_dim2_p.formosa")) %>%
-  tab_spanner(label = "Dimension 3", columns = c("var_dim3_p.latipinna", "var_dim3_p.formosa")) %>%
-  fmt_scientific(columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa", "var_dim2_p.latipinna", "var_dim2_p.formosa", "var_dim3_p.latipinna", "var_dim3_p.formosa"), decimals = 2) %>%
+             var_dim2_p.latipinna = "Sailfin", var_dim2_p.formosa = "Amazon") %>%
+  tab_spanner(label = "PC1", columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa")) %>%
+  tab_spanner(label = "PC2", columns = c("var_dim2_p.latipinna", "var_dim2_p.formosa")) %>%
+  fmt_scientific(columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa", "var_dim2_p.latipinna", "var_dim2_p.formosa"), decimals = 2) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c("Zone", "var_dim1_p.formosa", "var_dim2_p.formosa"))) %>%
+    locations = cells_body(columns = c("Zone", "var_dim1_p.formosa"))) %>%
   tab_style(style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
-            locations = cells_column_labels(columns = c("var_dim1_p.formosa", "var_dim2_p.formosa"))) %>% 
+            locations = cells_column_labels(columns = c("var_dim1_p.formosa"))) %>% 
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
-    locations = cells_column_spanners(spanners = c("Dimension 1", "Dimension 2"))) %>%
+    locations = cells_column_spanners(spanners = c("PC1"))) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
-    locations = cells_body(columns = c("var_dim1_p.latipinna", "var_dim2_p.latipinna", "var_dim3_p.latipinna"))
-  )
+    locations = cells_body(columns = c("var_dim1_p.latipinna", "var_dim2_p.latipinna"))) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything())
+
+var.geo.zone
+
+gtsave(var.geo.zone, "TB7_var-geo-zone.png")
 
 ```
 
@@ -483,20 +498,6 @@ ggplot(geo.df, aes(x = Species, y = Dim.2, fill = Species)) +
                     values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
                     labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
-ggplot(geo.df, aes(x = Species, y = Dim.3, fill = Species)) +
-  geom_rect(data = zone_backgrounds %>% filter(Zone %in% c("Z2", "Z3")), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
-  geom_boxplot() +
-  facet_wrap(~ Zone) +
-  theme_classic() + theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
-  ) + 
-  xlab("") +
-  ylab("PC3") +
-  scale_fill_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
-
 
 ```
 
@@ -510,35 +511,37 @@ pc1V <- leveneTest(Dim.1~Species*Basin, data=geo.df) # not significant (p=0.182)
 
 pc2V <- leveneTest(Dim.2~Species*Basin, data=geo.df) # significant (p<0.001)
 
-pc3V <- leveneTest(Dim.3~Species*Basin, data=geo.df) # significant (p=0.001)
-
 
 # Will display results in a table
 
-levene_result <- tibble(
-  Dimension = c("PC1", "PC2", "PC3"),
-  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1], pc3V$`F value`[1]),
-  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1], pc3V$`Pr(>F)`[1])
+basin_result <- tibble(
+  Classifier = "Basin", #used when combining tables later
+  Dimension = c("PC1", "PC2"),
+  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1]),
+  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1])
 ) %>%
-  mutate(Significance = case_when(
-    p_value < 0.001 ~ "***",
-    p_value < 0.01 ~ "**",
-    p_value < 0.05 ~ "*",
-    TRUE ~ "ns"
-  ))
+  mutate(p_display = if_else(
+      p_value < 0.001,
+      "*p* < 0.001^*^",
+      sprintf("%.3f", p_value)))
 
-levene_result %>%
+basin_result %>%
   gt() %>%
+  cols_hide(columns = c(Classifier, p_value)) %>%
   cols_label(
-    Dimension = "Dimension",
+    Dimension = "Principal Component",
     F_value = "F-value",
-    p_value = "p-value",
-    Significance = "Significance") %>%
-  fmt_number(columns = c("F_value"), decimals = 3) %>%
-  fmt(columns = c("p_value"), fns = function(x) {  
-    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))
-  }) 
-
+    p_display = "p-value") %>%
+  fmt_number(columns = F_value, decimals = 3) %>%
+  fmt_markdown(columns = p_display)  %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything()) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      columns = "p_display",
+      rows = p_value < 0.05)
+  )
 
 # Summary of variation for each dimension in each species
   ## 
@@ -547,31 +550,33 @@ table_basin <- geo.df %>%
   group_by(Species, Basin) %>%
   summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
             var_dim2 = var(Dim.2, na.rm = TRUE),
-            var_dim3 = var(Dim.3, na.rm = TRUE),
             .groups = "drop") %>%
-  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2, var_dim3)) 
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2)) 
 
-table_basin %>%
+var.geo.basin <- table_basin %>%
   gt()  %>%
   cols_label(var_dim1_p.latipinna = "Sailfin", var_dim1_p.formosa = "Amazon",
-             var_dim2_p.latipinna = "Sailfin", var_dim2_p.formosa = "Amazon",
-             var_dim3_p.latipinna = "Sailfin", var_dim3_p.formosa = "Amazon") %>%
-  tab_spanner(label = "Dimension 1", columns = c(var_dim1_p.latipinna, var_dim1_p.formosa)) %>%
-  tab_spanner(label = "Dimension 2", columns = c(var_dim2_p.latipinna, var_dim2_p.formosa)) %>%
-  tab_spanner(label = "Dimension 3", columns = c(var_dim3_p.latipinna, var_dim3_p.formosa)) %>%
-  fmt_scientific(columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa","var_dim2_p.latipinna", "var_dim2_p.formosa", "var_dim3_p.latipinna", "var_dim3_p.formosa"), decimals = 2) %>%
+             var_dim2_p.latipinna = "Sailfin", var_dim2_p.formosa = "Amazon") %>%
+  tab_spanner(label = "PC1", columns = c(var_dim1_p.latipinna, var_dim1_p.formosa)) %>%
+  tab_spanner(label = "PC2", columns = c(var_dim2_p.latipinna, var_dim2_p.formosa)) %>%
+  fmt_scientific(columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa","var_dim2_p.latipinna", "var_dim2_p.formosa"), decimals = 2) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(Basin, var_dim1_p.formosa, var_dim2_p.formosa))) %>%
+    locations = cells_body(columns = c(Basin, var_dim1_p.formosa))) %>%
   tab_style(style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
-            locations = cells_column_labels(columns = c("var_dim1_p.formosa", "var_dim2_p.formosa"))) %>% 
+            locations = cells_column_labels(columns = c("var_dim1_p.formosa"))) %>% 
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
-    locations = cells_column_spanners(spanners = c("Dimension 1", "Dimension 2"))) %>%
+    locations = cells_column_spanners(spanners = c("PC1"))) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
-    locations = cells_body(columns = c("var_dim1_p.latipinna", "var_dim2_p.latipinna", "var_dim3_p.latipinna"))
-  )
+    locations = cells_body(columns = c("var_dim1_p.latipinna", "var_dim2_p.latipinna"))) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything())
+
+var.geo.basin
+
+gtsave(var.geo.basin, "TB8_var-geo-basin.png")
 
 
 ```
@@ -614,18 +619,7 @@ ggplot(geo.df, aes(x = Species, y = Dim.2, fill = Species)) +
                     values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
                     labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
 
-ggplot(geo.df, aes(x = Species, y = Dim.3, fill = Species)) +
-  geom_rect(data = basin_backgrounds %>% filter(fill_color == "lightgray"), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
-  geom_boxplot() +
-  facet_wrap(~ Basin) +
-  theme_classic() + theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
-  ) + xlab("") +
-  ylab("PC3") +
-  scale_fill_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
+
 
 
 ```
@@ -634,15 +628,15 @@ ggplot(geo.df, aes(x = Species, y = Dim.3, fill = Species)) +
 
 ## **Summary: Part I**
 
-As expected, we see that Amazons are intermediate to both parents in overall shape. This is most evident in PC1, but in PC 2 & 3, there is a lot of overlap between the species. This is likely due to PC 2 & 3 explaining much less variation, so there is less that distinguishes the groups. 
+As expected, we see that Amazons are intermediate to both parents in overall shape. This is most evident in PC1, but in PC 2, there is a lot of overlap between the species. This is likely due to PC 2 explaining much less variation, so there is less that distinguishes the groups. 
 
-When we perform our Levene's test, we see that there is no significant difference in variation among the species for PC1, but there is a significant difference for PC2 (p=0.0006) and PC3 (p=0.0135). Landmarks 3 (x-coor), 9 (x-coor), and 10 (y-coor) all load heavily on PC2, which correspond to dorsal position and body depth. We see that sailfins contain significantly more variation than Amazons and more variation (NS) than Atlantics for PC2 (note: PC1 included in table but only PC2 had significant difference). For PC3, it is only landmark 2 that loads heavily, which could correspond to head depth. Here we see that Amazons are significantly more variable than sailfin mollies, and more variable (NS) than Atlantics. 
+When we perform our Levene's test, we see that there is no significant difference in variation among the species for PC1, but there is a significant difference for PC2 (p=0.0006). Landmarks 3 (x-coor), 9 (x-coor), and 10 (y-coor) all load heavily on PC2, which correspond to dorsal position and body depth. We see that sailfins contain significantly more variation than Amazons and more variation (NS) than Atlantics for PC2 (note: PC1 included in table but only PC2 had significant difference). 
 
-It is good to remember though, that while PC 2 & 3 shows significant differences in PC shape variation, and interesting results regarding Amazons varying more than parentals, these PCs explain much less variation than PC1, which shows no significant difference. 
+It is good to remember though, that while PC 2 shows significant differences in PC shape variation,this PC explains much less variation than PC1, which shows no significant difference. 
 
 ***
 
-Previous results are echoed in the geographic analysis, regardless of whether 'zones' or 'basins' was selected as the geographic characteristic. PC1 was not different between species across zones (p=0.223) or basins (p=0.182). PC2 and PC3 were significantly different between species across both zones (PC2: p<0.001; PC3: p=0.020) and basins (PC2: p<0.001; PC3: p=0.001). For zones, sailfin mollies contained more variation than Amazons in all zones for PC2 but only in zone 4 in PC3. For basins, sailfins contained more variation than Amazons in all river basins for PC2 and in 2 of the 4 river basins in PC3 (note: one river basin only contained sailfins). 
+Previous results are echoed in the geographic analysis, regardless of whether 'zones' or 'basins' was selected as the geographic characteristic. PC1 was not different between species across zones (p=0.223) or basins (p=0.182). PC2 was significantly different between species across both zones (p<0.001) and basins (p<0.001). For zones, sailfin mollies contained more variation than Amazons in all zones for PC2. For basins, sailfins contained more variation than Amazons in all river basins for PC2 (note: one river basin only contained sailfins). 
 
 
 ***
@@ -667,10 +661,10 @@ dig.meas <- data.frame(
   First.landmark = c("LM1", "LM3", "LM3", "LM5", "LM6", "LM1", "LM3", "LM1", "LM2", "LM2", "LM1", "LM15"),
   Second.landmark= c("LM6", "LM10", "LM11", "LM7", "LM8", "LM3", "LM4", "LM2", "LM11", "LM12", "LM15", "LM16"))
 
-dig.meas %>%
+landmark.tbl <-dig.meas %>%
   gt() %>%
   cols_label(
-    type = "", 
+    type = "Trait", 
     First.landmark = "First Landmark", 
     Second.landmark = "Second Landmark") %>%
   tab_style(
@@ -681,11 +675,13 @@ dig.meas %>%
     locations = cells_body(columns = type)) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
-    locations = cells_body(columns = c(First.landmark, Second.landmark))) %>%
+    locations = cells_body(columns = c(First.landmark))) %>%
   cols_align(
     align = "center",
     columns = everything())
+landmark.tbl
 
+gtsave(landmark.tbl, "TB3_landmark-table.png")
 
 ```
 
@@ -1444,27 +1440,39 @@ ba_stats_all <- df_wide_fin %>%
                      " (", round(stats$biasLowerCI,3),
                      ", ", round(stats$biasUpperCI,3), ")"),
     LOA_range = paste0(round(stats$lowerLOA,3), " to ", round(stats$upperLOA,3))) %>%
+    mutate(p_display = case_when(
+    p_value < 0.001 ~ "*p* < 0.001^*^",
+    p_value < 0.05  ~ paste0(sprintf("%.3f", p_value), "^*^"),
+    TRUE            ~ sprintf("%.3f", p_value))) %>%
   ungroup() 
 
-ba_stats_all %>%
-  select(characteristic, t_value, p_value, bias_CI, LOA_range) %>%
+ba.stats.char <- ba_stats_all %>%
+  select(characteristic, t_value, p_value, p_display, bias_CI, LOA_range) %>%
   gt() %>%
+  cols_hide(columns = p_value) %>%
   tab_header(title = "Bland–Altman Statistics by Trait") %>%
   cols_label(
     characteristic = "Trait",
     t_value = "t value",
-    p_value = "p-value",
+    p_display = "p-value",
     bias_CI = "Bias (CI)",
     LOA_range = "Limit of Agreement Range") %>%
-  fmt_number(columns = c(t_value, p_value), decimals = 3) %>%
-  fmt(columns = c("p_value"), fns = function(x) {  
-    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))}) %>%
+  fmt_markdown(columns = p_display) %>%
+  fmt_number(columns = c(t_value), decimals = 3) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(characteristic, t_value, p_value, bias_CI))) %>%
+    locations = cells_body(columns = c(characteristic, t_value, p_display, bias_CI))) %>%
   cols_align(
     align = "center",
-    columns = everything())
+    columns = everything()) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      columns = "p_display",
+      rows = p_value < 0.05))
+ba.stats.char
+
+gtsave(ba.stats.char, "TB9_ba-stats-char.png")
 
 ```
 
@@ -1606,38 +1614,35 @@ zw.man <- z.wide %>%
   filter(Method == "Manual")
 
 
-pc1 <- t.test(zw.dig$Dim.1, zw.man$Dim.1, paired= TRUE, alternative = "two.sided") # Not signficant (p=1)
+meth.pc1 <- t.test(zw.dig$Dim.1, zw.man$Dim.1, paired= TRUE, alternative = "two.sided") # Not signficant (p=1)
 
-pc2 <- t.test(zw.dig$Dim.2, zw.man$Dim.2, paired= TRUE, alternative = "two.sided") # Not significant (p=1)
+meth.pc2 <- t.test(zw.dig$Dim.2, zw.man$Dim.2, paired= TRUE, alternative = "two.sided") # Not significant (p=1)
 
 
 # Will display results in a table
 
 ttest_result <- tibble(
+  Classifier = "T-test", #for combining tables later
   Dimension = c("PC1", "PC2"),
-  t_value = c(pc1$statistic[1], pc2$statistic[1]),
-  p_value = c(pc1$p.value[1], pc2$p.value[1])
+  t_value = c(meth.pc1$statistic[1], meth.pc2$statistic[1]),
+  p_value = c(meth.pc1$p.value[1], meth.pc2$p.value[1])
 ) %>%
-  mutate(Significance = case_when(
-    p_value < 0.001 ~ "***",
-    p_value < 0.01 ~ "**",
-    p_value < 0.05 ~ "*",
-    TRUE ~ "ns"
-  ))
+  mutate(p_display = if_else(
+      p_value < 0.001,
+      "*p* < 0.001^*^",
+      sprintf("%.3f", p_value)))
 
 ttest_result %>%
   gt() %>%
+  cols_hide(columns = c(Classifier, p_value)) %>%
   cols_label(
     Dimension = "Dimension",
     t_value = "t-value",
-    p_value = "p-value",
-    Significance = "Significance") %>%
+    p_display = "p-value") %>%
   fmt_number(columns = c("t_value"), decimals = 3) %>%
-  fmt(columns = c(p_value), fns = function(x) {  
-    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))}) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
-    locations = cells_body(columns = c(Dimension, t_value, p_value, Significance)))
+    locations = cells_body(columns = c(Dimension, t_value)))
 
 
 
@@ -1651,36 +1656,33 @@ No significant differences.
 
 ```{r}
 
-pc1V <- leveneTest(Dim.1~Method, data=z.wide) # Not significant (p=0.96)
-pc2V <- leveneTest(Dim.2~Method, data=z.wide) # Not significant (p=0.18)
+meth.pc1V <- leveneTest(Dim.1~Method, data=z.wide) # Not significant (p=0.96)
+meth.pc2V <- leveneTest(Dim.2~Method, data=z.wide) # Not significant (p=0.18)
 
 # Will display results in a table
 
-levenes_result <- tibble(
+levenes_result_meth <- tibble(
+  Classifier = "Levene's Test",
   Dimension = c("PC1", "PC2"),
-  F_value = c(pc1V$`F value`[1], pc2V$`F value`[1]),
-  p_value = c(pc1V$`Pr(>F)`[1], pc2V$`Pr(>F)`[1])
+  F_value = c(meth.pc1V$`F value`[1], meth.pc2V$`F value`[1]),
+  p_value = c(meth.pc1V$`Pr(>F)`[1], meth.pc2V$`Pr(>F)`[1])
 ) %>%
-  mutate(Significance = case_when(
-    p_value < 0.001 ~ "***",
-    p_value < 0.01 ~ "**",
-    p_value < 0.05 ~ "*",
-    TRUE ~ "ns"
-  ))
+  mutate(p_display = if_else(
+      p_value < 0.001,
+      "*p* < 0.001^*^",
+      sprintf("%.3f", p_value)))
 
-levenes_result %>%
+levenes_result_meth %>%
   gt() %>%
+  cols_hide(columns = c(Classifier, p_value)) %>%
   cols_label(
     Dimension = "Dimension",
     F_value = "F-value",
-    p_value = "p-value",
-    Significance = "Significance") %>%
+    p_display = "p-value") %>%
   fmt_number(columns = c("F_value"), decimals = 3) %>%
-  fmt(columns = c(p_value), fns = function(x) {  
-    ifelse(x < 0.001, "p < 0.001", formatC(x, format = "f", digits = 3))}) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
-    locations = cells_body(columns = c(Dimension, F_value, p_value, Significance)))
+    locations = cells_body(columns = c(Dimension, F_value)))
 
 
 ```
@@ -1715,3 +1717,78 @@ Overall, we conclude there is no practical difference between manual and digital
 ***
 
 
+# Additional Figures & Tables
+
+Below are additional figures and tables used in the publication.
+
+## Part 1
+
+```{r}
+# COMBINED ZONE AND BASIN LEVENE'S RESULTS
+
+levene_combined <- bind_rows(zone_result, basin_result)
+
+levene.geo.results <- levene_combined %>%
+  gt() %>%
+  cols_hide(columns = "p_value") %>%
+  cols_label(
+    Classifier = "Classifier",
+    Dimension = "Dimension",
+    F_value = "F-value",
+    p_display = "p-value"
+  ) %>%
+  fmt_markdown(columns = p_display) %>%
+  fmt_number(columns = c("F_value"), decimals = 3)  %>%
+  opt_horizontal_padding(scale = 2) %>%
+  cols_align(align = "center", everything()) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      columns = "p_display",
+      rows = p_value < 0.05)) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Classifier, Dimension, F_value)))
+
+levene.geo.results
+
+gtsave(levene.geo.results, "TB6_levene-geo-results.png")
+
+```
+
+
+## Part 2
+
+```{r}
+post.pca.combo <- bind_rows(ttest_result, levenes_result_meth) %>%
+ mutate(Test_Statistic = case_when(
+      Classifier == "T-test"       ~ paste0("t = ", sprintf("%.3f", t_value)),   
+      Classifier == "Levene's Test" ~ paste0("F = ", sprintf("%.3f", F_value))))
+
+post.pca.tbl <- post.pca.combo %>%
+  gt() %>%
+  cols_hide(columns = c("F_value", "t_value", "p_value")) %>%
+  cols_move_to_start(columns = c(Classifier, Dimension, Test_Statistic)) %>%
+  cols_label(
+    Classifier = "Test type",
+    Dimension = "Dimension",
+    Test_Statistic = "Test statistic",
+    p_display = "p-value") %>%
+  fmt_markdown(columns = p_display) %>%
+  opt_horizontal_padding(scale = 2) %>%
+  cols_align(align = "center", everything()) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      columns = "p_display",
+      rows = p_value < 0.05)) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Classifier, Dimension, Test_Statistic)))
+
+post.pca.tbl
+
+gtsave(post.pca.tbl, "TB10_post-pca-methods.png")
+
+
+```
