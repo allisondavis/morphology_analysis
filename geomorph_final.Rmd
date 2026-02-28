@@ -94,7 +94,7 @@ test.df <- read.table(test.df, header = TRUE, sep = "\t")
 # Replace HydroBASIN basin codes with basin names
 test.df$Basin <- factor(test.df$Basin,
                         levels = c("7040048420", "7040049270", "7040048310", "7040049990", "7040049280"),
-                        labels = c("Nueces-Rio Grande Costal", "Rio Grande", "Brazos-Colorado Costal", "Panuco", "San Fernando-Soto la Marina"))
+                        labels = c("Nueces-Rio Grande Coastal", "Rio Grande", "Brazos-Colorado Coastal", "Panuco", "San Fernando-Soto la Marina"))
 
 # Replace default residual column names with the corresponding landmark (x,y). This will make it easier to interpret which size-corrected shape coordinates influence our results later on.
 
@@ -209,7 +209,7 @@ var.PCA.spp <- test.df %>%
     Species == "p.latipinna" ~ "Sailfin molly",
     Species == "p.formosa" ~ "Amazon molly",
     Species == "p.mexicana" ~ "Atlantic molly")) %>%
-  gt() %>% tab_header(title = "Variation of Pricipal Components 1 & 2") %>%
+  gt() %>% tab_header(title = "Variation of Principal Components 1 & 2") %>%
   cols_label(Species = "Species",
              var_dim1 = "PC1",
              var_dim2 = "PC2") %>%
@@ -223,6 +223,7 @@ var.PCA.spp <- test.df %>%
 var.PCA.spp
 
 gtsave(var.PCA.spp, "TB5_var-pca-spp.png")
+gtsave(var.PCA.spp, "TB5_var-pca-spp.rtf")
 
 # pairwise comparisons for significant dimensions
   ## Only significant pairwise comparison (even after Holms correction) is between Amazon's and Sailfins for both PC2 and PC3
@@ -336,6 +337,7 @@ pairwise.results <- PW_results %>%
 pairwise.results
 
 gtsave(pairwise.results, "TB4_pairwise-results.png")
+gtsave(pairwise.results, "TB4_pairwise-results.rtf")
 
 ```
 
@@ -345,28 +347,25 @@ gtsave(pairwise.results, "TB4_pairwise-results.png")
 
 
 
-plot1<- autoplot(PCA.test, data = test.df, colour="Species", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
+plot1<- autoplot(PCA.test, data = test.df, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
   scale_color_manual(name="Species",
                     values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
                     labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) +
   scale_fill_manual(name="Species",
                     values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) + 
+                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) +
+  scale_shape_manual(name= 'Species', 
+                     values = c("p.latipinna" = 17, "p.formosa"=16, "p.mexicana"=3),
+                     labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) +
    guides(fill = guide_legend(override.aes = list(fill = NA)))+
   ggtitle("PCA Plot of Morphology traits") + theme_classic() 
 plot1
 
+#ggsave(plot1, filename = "Figure_4b_PCA-spp.pdf")
+ggsave(plot1, filename = "Fig4b_PCA-spp.png")
 
 
-plot2<- autoplot(PCA.test, x=2, y=3, data = test.df, colour='Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) +
-  scale_fill_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00", "p.mexicana"="#9986A5"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly", "p.mexicana"= "Atlantic molly")) + 
-   guides(fill = guide_legend(override.aes = list(fill = NA)))+
-  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-plot2
+
 
 
 
@@ -431,7 +430,7 @@ table_zone <- geo.df %>%
   summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
             var_dim2 = var(Dim.2, na.rm = TRUE),
             .groups = "drop") %>%
-  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2)) 
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2))
 
 var.geo.zone <- table_zone %>%
   gt()  %>%
@@ -464,40 +463,43 @@ gtsave(var.geo.zone, "TB7_var-geo-zone.png")
 
 ```{r}
 
-# Define the zone backgrounds (alternating light gray)
-zone_backgrounds <- data.frame(
-  Zone = c("Z1", "Z2", "Z3", "Z4"),
-  fill_color = c("white", "lightgray", "lightgray", "white")
-)
+geo_long <- geo.df %>%
+  pivot_longer(cols = c(Dim.1, Dim.2),
+               names_to = "PC",
+               values_to = "Value") %>%
+  mutate(PC = factor(PC, levels = c("Dim.1", "Dim.2"),
+                     labels = c("PC1", "PC2")),
+         Zone = factor(Zone, levels = c("Z1","Z2","Z3","Z4"),
+                      labels = c("Zone 1","Zone 2","Zone 3","Zone 4")))
 
-ggplot(geo.df, aes(x = Species, y = Dim.1, fill = Species)) +
-  geom_rect(data = zone_backgrounds %>% filter(Zone %in% c("Z2", "Z3")), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
-  geom_boxplot() +
-  facet_wrap(~ Zone) +
-  theme_classic() + theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
-  ) +
+
+zone_backgrounds <- geo_long %>%
+  filter(Zone %in% c("Z2","Z4")) %>%
+  distinct(PC, Zone)
+
+zones.plot <- ggplot(geo_long, aes(x = Species, y = Value, fill = Species)) +
+  geom_rect(data = zone_backgrounds,
+            aes(xmin = 0.5, xmax = 2.5, ymin = -Inf, ymax = Inf),
+            inherit.aes = FALSE,
+            fill = "lightgray", alpha = 0.3) +
+  geom_boxplot(show.legend = FALSE) +
+  facet_grid(PC ~ Zone, scales = "free_y", switch = "y") +
+  scale_x_discrete(labels = c("p.latipinna" = "Sailfin \nmolly",
+                              "p.formosa" = "Amazon \nmolly")) +
+  scale_fill_manual(values = c("p.latipinna"="#78B7C5",
+                               "p.formosa"="#E1AF00")) +
+  theme_classic() +
+  theme(
+    strip.placement = "outside",
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    panel.spacing.y = unit(1.5, "lines")) +
   xlab("") +
-  ylab("PC1") +
-  scale_fill_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
+  ylab("")
 
-ggplot(geo.df, aes(x = Species, y = Dim.2, fill = Species)) +
-  geom_rect(data = zone_backgrounds %>% filter(Zone %in% c("Z2", "Z3")), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
-  geom_boxplot() +
-  facet_wrap(~ Zone) +
-  theme_classic() + theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
-  ) + 
-  xlab("") +
-  ylab("PC2") +
-  scale_fill_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
+zones.plot
 
+ggsave(zones.plot, filename = "Fig5a_zones.png")
 
 ```
 
@@ -540,8 +542,7 @@ basin_result %>%
     style = cell_text(weight = "bold"),
     locations = cells_body(
       columns = "p_display",
-      rows = p_value < 0.05)
-  )
+      rows = p_value < 0.05))
 
 # Summary of variation for each dimension in each species
   ## 
@@ -551,7 +552,7 @@ table_basin <- geo.df %>%
   summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
             var_dim2 = var(Dim.2, na.rm = TRUE),
             .groups = "drop") %>%
-  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2)) 
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2))
 
 var.geo.basin <- table_basin %>%
   gt()  %>%
@@ -584,43 +585,39 @@ gtsave(var.geo.basin, "TB8_var-geo-basin.png")
 ##### *Plots*
 
 ```{r}
+geo_long2 <- geo_long %>%
+  filter(Basin != "Brazos-Colorado Coastal") %>%
+  mutate(Basin = factor(Basin,
+                        levels = unique(Basin),
+                        labels = c("Nueces-Rio Grande \nCoastal", "Rio Grande", "Panuco", "San Fernando-Soto \nla Marina")))
 
-# Define alternating background colors for basins
-basin_backgrounds <- data.frame(
-  Basin = factor(c("Nueces-Rio Grande Costal", "Rio Grande", "Brazos-Colorado Costal", "Panuco", "San Fernando-Soto la Marina")),
-  fill_color = rep(c("white", "lightgray"), length.out = 5)  # Alternating colors
-)
+basin_backgrounds <- geo_long2 %>%
+  filter(Basin %in% c("Rio Grande","San Fernando-Soto \nla Marina")) %>%
+  distinct(PC, Basin)
 
+basins.plot <- ggplot(geo_long2, aes(x = Species, y = Value, fill = Species)) +
+  geom_rect(data = basin_backgrounds,
+            aes(xmin = 0.5, xmax = 2.5, ymin = -Inf, ymax = Inf),
+            inherit.aes = FALSE,
+            fill = "lightgray", alpha = 0.3) +
+  geom_boxplot(show.legend = FALSE) +
+  facet_grid(PC ~ Basin, scales = "free_y", switch = "y") +
+  scale_x_discrete(labels = c("p.latipinna" = "Sailfin \nmolly",
+                              "p.formosa" = "Amazon \nmolly")) +
+  scale_fill_manual(values = c("p.latipinna"="#78B7C5",
+                               "p.formosa"="#E1AF00")) +
+  theme_classic() +
+  theme(
+    strip.placement = "outside",
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    panel.spacing.y = unit(1.5, "lines")) +
+  xlab("") +
+  ylab("")
 
+basins.plot
 
-ggplot(geo.df, aes(x = Species, y = Dim.1, fill = Species)) +
-  geom_rect(data = basin_backgrounds %>% filter(fill_color == "lightgray"), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
-  geom_boxplot() +
-  facet_wrap(~ Basin) +
-  theme_classic() + theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
-  ) + xlab("") +
-  ylab("PC1") +
-  scale_fill_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
-
-ggplot(geo.df, aes(x = Species, y = Dim.2, fill = Species)) +
-  geom_rect(data = basin_backgrounds %>% filter(fill_color == "lightgray"), aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf), fill="lightgray", alpha = 0.3, inherit.aes = FALSE) + 
-  geom_boxplot() +
-  facet_wrap(~ Basin) +
-  theme_classic() + theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
-  ) + xlab("") +
-  ylab("PC2") +
-  scale_fill_manual(name="Species",
-                    values = c("p.latipinna"="#78B7C5", "p.formosa"="#E1AF00"),
-                    labels= c("p.latipinna"="Sailfin molly", "p.formosa"= "Amazon molly"))
-
-
-
+ggsave(basins.plot, filename = "Fig5b_basins.png")
 
 ```
 
@@ -720,103 +717,58 @@ manual <- raw %>%
 
 All but OL fail the Shapiro-Wilk test with a slight skew/deviation to the right.
 
-```{r}
+```{r, fig.width=10, fig.height=25}
+vars.dig <- c("SL.dig","BD1.dig", "BD2.dig","CPD.dig","CPL.dig","PreDL.dig",
+              "DbL.dig","HL.dig","HD1.dig", "HD2.dig","SnL.dig","OL.dig")
 
 ##### Shapiro-Wilk test #####
-shapiro.test(digital$SL)
+shapiro.results.dig <- data.frame(
+  Variable = character(),
+  W = numeric(),
+  p.value = numeric(),
+  stringsAsFactors = FALSE)
 
-shapiro.test(digital$BD1)
+for(v in vars.dig){
+  x <- digital[[v]]
+  
+  
+    test <- shapiro.test(x)
+    shapiro.results.dig <- rbind(shapiro.results.dig,
+                             data.frame(Variable = v,
+                                        W = test$statistic,
+                                        p.value = test$p.value))}
 
-shapiro.test(digital$BD2)
 
-shapiro.test(digital$CPD)
+shapiro.results.dig
 
-shapiro.test(digital$CPL)
-
-shapiro.test(digital$PreDL)
-
-shapiro.test(digital$DbL)
-
-shapiro.test(digital$HL)
-
-shapiro.test(digital$HD1)
-
-shapiro.test(digital$HD2)
-
-shapiro.test(digital$SnL)
-
-shapiro.test(digital$OL)
 
 ##### Histograms #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(6, 2),   
+    mar = c(4,4,2,1))
 
-hist(digital$SL, breaks=30)
-
-hist(digital$BD1, breaks=30)
-
-hist(digital$BD2, breaks=30)
-
-hist(digital$CPD, breaks=30)
-
-hist(digital$CPL, breaks=30)
-
-hist(digital$PreDL, breaks=30)
-
-hist(digital$DbL, breaks=30)
-
-hist(digital$HL, breaks=30)
-
-hist(digital$HD1, breaks=30)
-
-hist(digital$HD2, breaks=30)
-
-hist(digital$SnL, breaks=30)
-
-hist(digital$OL, breaks=30)
+for(v in vars.dig){
+  
+  hist(digital[[v]],
+       main = paste("Histogram of", v),
+       xlab = v,
+       breaks = 30,
+       col = "gray80",
+       border = "black")}
 
 
 ##### QQ plots #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(6, 2),   
+    mar = c(4,4,2,1))
 
-qqnorm(digital$SL)
-qqline(digital$SL)
-
-qqnorm(digital$BD1)
-qqline(digital$BD1)
-
-qqnorm(digital$BD2)
-qqline(digital$BD2)
-
-qqnorm(digital$CPD)
-qqline(digital$CPD)
-
-qqnorm(digital$CPL)
-qqline(digital$CPL)
-
-qqnorm(digital$PreDL)
-qqline(digital$PreDL)
-
-qqnorm(digital$DbL)
-qqline(digital$DbL)
-
-qqnorm(digital$HL)
-qqline(digital$HL)
-
-qqnorm(digital$HD1)
-qqline(digital$HD1)
-
-qqnorm(digital$HD2)
-qqline(digital$HD2)
-
-qqnorm(digital$SnL)
-qqline(digital$SnL)
-
-qqnorm(digital$OL)
-qqline(digital$OL)
-
-
+for(v in vars.dig){
+  x <- digital[[v]]
+  
+ qqnorm(x,
+         main = paste("QQ Plot of", v),
+         pch = 16, cex = 0.6)
+  qqline(x, lwd = 1.5)}
 
 ```
 
@@ -825,87 +777,59 @@ qqline(digital$OL)
 
 All fail the SW test, with a slight skew/deviation to the right. 
 
-```{r}
+```{r, fig.width=10, fig.height=25}
+
+vars.man <- c("SL.man","BD1.man","CPD.man","CPL.man","PreDL.man",
+              "DbL.man","HL.man","HD1.man","SnL.man","OL.man")
 
 ##### Shapiro-Wilk test #####
-shapiro.test(manual$SL)
+shapiro.results.man <- data.frame(
+  Variable = character(),
+  W = numeric(),
+  p.value = numeric(),
+  stringsAsFactors = FALSE)
 
-shapiro.test(manual$BD1)
+for(v in vars.man){
+  x <- manual[[v]]
+  
+  
+    test <- shapiro.test(x)
+    shapiro.results.man <- rbind(shapiro.results.man,
+                             data.frame(Variable = v,
+                                        W = test$statistic,
+                                        p.value = test$p.value))}
 
-shapiro.test(manual$CPD)
 
-shapiro.test(manual$CPL)
+shapiro.results.man
 
-shapiro.test(manual$PreDL)
-
-shapiro.test(manual$DbL)
-
-shapiro.test(manual$HL)
-
-shapiro.test(manual$HD1)
-
-shapiro.test(manual$SnL)
-
-shapiro.test(manual$OL)
 
 ##### Histograms #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(5, 2),   
+    mar = c(4,4,2,1))
 
-hist(manual$SL, breaks=30)
-
-hist(manual$BD1, breaks=30)
-
-hist(manual$CPD, breaks=30)
-
-hist(manual$CPL, breaks=30)
-
-hist(manual$PreDL, breaks=30)
-
-hist(manual$DbL, breaks=30)
-
-hist(manual$HL, breaks=30)
-
-hist(manual$HD1, breaks=30)
-
-hist(manual$SnL, breaks=30)
-
-hist(manual$OL, breaks=30)
+for(v in vars.man){
+  
+  hist(manual[[v]],
+       main = paste("Histogram of", v),
+       xlab = v,
+       breaks = 30,
+       col = "gray80",
+       border = "black")}
 
 
 ##### QQ plots #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(5, 2),   
+    mar = c(4,4,2,1))
 
-qqnorm(manual$SL)
-qqline(manual$SL)
-
-qqnorm(manual$BD1)
-qqline(manual$BD1)
-
-qqnorm(manual$CPD)
-qqline(manual$CPD)
-
-qqnorm(manual$CPL)
-qqline(manual$CPL)
-
-qqnorm(manual$PreDL)
-qqline(manual$PreDL)
-
-qqnorm(manual$DbL)
-qqline(manual$DbL)
-
-qqnorm(manual$HL)
-qqline(manual$HL)
-
-qqnorm(manual$HD1)
-qqline(manual$HD1)
-
-qqnorm(manual$SnL)
-qqline(manual$SnL)
-
-qqnorm(manual$OL)
-qqline(manual$OL)
+for(v in vars.man){
+  x <- manual[[v]]
+  
+ qqnorm(x,
+         main = paste("QQ Plot of", v),
+         pch = 16, cex = 0.6)
+  qqline(x, lwd = 1.5)}
 
 
 
@@ -931,101 +855,55 @@ man_trans[, c(3:12)] <- log(man_trans[, c(3:12)])
 
 ##### *Digital Recheck*
 
-```{r}
+```{r, fig.width=10, fig.height=25}
 ##### Shapiro-Wilk test #####
-shapiro.test(dig_trans$SL)
+shapiro.results.dig2 <- data.frame(
+  Variable = character(),
+  W = numeric(),
+  p.value = numeric(),
+  stringsAsFactors = FALSE)
 
-shapiro.test(dig_trans$BD1)
+for(v in vars.dig){
+  x <- dig_trans[[v]]
+  
+  
+    test <- shapiro.test(x)
+    shapiro.results.dig2 <- rbind(shapiro.results.dig2,
+                             data.frame(Variable = v,
+                                        W = test$statistic,
+                                        p.value = test$p.value))}
 
-shapiro.test(dig_trans$BD2)
 
-shapiro.test(dig_trans$CPD)
+shapiro.results.dig2
 
-shapiro.test(dig_trans$CPL)
-
-shapiro.test(dig_trans$PreDL)
-
-shapiro.test(dig_trans$DbL)
-
-shapiro.test(dig_trans$HL)
-
-shapiro.test(dig_trans$HD1)
-
-shapiro.test(dig_trans$HD2)
-
-shapiro.test(dig_trans$SnL)
-
-shapiro.test(dig_trans$OL)
 
 ##### Histograms #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(6, 2),   
+    mar = c(4,4,2,1))
 
-hist(dig_trans$SL, breaks=30)
-
-hist(dig_trans$BD1, breaks=30)
-
-hist(dig_trans$BD2, breaks=30)
-
-hist(dig_trans$CPD, breaks=30)
-
-hist(dig_trans$CPL, breaks=30)
-
-hist(dig_trans$PreDL, breaks=30)
-
-hist(dig_trans$DbL, breaks=30)
-
-hist(dig_trans$HL, breaks=30)
-
-hist(dig_trans$HD1, breaks=30)
-
-hist(dig_trans$HD2, breaks=30)
-
-hist(dig_trans$SnL, breaks=30)
-
-hist(dig_trans$OL, breaks=30)
+for(v in vars.dig){
+  
+  hist(dig_trans[[v]],
+       main = paste("Histogram of", v),
+       xlab = v,
+       breaks = 30,
+       col = "gray80",
+       border = "black")}
 
 
 ##### QQ plots #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(6, 2),   
+    mar = c(4,4,2,1))
 
-qqnorm(dig_trans$SL)
-qqline(dig_trans$SL)
-
-qqnorm(dig_trans$BD1)
-qqline(dig_trans$BD1)
-
-qqnorm(dig_trans$BD2)
-qqline(dig_trans$BD2)
-
-qqnorm(dig_trans$CPD)
-qqline(dig_trans$CPD)
-
-qqnorm(dig_trans$CPL)
-qqline(dig_trans$CPL)
-
-qqnorm(dig_trans$PreDL)
-qqline(dig_trans$PreDL)
-
-qqnorm(dig_trans$DbL)
-qqline(dig_trans$DbL)
-
-qqnorm(dig_trans$HL)
-qqline(dig_trans$HL)
-
-qqnorm(dig_trans$HD1)
-qqline(dig_trans$HD1)
-
-qqnorm(dig_trans$HD2)
-qqline(dig_trans$HD2)
-
-qqnorm(dig_trans$SnL)
-qqline(dig_trans$SnL)
-
-qqnorm(dig_trans$OL)
-qqline(dig_trans$OL)
-
+for(v in vars.dig){
+  x <- dig_trans[[v]]
+  
+ qqnorm(x,
+         main = paste("QQ Plot of", v),
+         pch = 16, cex = 0.6)
+  qqline(x, lwd = 1.5)}
 
 
 ```
@@ -1033,86 +911,57 @@ qqline(dig_trans$OL)
 
 ##### *Manual Recheck*
 
-```{r}
+```{r, fig.width=10, fig.height=25}
 ##### Shapiro-Wilk test #####
-shapiro.test(man_trans$SL)
+shapiro.results.man2 <- data.frame(
+  Variable = character(),
+  W = numeric(),
+  p.value = numeric(),
+  stringsAsFactors = FALSE)
 
-shapiro.test(man_trans$BD1)
+for(v in vars.man){
+  x <- man_trans[[v]]
+  
+  
+    test <- shapiro.test(x)
+    shapiro.results.man2 <- rbind(shapiro.results.man2,
+                             data.frame(Variable = v,
+                                        W = test$statistic,
+                                        p.value = test$p.value))}
 
-shapiro.test(man_trans$CPD)
 
-shapiro.test(man_trans$CPL)
+shapiro.results.man2
 
-shapiro.test(man_trans$PreDL)
-
-shapiro.test(man_trans$DbL)
-
-shapiro.test(man_trans$HL)
-
-shapiro.test(man_trans$HD1)
-
-shapiro.test(man_trans$SnL)
-
-shapiro.test(man_trans$OL)
 
 ##### Histograms #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(5, 2),   
+    mar = c(4,4,2,1))
 
-hist(man_trans$SL, breaks=30)
-
-hist(man_trans$BD1, breaks=30)
-
-hist(man_trans$CPD, breaks=30)
-
-hist(man_trans$CPL, breaks=30)
-
-hist(man_trans$PreDL, breaks=30)
-
-hist(man_trans$DbL, breaks=30)
-
-hist(man_trans$HL, breaks=30)
-
-hist(man_trans$HD1, breaks=30)
-
-hist(man_trans$SnL, breaks=30)
-
-hist(man_trans$OL, breaks=30)
+for(v in vars.man){
+  
+  hist(man_trans[[v]],
+       main = paste("Histogram of", v),
+       xlab = v,
+       breaks = 30,
+       col = "gray80",
+       border = "black")}
 
 
 ##### QQ plots #####
 
-par(mfcol=c(2,2), oma = c(0,0,2,0))
+par(mfcol = c(5, 2),   
+    mar = c(4,4,2,1))
 
-qqnorm(man_trans$SL)
-qqline(man_trans$SL)
+for(v in vars.man){
+  x <- man_trans[[v]]
+  
+ qqnorm(x,
+         main = paste("QQ Plot of", v),
+         pch = 16, cex = 0.6)
+  qqline(x, lwd = 1.5)}
 
-qqnorm(man_trans$BD1)
-qqline(man_trans$BD1)
 
-qqnorm(man_trans$CPD)
-qqline(man_trans$CPD)
-
-qqnorm(man_trans$CPL)
-qqline(man_trans$CPL)
-
-qqnorm(man_trans$PreDL)
-qqline(man_trans$PreDL)
-
-qqnorm(man_trans$DbL)
-qqline(man_trans$DbL)
-
-qqnorm(man_trans$HL)
-qqline(man_trans$HL)
-
-qqnorm(man_trans$HD1)
-qqline(man_trans$HD1)
-
-qqnorm(man_trans$SnL)
-qqline(man_trans$SnL)
-
-qqnorm(man_trans$OL)
-qqline(man_trans$OL)
 
 ```
 
@@ -1287,7 +1136,9 @@ ba.HD2 <- blandr.draw(data_HD2$dig, data_HD2$man, ciDisplay = FALSE) +
 #ba.HD2
 
 
-grid.arrange(ba.BD1, ba.BD2, ba.HD1, ba.HD2)
+plots.BDHD <- grid.arrange(ba.BD1, ba.BD2, ba.HD1, ba.HD2)
+plots.BDHD
+ggsave(plots.BDHD, filename = "SFig3_BDHD-BA-plots.png")
 ```
 
 We see that BD1 has less scatter, less outside the limits of agreement (blue dashed lines; LOA) and a smaller bias compared to BD2 (red dashed line; 0.12 vs 0.36 respectively). In addition, BD2's LOA don't include 0, so BD1 is more appropriate to use. In contrast, HD1, while it has less scatter with fewer points outside the LOA, it has a bias further away from 0 compared to HD2 (red dashed line; 0.06 vs -0.008 respectively), so HD2 is more appropriate to use. 
@@ -1385,6 +1236,7 @@ ba_full_CR_fin <- blandr.draw(df_ba_fin$dig, df_ba_fin$man, ciDisplay = FALSE) +
   theme_minimal()
 
 ba_full_CR_fin
+ggsave(ba_full_CR_fin, filename= "Fig6a_BA-full.png")
 
 ```
 
@@ -1409,6 +1261,7 @@ ba_by_char_fin <- ggplot(df_ba_fin, aes(x = average, y = difference)) +
 
 
 ba_by_char_fin
+ggsave(ba_by_char_fin, filename = "Fig6b_BA-by-trait.png")
 
 ```
 
@@ -1421,7 +1274,7 @@ We can extract the important information (bias, LOAs, confidence intervals, and 
 
 
 
-### Whole dataset
+### Whole data set
 
 (bar_full <- blandr.statistics(df_wide_fin$dig, df_wide_fin$man))
 
@@ -1472,7 +1325,7 @@ ba.stats.char <- ba_stats_all %>%
       rows = p_value < 0.05))
 ba.stats.char
 
-gtsave(ba.stats.char, "TB9_ba-stats-char.png")
+gtsave(ba.stats.char, "Table7_ba-stats-char.png")
 
 ```
 
@@ -1692,9 +1545,11 @@ levenes_result_meth %>%
 
 ```{r}
 
-digVman <- autoplot(PCA_z, data = z.wide, colour="Method", loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5"))+ ggtitle("PCA Plot of Methods") + theme_classic() 
+digVman <- autoplot(PCA_z, data = z.wide, colour="Method", shape='Method', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm')+scale_color_manual(values=c("#E1AF00","#78B7C5"))+ scale_fill_manual(values=c("#E1AF00","#78B7C5"))+ scale_shape_manual(values = c(16,17)) + ggtitle("PCA Plot of Methods") + theme_classic() 
 
 digVman
+
+ggsave(digVman, filename = "Fig7_PCA-methods.png")
 
 ```
 
@@ -1752,14 +1607,217 @@ levene.geo.results <- levene_combined %>%
 
 levene.geo.results
 
-gtsave(levene.geo.results, "TB6_levene-geo-results.png")
+gtsave(levene.geo.results, "Table5_levene-geo-results.png")
 
 ```
 
 
+```{r}
+# COMBINED ZONE AND BASIN VARIATION LEVELS
+
+table_zone <- geo.df %>%
+  group_by(Species, Zone) %>%
+  summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
+            var_dim2 = var(Dim.2, na.rm = TRUE),
+            .groups = "drop") %>%
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2)) %>%
+  rename(Classifier = Zone)
+
+table_basin <- geo.df %>%
+  group_by(Species, Basin) %>%
+  summarise(var_dim1 = var(Dim.1, na.rm = TRUE),
+            var_dim2 = var(Dim.2, na.rm = TRUE),
+            .groups = "drop") %>%
+  pivot_wider(names_from = Species, values_from = c(var_dim1, var_dim2)) %>%
+  rename(Classifier = Basin)
+
+var_combined <- bind_rows(table_zone, table_basin) %>%
+  mutate(
+    Classifier = case_when(
+      grepl("^Z", Classifier) ~ sub("^Z", "Zone ", Classifier),
+      TRUE ~ Classifier))
+
+geo.variation <- var_combined %>%
+  gt() %>%
+  cols_label(
+    Classifier = "Classifier",
+    var_dim1_p.formosa = "Amazon",
+    var_dim1_p.latipinna = "Sailfin",
+    var_dim2_p.formosa = "Amazon",
+    var_dim2_p.latipinna = "Sailfin"
+  ) %>%
+  tab_spanner(label = "PC1", columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa")) %>%
+  tab_spanner(label = "PC2", columns = c("var_dim2_p.latipinna", "var_dim2_p.formosa")) %>%
+  fmt_scientific(columns = c("var_dim1_p.latipinna", "var_dim1_p.formosa", "var_dim2_p.latipinna", "var_dim2_p.formosa"), decimals = 2) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c("Classifier", "var_dim1_p.formosa"))) %>%
+  tab_style(style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+            locations = cells_column_labels(columns = c("var_dim1_p.formosa"))) %>% 
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_column_spanners(spanners = c("PC1"))) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
+    locations = cells_body(columns = c("var_dim1_p.latipinna", "var_dim2_p.latipinna"))) %>%
+  tab_style(
+  style = cell_borders(
+    sides = "bottom",
+    color = "darkgray",
+    weight = px(2.5)),
+  locations = cells_body(rows = 4)) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything())
+
+
+geo.variation
+
+gtsave(geo.variation, "Table6_geo-variation.png")
+
+```
+
 ## Part 2
 
 ```{r}
+#QQPLOTS BEFORE AND AFTER TRANSFORMATION
+
+vars.man <- c("SL.man","BD1.man","CPD.man","CPL.man","PreDL.man",
+          "DbL.man","HL.man","HD1.man","SnL.man","OL.man")
+
+tiff("QQplots-man.tiff",
+     width = 2400,
+     height = 6000,
+     res = 600,
+     compression = "lzw")
+
+par(mfcol = c(length(vars.man), 2),
+    mar = c(2,2,1,1),      # small inner margins
+    oma = c(2,12,4,1))      # outer margins (left + top space)
+
+for(i in seq_along(vars.man)){
+  
+  v <- vars.man[i]
+  
+  x1 <- manual[[v]]
+  x2 <- man_trans[[v]]
+  
+  p1 <- shapiro.test(x1)$p.value
+  p2 <- shapiro.test(x2)$p.value
+  
+  ## Original
+  qqnorm(x1, main="", pch=16, cex=0.6)
+  qqline(x1, lwd=1.5)
+  
+  usr <- par("usr")
+
+x_pos <- usr[2] - 0.05 * (usr[2] - usr[1])  # 5% inward from right
+y_pos <- usr[3] + 0.05 * (usr[4] - usr[3])  # 5% upward from bottom
+
+text(x_pos, y_pos,
+     labels = paste0("p = ", format.pval(p1, digits=3)),
+     adj = c(1,0),
+     cex = 0.8)
+  
+  ## Transformed
+  qqnorm(x2, main="", pch=16, cex=0.6)
+  qqline(x2, lwd=1.5)
+
+  usr <- par("usr")
+
+x_pos <- usr[2] - 0.05 * (usr[2] - usr[1])  # 5% inward from right
+y_pos <- usr[3] + 0.05 * (usr[4] - usr[3])  # 5% upward from bottom
+
+text(x_pos, y_pos,
+     labels = paste0("p = ", format.pval(p1, digits=3)),
+     adj = c(1,0),
+     cex = 0.8)
+
+  mtext(v,
+        side=2,
+        line=6,
+        at = 1 - (i - 0.5)/length(vars.man),
+        outer=TRUE,
+        las=2,
+        cex=0.9)
+}
+# Column headers
+mtext("Original", side = 3, line = 1.5, at = 0.27, outer = TRUE, cex = 1.2)
+mtext("Transformed", side = 3, line = 1.5, at = 0.73, outer = TRUE, cex = 1.2)
+
+dev.off()
+
+##############
+
+vars.dig <- c("SL.dig","BD1.dig", "BD2.dig","CPD.dig","CPL.dig","PreDL.dig",
+          "DbL.dig","HL.dig","HD1.dig", "HD2.dig","SnL.dig","OL.dig")
+
+tiff("QQplots-dig.tiff",
+     width = 2400,
+     height = 6000,
+     res = 600,
+     compression = "lzw")
+
+par(mfcol = c(length(vars.dig), 2),
+    mar = c(2,2,1,1),      # small inner margins
+    oma = c(2,12,4,1))      # outer margins (left + top space)
+
+for(i in seq_along(vars.dig)){
+  
+  v <- vars.dig[i]
+  
+  x1 <- digital[[v]]
+  x2 <- dig_trans[[v]]
+  
+  p1 <- shapiro.test(x1)$p.value
+  p2 <- shapiro.test(x2)$p.value
+  
+  ## Original
+  qqnorm(x1, main="", pch=16, cex=0.6)
+  qqline(x1, lwd=1.5)
+  
+  usr <- par("usr")
+
+x_pos <- usr[2] - 0.05 * (usr[2] - usr[1])  # 5% inward from right
+y_pos <- usr[3] + 0.05 * (usr[4] - usr[3])  # 5% upward from bottom
+
+text(x_pos, y_pos,
+     labels = paste0("p = ", format.pval(p1, digits=3)),
+     adj = c(1,0),
+     cex = 0.8)
+  
+  ## Transformed
+  qqnorm(x2, main="", pch=16, cex=0.6)
+  qqline(x2, lwd=1.5)
+
+  usr <- par("usr")
+
+x_pos <- usr[2] - 0.05 * (usr[2] - usr[1])  # 5% inward from right
+y_pos <- usr[3] + 0.05 * (usr[4] - usr[3])  # 5% upward from bottom
+
+text(x_pos, y_pos,
+     labels = paste0("p = ", format.pval(p1, digits=3)),
+     adj = c(1,0),
+     cex = 0.8)
+
+  mtext(v,
+        side=2,
+        line=6,
+        at = 1 - (i - 0.5)/length(vars.dig),
+        outer=TRUE,
+        las=2,
+        cex=0.9)
+}
+# Column headers
+mtext("Original", side = 3, line = 1.5, at = 0.27, outer = TRUE, cex = 1.2)
+mtext("Transformed", side = 3, line = 1.5, at = 0.73, outer = TRUE, cex = 1.2)
+
+dev.off()
+
+```
+
+
+```{r}
+#POST PCA TESTS IN ONE TABLE
 post.pca.combo <- bind_rows(ttest_result, levenes_result_meth) %>%
  mutate(Test_Statistic = case_when(
       Classifier == "T-test"       ~ paste0("t = ", sprintf("%.3f", t_value)),   
@@ -1788,7 +1846,7 @@ post.pca.tbl <- post.pca.combo %>%
 
 post.pca.tbl
 
-gtsave(post.pca.tbl, "TB10_post-pca-methods.png")
+gtsave(post.pca.tbl, "Table8_post-pca-methods.png")
 
 
 ```
