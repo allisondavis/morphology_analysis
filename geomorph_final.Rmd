@@ -473,17 +473,52 @@ geo_long <- geo.df %>%
                       labels = c("Zone 1","Zone 2","Zone 3","Zone 4")))
 
 
-zone_backgrounds <- geo_long %>%
-  filter(Zone %in% c("Z2","Z4")) %>%
-  distinct(PC, Zone)
+zone_backgrounds <- expand.grid(
+  PC = levels(geo_long$PC),
+  Zone = c("Zone 2", "Zone 4"))
 
-zones.plot <- ggplot(geo_long, aes(x = Species, y = Value, fill = Species)) +
-  geom_rect(data = zone_backgrounds,
-            aes(xmin = 0.5, xmax = 2.5, ymin = -Inf, ymax = Inf),
-            inherit.aes = FALSE,
-            fill = "lightgray", alpha = 0.3) +
+zones.plot2 <- ggplot(geo_long, aes(x = Species, y = Value, fill = Species, group = interaction(Species, PC))) +
+stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1),
+             geom = "pointrange")
+
+#mean + SD plot; see if Mike thinks this would be better than boxplots
+p <- ggplot(
+  geo_long,
+  aes(x = Species, y = Value, color = Species, group = Species)
+) +
+  stat_summary(
+    fun.data = mean_sdl, 
+    fun.args = list(mult = 1),   # 1 × SD
+    geom = "pointrange",
+    position = position_dodge(width = 0.5),
+    size = 0.8
+  ) +
+  facet_grid(PC ~ Zone, scales = "fixed") +
+  scale_color_manual(values = c("p.latipinna"="#78B7C5",
+                                "p.formosa"="#E1AF00")) +
+  theme_classic() +
+  theme(
+    strip.placement = "outside",
+    axis.text.x = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    panel.spacing.y = unit(1.5, "lines")
+  ) +
+  xlab("") +
+  ylab("PC value ± SD")
+
+p
+
+
+
+zones.plot <- ggplot(geo_long, aes(x = Species, y = Value, fill = Species, group = interaction(Species, PC))) +
+  geom_rect(
+    data = zone_backgrounds,
+    aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
+    inherit.aes = FALSE,
+    fill = "grey95",
+    alpha = 1) +
   geom_boxplot(show.legend = FALSE) +
-  facet_grid(PC ~ Zone, scales = "free_y", switch = "y") +
+  facet_grid(PC ~ Zone, scales = "fixed", switch = "y") +
   scale_x_discrete(labels = c("p.latipinna" = "Sailfin \nmolly",
                               "p.formosa" = "Amazon \nmolly")) +
   scale_fill_manual(values = c("p.latipinna"="#78B7C5",
