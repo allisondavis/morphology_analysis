@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Data collection 
 
-```{r, echo=FALSE}
+```{r, results='hide', message=FALSE, warning=FALSE}
 library(curl)
 library(dplyr)
 
@@ -94,9 +94,9 @@ trait.names <- c(
 
 Want to do a quick summary, mostly of number of fish in each zone, basin, and watershed.
 
-We find that there are at least 3 fish of each species in all zones, 7 of 11 basins, and 8 of 17 basins.
+We find that there are at least 3 fish of each species in all zones, 7 of 11 basins, and 8 of 17 basins. Classifiers marked with an asterisk only have >3 of one species.
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 library(tidyr) 
 library(gt)
 
@@ -169,11 +169,11 @@ Steve mentioned that using coefficient of variation would be able to distinguish
 
 Doesn't look like there is a particular function, just typing in mean and sd for the column you want. Made a simple function below.
 
-```{r}
+```{r, results='hide'}
 
 coef_var <- function(x){
   sd(x)/mean(x)
-}
+  }
 
 ```
 
@@ -190,7 +190,7 @@ After discussing with Mike and confirming with Steve, I will do the coefficient 
 Amazon vs sailfin, each trait, raw data
 
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 library(purrr)
 library(tibble)
 
@@ -247,7 +247,7 @@ To see if these are statistically different, we can use the cvequality package o
 Note: was doing this on the df with the already calculated cov values, but that doesn't work with the asymptotic_test() function; the function requires individual measurements.
 
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 library(cvequality)
 
 
@@ -272,10 +272,6 @@ cv.tests <- df.long %>%
 
 cv.df2 <- cv.wide %>%
   left_join(cv.tests, by = c("variable" = "Trait")) %>%
-   mutate(p_display = case_when(
-    p_value < 0.001 ~ "*p* < 0.001*",
-    p_value < 0.05  ~ paste0(sprintf("%.3f", p_value), "*"),
-    TRUE            ~ paste0(sprintf("%.3f", p_value)))) %>%
   mutate(p_adj_display = case_when(
     p_adj < 0.001 ~ "*p* < 0.001*",
     p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
@@ -289,17 +285,16 @@ cv.df2 %>%
     Amazon = "Amazon molly",
     Sailfin = "Sailfin molly",
     stat = "Statistic",
-    p_display = md("*p*-value"),
     p_adj_display = md("Adjusted *p*-value")) %>%
-  fmt_markdown(columns = c(p_display, p_adj_display)) %>%
+  fmt_markdown(columns = p_adj_display) %>%
   fmt_number(columns = c(Amazon, Sailfin, stat), decimals = 3) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(variable, Amazon, Sailfin, stat, p_display))) %>%
+    locations = cells_body(columns = c(variable, Amazon, Sailfin, stat))) %>%
   tab_style(
     style = cell_text(weight = "bold"),
     locations = cells_body(
-      columns = c(p_display, p_adj_display),
+      columns = p_adj_display,
       rows = p_adj < 0.05)) %>%
   opt_horizontal_padding(scale=2) %>%
   cols_align(align="center", everything())
@@ -312,7 +307,7 @@ cv.df2 %>%
 
 
 #### Results
-*(reminder: different = genetic drift)*
+*(reminder: same = adaptability, different = genetic drift)*
 
 From the raw data: D, LLSC, and CPL were significant (D and LLSC are species diagnostics; CPL shouldn't be to my knowledge). After Benjamini-Hochberg corrections, only LLSC was significant. 
 
@@ -324,7 +319,7 @@ From the raw data: D, LLSC, and CPL were significant (D and LLSC are species dia
 Want to partition the amazons and sailfins across (a) zones, (b) basins and (c) watersheds then compare the cov within each classifier. 
 
 ### Zone
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 # Calculate CV for every species in every zone
 cv.df.zone <- raw1 %>%
   pivot_longer(cols = 5:24, names_to = "variable", values_to = "val") %>%
@@ -353,11 +348,6 @@ cv.tests.zone <- df.long %>%
     p.value = map_dbl(test, ~ .x$p_value),
     p.adj = p.adjust(p.value, method = "fdr")) %>%
   ungroup() %>%
-  mutate(p_display = case_when(
-    is.na(p.value)  ~ NA_character_,
-    p.value < 0.001 ~ "*p* < 0.001*",
-    p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), "*"),
-    TRUE            ~ paste0(sprintf("%.3f", p.value)))) %>%
   mutate(p_adj_display = case_when(
     is.na(p.value)  ~ NA_character_,
     p.adj < 0.001 ~ "*p* < 0.001*",
@@ -368,7 +358,7 @@ cv.tests.zone <- df.long %>%
   pivot_wider(
     id_cols = Trait, 
     names_from = Zone,
-    values_from = c(stat, p_display, p.adj, p_adj_display),
+    values_from = c(stat, p.adj, p_adj_display),
     names_glue = "{Zone}_{.value}")
   
   
@@ -399,7 +389,6 @@ cv.zones <- final_df %>%
   cols_label(.list = new_labels) %>%
   cols_label(
     ends_with("_stat") ~ "Stat",
-    ends_with("_p_display") ~ md("*p*-value"),
     ends_with("_p_adj_display") ~ md("Adjusted *p*-value")) %>%
   fmt_markdown(columns = contains("display")) %>%
   fmt_number(columns = contains(c("Amazon", "Sailfin", "stat")), decimals = 3) %>%
@@ -423,12 +412,12 @@ cv.zones <- zones %>%
 cv.zones <- cv.zones %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat", "p_display")))) %>%
+    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_body(columns = contains("p_adj_display"))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_column_labels(columns = contains("p_adj_display"))) %>%
   opt_horizontal_padding(scale=2) %>%
   cols_align(align="center", everything()) %>%
@@ -443,7 +432,7 @@ cv.zones
 
 ### Basin
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 library(stringr)
 
 # Filtering for basins with n>=3 for both species
@@ -495,11 +484,6 @@ cv.tests.basin <- df.long2 %>%
   group_by(Basin) %>%
   mutate(p.adj = p.adjust(p.value, method = "fdr")) %>%
   ungroup() %>%
- # mutate(p_display = case_when(
-    #is.na(p.value)  ~ NA_character_,
-    #p.value < 0.001 ~ "*p* < 0.001*",
-    #p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), "*"),
-    #TRUE            ~ paste0(sprintf("%.3f", p.value)))) %>%
   mutate(p_adj_display = case_when(
     is.na(p.value)  ~ NA_character_,
     p.adj < 0.001 ~ "*p* < 0.001*",
@@ -510,7 +494,7 @@ cv.tests.basin <- df.long2 %>%
   pivot_wider(
     id_cols = Trait, 
     names_from = Basin,
-    values_from = c(stat, p.adj, p_adj_display), #removed p_display
+    values_from = c(stat, p.adj, p_adj_display),
     names_glue = "{Basin}_{.value}")
   
   
@@ -560,22 +544,20 @@ cv.basin <- cv.basin %>%
   cols_label(.list = new_labels) %>%
   cols_label(
     ends_with("_stat") ~ "Stat",
-    #ends_with("_p_display") ~ md("*p*-value"),
     ends_with("_p_adj_display") ~ md("Adjusted *p*-value")) %>%
-  #fmt_markdown(columns = contains("p_display")) %>%
-  fmt_markdown(columns = contains("p_adj_display")) %>%
+  fmt_markdown(columns = contains("display")) %>%
   fmt_number(columns = contains(c("Amazon", "Sailfin", "_stat")), decimals = 3) %>%
   sub_missing(
     columns = everything(),
     missing_text = "---") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>% #removed p_display
+    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_body(columns = contains("p_adj_display"))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_column_labels(columns = ends_with("p_adj_display"))) %>%
   opt_horizontal_padding(scale=2) %>%
   cols_align(align="center", everything()) %>%
@@ -589,7 +571,7 @@ cv.basin
 
 ### Watersheds
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 # Filtering for watersheds with n>=3 for both species
 valid_sheds <- raw1 %>%
   group_by(Watershed, SPP) %>%
@@ -639,11 +621,6 @@ cv.tests.shed <- df.long3 %>%
   group_by(Watershed) %>%
   mutate(p.adj = p.adjust(p.value, method = "fdr")) %>%
   ungroup() %>%
- # mutate(p_display = case_when(
-    #is.na(p.value)  ~ NA_character_,
-    #p.value < 0.001 ~ "*p* < 0.001*",
-    #p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), "*"),
-    #TRUE            ~ paste0(sprintf("%.3f", p.value)))) %>%
   mutate(p_adj_display = case_when(
     is.na(p.value)  ~ NA_character_,
     p.adj < 0.001 ~ "*p* < 0.001*",
@@ -654,7 +631,7 @@ cv.tests.shed <- df.long3 %>%
   pivot_wider(
     id_cols = Trait, 
     names_from = Watershed,
-    values_from = c(stat, p.adj, p_adj_display), #removed p_display
+    values_from = c(stat, p.adj, p_adj_display),
     names_glue = "{Watershed}_{.value}")
   
   
@@ -704,22 +681,20 @@ cv.shed <- cv.shed %>%
   cols_label(.list = new_labels) %>%
   cols_label(
     ends_with("_stat") ~ "Stat",
-    #ends_with("_p_display") ~ md("*p*-value"),
     ends_with("_p_adj_display") ~ md("Adjusted *p*-value")) %>%
-  #fmt_markdown(columns = contains("p_display")) %>%
-  fmt_markdown(columns = contains("p_adj_display")) %>%
+  fmt_markdown(columns = contains("display")) %>%
   fmt_number(columns = contains(c("Amazon", "Sailfin", "_stat")), decimals = 3) %>%
   sub_missing(
     columns = everything(),
     missing_text = "---") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>% #removed p_display
+    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>% 
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_body(columns = contains("p_adj_display"))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_column_labels(columns = ends_with("p_adj_display"))) %>%
   opt_horizontal_padding(scale=2) %>%
   cols_align(align="center", everything()) %>%
@@ -733,7 +708,7 @@ cv.shed
 ***
 
 #### Results
-*(reminder: different = genetic drift)*
+*(reminder: same = adaptability, different = genetic drift)*
 Will report on adjusted p-value only.
 
   * **ZONES:** 
@@ -769,7 +744,7 @@ Since I did the original comparisons also on only mature individuals, I'll filte
 
 ### Overall species comparison
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 rawF <- filter(raw1,SL>=32.5)
 
 rawAF <- rawF %>% filter(SPP == "Amazon molly") 
@@ -818,10 +793,6 @@ cv.tests.F <- df.longF %>%
 
 cv.df.F <- cv.wide.F %>%
   left_join(cv.tests.F, by = c("variable" = "Trait")) %>%
-   mutate(p_display = case_when(
-    p_value < 0.001 ~ "*p* < 0.001*",
-    p_value < 0.05  ~ paste0(sprintf("%.3f", p_value), "*"),
-    TRUE            ~ paste0(sprintf("%.3f", p_value)))) %>%
   mutate(p_adj_display = case_when(
     p_adj < 0.001 ~ "*p* < 0.001*",
     p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
@@ -829,26 +800,26 @@ cv.df.F <- cv.wide.F %>%
 
 cv.df.F %>%
   gt() %>%
-  cols_hide(columns = c(p_value, p_adj)) %>%
   cols_label(
     variable = "Trait",
     Amazon = "Amazon molly",
     Sailfin = "Sailfin molly",
     stat = "Statistic",
-    p_display = md("*p*-value"),
     p_adj_display = md("Adjusted *p*-value")) %>%
-  fmt_markdown(columns = c(p_display, p_adj_display)) %>%
+  fmt_markdown(columns = p_adj_display) %>%
   fmt_number(columns = c(Amazon, Sailfin, stat), decimals = 3) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(variable, Amazon, Sailfin, stat, p_display))) %>%
+    locations = cells_body(columns = c(variable, Amazon, Sailfin, stat))) %>%
   tab_style(
     style = cell_text(weight = "bold"),
     locations = cells_body(
-      columns = c(p_display, p_adj),
+      columns = p_adj_display,
       rows = p_adj < 0.05)) %>%
   opt_horizontal_padding(scale=2) %>%
-  cols_align(align="center", everything())
+  cols_align(align="center", everything()) %>%
+  cols_hide(columns = c(p_value, p_adj))
+
   
 
 
@@ -858,7 +829,7 @@ cv.df.F %>%
 
 
 #### Results
-*(reminder: different = genetic drift)*
+*(reminder: same = adaptability, different = genetic drift)*
 
 From the filtered data: SL, CPL, PreDL, and HL were significant (different = genetic drift; PreDL and possibly HL is expected to be different, since the dorsal if farther back on the amazon; SL is known to be bigger in amazon, so this is also expected; CPL shouldn't be a species diagnostic to my knowledge). After Benjamini-Hochberg correction, no trait was significant.
 
@@ -870,7 +841,7 @@ From the filtered data: SL, CPL, PreDL, and HL were significant (different = gen
 Want to partition the amazons and sailfins across (a) zones, (b) basins and (c) watersheds then compare the cov within each classifier. 
 
 #### Zone
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 # Calculate CV for every species in every zone
 cv.df.zoneF <- rawF %>%
   pivot_longer(cols = 5:24, names_to = "variable", values_to = "val") %>%
@@ -899,11 +870,6 @@ cv.tests.zoneF <- df.longF %>%
     p.value = map_dbl(test, ~ .x$p_value),
     p.adj = p.adjust(p.value, method = "fdr")) %>%
   ungroup() %>%
-  mutate(p_display = case_when(
-    is.na(p.value)  ~ NA_character_,
-    p.value < 0.001 ~ "*p* < 0.001*",
-    p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), "*"),
-    TRUE            ~ paste0(sprintf("%.3f", p.value)))) %>%
   mutate(p_adj_display = case_when(
     is.na(p.value)  ~ NA_character_,
     p.adj < 0.001 ~ "*p* < 0.001*",
@@ -914,7 +880,7 @@ cv.tests.zoneF <- df.longF %>%
   pivot_wider(
     id_cols = Trait, 
     names_from = Zone,
-    values_from = c(stat, p_display, p.adj, p_adj_display),
+    values_from = c(stat, p.adj, p_adj_display),
     names_glue = "{Zone}_{.value}")
   
   
@@ -945,7 +911,6 @@ cv.zones_F <- final_df_F %>%
   cols_label(.list = new_labelsF) %>%
   cols_label(
     ends_with("_stat") ~ "Stat",
-    ends_with("_p_display") ~ md("*p*-value"),
     ends_with("_p_adj_display") ~ md("Adjusted *p*-value")) %>%
   fmt_markdown(columns = contains("display")) %>%
   fmt_number(columns = contains(c("Amazon", "Sailfin", "stat")), decimals = 3) %>%
@@ -969,12 +934,12 @@ cv.zones_F <- zones %>%
 cv.zones_F <- cv.zones_F %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat", "p_display")))) %>%
+    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_body(columns = contains("p_adj_display"))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_column_labels(columns = ends_with("p_adj_display"))) %>%
   opt_horizontal_padding(scale=2) %>%
   cols_align(align="center", everything()) %>%
@@ -990,7 +955,7 @@ cv.zones_F
 
 ### Basin
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 library(stringr)
 
 # Filtering for basins with n>=3 for both species
@@ -1042,11 +1007,6 @@ cv.tests.basinF <- df.longF2 %>%
   group_by(Basin) %>%
   mutate(p.adj = p.adjust(p.value, method = "fdr")) %>%
   ungroup() %>%
- # mutate(p_display = case_when(
-    #is.na(p.value)  ~ NA_character_,
-    #p.value < 0.001 ~ "*p* < 0.001*",
-    #p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), "*"),
-    #TRUE            ~ paste0(sprintf("%.3f", p.value)))) %>%
   mutate(p_adj_display = case_when(
     is.na(p.value)  ~ NA_character_,
     p.adj < 0.001 ~ "*p* < 0.001*",
@@ -1057,7 +1017,7 @@ cv.tests.basinF <- df.longF2 %>%
   pivot_wider(
     id_cols = Trait, 
     names_from = Basin,
-    values_from = c(stat, p.adj, p_adj_display), #removed p_display
+    values_from = c(stat, p.adj, p_adj_display),
     names_glue = "{Basin}_{.value}")
   
   
@@ -1107,22 +1067,20 @@ cv.basin_F <- cv.basin_F %>%
   cols_label(.list = new_labelsF) %>%
   cols_label(
     ends_with("_stat") ~ "Stat",
-    #ends_with("_p_display") ~ md("*p*-value"),
     ends_with("_p_adj_display") ~ md("Adjusted *p*-value")) %>%
-  #fmt_markdown(columns = contains("p_display")) %>%
-  fmt_markdown(columns = contains("p_adj_display")) %>%
+  fmt_markdown(columns = contains("display")) %>%
   fmt_number(columns = contains(c("Amazon", "Sailfin", "_stat")), decimals = 3) %>%
   sub_missing(
     columns = everything(),
     missing_text = "---") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>% #removed p_display
+    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_body(columns = contains("p_adj_display"))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_column_labels(columns = ends_with("p_adj_display"))) %>%
   opt_horizontal_padding(scale=2) %>%
   cols_align(align="center", everything()) %>%
@@ -1138,7 +1096,7 @@ cv.basin_F
 
 ### Watersheds
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 # Filtering for watersheds with n>=3 for both species
 valid_shedsF <- rawF %>%
   group_by(Watershed, SPP) %>%
@@ -1188,11 +1146,6 @@ cv.tests.shedF <- df.longF3 %>%
   group_by(Watershed) %>%
   mutate(p.adj = p.adjust(p.value, method = "fdr")) %>%
   ungroup() %>%
- # mutate(p_display = case_when(
-    #is.na(p.value)  ~ NA_character_,
-    #p.value < 0.001 ~ "*p* < 0.001*",
-    #p.value < 0.05  ~ paste0(sprintf("%.3f", p.value), "*"),
-    #TRUE            ~ paste0(sprintf("%.3f", p.value)))) %>%
   mutate(p_adj_display = case_when(
     is.na(p.value)  ~ NA_character_,
     p.adj < 0.001 ~ "*p* < 0.001*",
@@ -1203,7 +1156,7 @@ cv.tests.shedF <- df.longF3 %>%
   pivot_wider(
     id_cols = Trait, 
     names_from = Watershed,
-    values_from = c(stat, p.adj, p_adj_display), #removed p_display
+    values_from = c(stat, p.adj, p_adj_display),
     names_glue = "{Watershed}_{.value}")
   
   
@@ -1253,22 +1206,20 @@ cv.shed_F <- cv.shed_F %>%
   cols_label(.list = new_labelsF) %>%
   cols_label(
     ends_with("_stat") ~ "Stat",
-    #ends_with("_p_display") ~ md("*p*-value"),
     ends_with("_p_adj_display") ~ md("Adjusted *p*-value")) %>%
-  #fmt_markdown(columns = contains("p_display")) %>%
-  fmt_markdown(columns = contains("p_adj_display")) %>%
+  fmt_markdown(columns = contains("display")) %>%
   fmt_number(columns = contains(c("Amazon", "Sailfin", "_stat")), decimals = 3) %>%
   sub_missing(
     columns = everything(),
     missing_text = "---") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>% #removed p_display
+    locations = cells_body(columns = contains(c("Amazon", "Sailfin", "stat")))) %>% 
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_body(columns = contains("p_adj_display"))) %>%
   tab_style(
-    style = cell_borders(sides = "right", color = "lightgray", weight = px(2)),
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
     locations = cells_column_labels(columns = ends_with("p_adj_display"))) %>%
   opt_horizontal_padding(scale=2) %>%
   cols_align(align="center", everything()) %>%
@@ -1283,7 +1234,7 @@ cv.shed_F
 
 
 #### Results
-*(reminder: different = genetic drift)*
+*(reminder: same = adaptability, different = genetic drift)*
 Will only report on adjusted p-values.
 
 * **ZONES:** 
@@ -1313,7 +1264,7 @@ Here I will display the trait, adjusted p for all, adjusted p for filtered, and 
 
 ## All vs filtered data
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 
 # Join the Filtered and Full datasets
 all.df <- cv.df.F %>%
@@ -1374,7 +1325,139 @@ all.df %>%
 
 ## Geographic comparisons
 
-```{r}
+Not sure if its worth creating a table like this for basins or watersheds if the filtered and full data sets don't have the same basins/watersheds. Would mean that the filtered columns for some of the basins/watersheds would just be a lot of NAs.
+
+### Zones 
+
+```{r, echo=FALSE, warning=FALSE}
+# Create a 'higher CV' logic column - FULL
+zone.labels_higher <- cv.df.zone %>%
+  select(Zone, variable, species_label, cv) %>%
+  mutate(variable = recode(variable, !!!trait.names)) %>%
+  pivot_wider(names_from = species_label, values_from = cv) %>% #pivot to compare species
+  mutate(higher_cv_label = case_when(
+    Amazon > Sailfin ~ "Amazon",
+    Sailfin > Amazon ~ "Sailfin",
+    TRUE ~ "--")) %>%
+  select(Zone, variable, higher_cv_label) %>% #pivot for zone layout 
+  pivot_wider(
+    names_from = Zone,
+    values_from = higher_cv_label,
+    names_glue = "{Zone}_higher_cv_full")
+
+# Create new full final df
+zone.df <- cv.tests.zone %>%
+  rename(variable = Trait) %>%
+  left_join(zone.labels_higher, by = "variable")
+
+# Create a 'higher CV' logic column - FILTERED
+zone.labels_higherF <- cv.df.zoneF %>%
+  select(Zone, variable, species_label, cv) %>%
+  mutate(variable = recode(variable, !!!trait.names)) %>%
+  pivot_wider(names_from = species_label, values_from = cv) %>%
+  mutate(higher_cv_label = case_when(
+    Amazon > Sailfin ~ "Amazon",
+    Sailfin > Amazon ~ "Sailfin",
+    TRUE ~ "--")) %>%
+  select(Zone, variable, higher_cv_label) %>%
+  pivot_wider(
+    names_from = Zone,
+    values_from = higher_cv_label,
+    names_glue = "{Zone}_higher_cv")
+
+# Create new filtered final df
+zone.F <- cv.tests.zoneF %>%
+  rename(variable = Trait) %>%
+  left_join(zone.labels_higherF, by = "variable")
+
+# Final table df
+zone.table.df <- zone.F %>%
+  left_join(zone.df, by = "variable", suffix = c("", "_full")) %>%
+  select(variable, contains("p_adj_display"), contains("higher_cv"))
+
+# Only show the 'higher CV' logic for significant comparisons
+zone.table.df <- zones %>%
+  reduce(.init = zone.table.df, function(temp_df, z) {
+
+    p_col        <- paste0(z, "_p_adj_display")
+    cv_col       <- paste0(z, "_higher_cv")
+    p_col_full   <- paste0(z, "_p_adj_display_full")
+    cv_col_full  <- paste0(z, "_higher_cv_full")
+
+    temp_df %>%
+      mutate(
+        !!sym(cv_col) := if_else(!!sym(p_col) < 0.05, !!sym(cv_col), "--"),
+        !!sym(cv_col_full) := if_else(!!sym(p_col_full) < 0.05, !!sym(cv_col_full), "--"))})
+
+column_order <- c("variable", 
+                  unlist(map(zones, ~ c(
+                    paste0(.x, "_p_adj_display"),
+                    paste0(.x, "_higher_cv"),
+                    paste0(.x, "_p_adj_display_full"),
+                    paste0(.x, "_higher_cv_full")
+                  ))))
+
+# Begin table formation
+zone.table <- zone.table.df %>%
+  select(all_of(column_order)) %>%
+  gt() %>%
+  tab_spanner(label = "Zone 1", columns = starts_with("Zone 1_")) %>%
+  tab_spanner(label = "Zone 2", columns = starts_with("Zone 2_")) %>%
+  tab_spanner(label = "Zone 3", columns = starts_with("Zone 3_")) %>%
+  tab_spanner(label = "Zone 4", columns = starts_with("Zone 4_")) %>%
+  cols_label(
+    variable = "Trait",
+    contains("p_adj_display") ~ md("Filtered (*p*)"),
+    contains("higher_cv") ~ "Higher CV",
+    contains("p_adj_display_full") ~ md("Full (*p*)"),
+    contains("higher_cv_full") ~ "Higher CV") %>%
+  fmt_markdown(columns = everything())
+
+# Bold rows in each zone with significant results
+zone.table <- zones %>%
+  reduce(.init = zone.table, function(temp_table, z) {
+
+  p_disp      <- paste0(z, "_p_adj_display")
+  cv_col      <- paste0(z, "_higher_cv")
+  p_disp_full <- paste0(z, "_p_adj_display_full")
+  cv_col_full <- paste0(z, "_higher_cv_full")
+
+  temp_table %>%
+    tab_style(
+      style = cell_text(weight = "bold"),
+      locations = cells_body(
+        columns = all_of(p_disp),
+        rows = !!sym(cv_col) != "--")) %>%
+    tab_style(
+      style = cell_text(weight = "bold"),
+      locations = cells_body(
+        columns = all_of(p_disp_full),
+        rows = !!sym(cv_col_full) != "--"))})
+
+ # Final table edits
+ zone.table <- zone.table %>%
+   tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = variable)) %>%
+   tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = ends_with("higher_cv"))) %>%
+   tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)), 
+    locations = cells_body(columns = ends_with("higher_cv_full"))) %>%
+   tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(3)),
+    locations = cells_column_labels(columns = ends_with("higher_cv_full"))) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"),
+    locations = cells_body(columns = contains("p_adj_display"))) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything())
+
+zone.table
+
+
+
 
 
 ```
@@ -1384,5 +1467,8 @@ all.df %>%
 
 
 ***
-***FIN***
 ***
+***
+<div align="center">
+***FIN***
+</div>
