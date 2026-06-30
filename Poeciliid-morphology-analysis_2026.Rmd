@@ -1,0 +1,3433 @@
+---
+title: "Poeciliid-morphology_2026"
+author: "Allison Davis"
+date: "2026-06-12"
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 6
+    toc_float:
+      collapsed: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **PURPOSE**
+
+We aim to understand the interplay of genetic variation and environmental heterogeneity in the persistence of asexual-sexual systems through comparisons of morphological variation. In this study, we compare 22 morphological traits in preserved Amazon molly (*Poecilia formosa*) and its parental species (sailfin molly (*P. latipinna*), Atlantic molly (*P. mexicana*)) from across their native and introduced sympatric range. While we expect morphological variation in all species because of local adaptations we predict the variation of the sexual sailfin and Atlantic species to be higher than the Amazon species due to the presence of genetic recombination.
+
+In part I, we will analyze all processed samples (186 Amazon mollies, 156 female sailfin mollies, and 36 female Atlantic mollies). In part II (**Filtered_poeciliid-morphology-analysis_2026.Rmd**), we will filter for adults (standard length > 32.5mm). For the main analysis, we will focus on Amazon and sailfin mollies only. We will then extract Amazon and sailfin samples from the Tampico, Mexico region to compare to our Atlantic molly samples, as our Atlantic molly samples only originate from Tampico, MX. For our geographic analysis, we will assess variation in Amazons and sailfins only, across both latitudinal-based zones and river drainage basins, as basins are often more reflective of genetic distribution of fishes. *NOTE:* Our coefficient of variation analysis can be found in **COV_final.Rmd**.
+
+
+***
+***
+
+# **PART I: ALL FISH**
+
+The following analysis will compare variation among all processed fish (186 Amazon mollies, 156 female sailfin mollies, and 36 female Atlantic mollies). Note: after removing all samples with NA values, the final numbers are: 166 Amazons, 134 sailfins, and 32 Atlantics.
+
+For the main analysis, we will use only Amazons and sailfin; comparisons to Atlantic mollies can be found in the **Tampico MX** section.
+
+
+## **Data**
+
+All analyses were conducted using R version 4.4.2 
+
+### Load required libraries 
+
+Remove the '#' before `install.packages` if it is the first time installing library. 
+
+```{r, warning=FALSE}
+
+#install.packages("curl")             #v5.2.1
+library(curl)
+
+#install.packages("dplyr")            #v1.1.4
+library(dplyr)
+
+#install.packages("tidyverse")        #v2.0.0
+library(tidyverse)
+
+#install.packages("tidyr")            #v1.3.1
+library(tidyr)
+
+#install.packages("gt")               #v0.11.1
+library(gt)
+
+#install.packages("factoextra")       #v1.0.7
+library(factoextra)
+
+#install.packages("car")              #v3.1-2
+library(car)
+
+#install.packages("AMR")              #v2.1.1 
+library(AMR)
+
+#install.packages("ggplot2")          #v3.5.1
+library(ggplot2)
+
+#install.packages("ggfortify")        #v0.4.17
+library(ggfortify)
+
+#install.packages("ggbiplot")         #v0.6.2
+library(ggbiplot)
+
+#install.packages("emmeans")          #v2.0.1
+library(emmeans)
+
+#install.packages("glmmTMB")          #v1.1.14
+library(glmmTMB)
+
+#install.packages("DHARMa")           #v0.4.7
+library(DHARMa)
+
+#install.packages("Gifi)              #v1.0-0
+library(Gifi)
+
+#install.packages("FSA")              #v0.10.1
+library(FSA)
+
+```
+
+
+### Read in data
+
+
+```{r}
+# OPTION 1: download 'Final_morph-data_2026.csv' into working directory 
+#raw <- read.csv("Final_morph-data_2026.csv", header = TRUE, sep = ",", stringsAsFactors = TRUE)
+#head(raw)
+
+
+# OPTION 2: load from Github repository
+raw <- curl("https://raw.githubusercontent.com/allisondavis/morphology_analysis/refs/heads/master/Final_morph-data_2026.csv")
+
+raw <- read.csv(raw, header = TRUE, sep = ",", stringsAsFactors = TRUE)
+
+
+# Removing info we don't need
+## Note: Right & left pelvic (P2.L/R) identical for both species in all samples
+## Note: Total length (TL) is missing data; will use standard length (SL)
+## Note: Sample size too sparse in watersheds (hydro.lv8); geographic analysis will use basin (hydro.lv6; hydroBASIN level 6)
+raw1 <- select(raw, -c(INSTITUTE, ID.NUM, LOCATION, LAT, LONG, SAMPLING.DATE, MEASUREMENT.DATE, PHOTO.DATE, TAG.., P2.L, P2.R, TL, HYDRO.LV8 ))
+
+
+# Remove samples with missing values
+raw1 <- raw1[complete.cases(raw1[, 4:23]),] 
+
+
+
+# Make data more reader friendly
+## Species
+raw1$SPP <- factor(raw1$SPP,
+                   levels = c("p.latipinna", "p.formosa", "p.mexicana"),
+                        labels = c("Sailfin molly", "Amazon molly", "Atlantic molly"))
+
+## Zones
+raw1$ZONE <- factor(raw1$ZONE,
+                    levels = c("Z1", "Z2", "Z3", "Z4"),
+                    labels = c("Zone 1", "Zone 2", "Zone 3", "Zone 4"))
+
+## Basins
+raw1$HYDRO.LV6 <- factor(raw1$HYDRO.LV6, 
+                         levels = c("7060048310", "7060048490", "7060048620", "7060048630", "7060048870", "7060049130", "7060049270", "7060049500", "7060049830", "7060820630", "7060824100"),
+                         labels = c("Brazos-Colorado Coastal", "Lavaca-Guadalupe Coastal", "San Antonio-Guadalupe", "San Antonio-Nueces Coastal", "Upper Southwest Texas Coastal", "Lower Southwest Texas Coastal", "Lower R\u00edo Grande", "R\u00edo San Fernando", "Lagunas de San Andr\u00e9s-Morales", "R\u00edo Tames\u00ed", "R\u00edo Tamu\u00edn"))
+
+
+raw1 <- raw1 %>%
+  rename(Species = SPP,
+         Zone = ZONE,
+         Basin = HYDRO.LV6)
+
+
+
+## Trait names
+trait.names <- c(
+  D = "Dorsal rays",
+  P1 = "Left pectoral rays",
+  P1.R = "Right pectoral rays",
+  A = "Anal rays", 
+  LLSC = "Lateral line scale count",
+  SALL = "Scales above lateral line",
+  SBLL = "Scales below lateral line", 
+  SBDF = "Scales before dorsal fin",
+  SL = "Standard length", 
+  BD = "Body depth", 
+  CPD = "Caudal peduncle depth",
+  CPL = "Caudal peduncle length",
+  PreDL = "Predorsal length",
+  DbL = "Dorsal base length",
+  HL = "Head length",
+  HD = "Head depth",
+  HW = "Head width",
+  SnL = "Snout length", 
+  OL = "Orbit length",
+  FLA = "Fluctuating asymmetries")
+
+
+# Final data frames
+
+## main analysis
+raw2 <- raw1 %>% 
+  filter(Species != "Atlantic molly") %>% 
+  droplevels()
+
+## Tampico MX analysis
+geo <- raw1 %>%
+  filter(COUNTY.ST == "Tamaulipas/MX") %>%
+  droplevels()
+
+```
+
+
+### Summary stats
+
+```{r}
+
+#create long df to easily summarize later
+dat.long <- raw2 %>%
+  pivot_longer(
+    cols = c(D, P1, A, P1.R, LLSC, SALL, SBLL, SBDF, SL, BD, CPD, CPL, PreDL, DbL, HL, HD, HW, SnL, OL, FLA),
+    names_to = "Trait",
+    values_to = "Value")
+
+#gather summary statistics 
+summ.stats <- dat.long %>%
+  group_by(Species, Trait) %>%
+  summarize(
+    mean = mean(Value, na.rm = TRUE),
+    sd   = sd(Value, na.rm = TRUE),
+    min  = min(Value, na.rm = TRUE),
+    med  = median(Value, na.rm = TRUE),
+    max  = max(Value, na.rm = TRUE),
+    .groups = "drop")
+
+
+# Species sample sizes
+n.df <- raw2 %>%
+  count(Species, name = "n")
+
+# Add species label with n
+summ.stats2 <- summ.stats %>%
+  left_join(n.df, by = "Species") %>%
+  mutate(
+    Species_n = paste0(Species, " (n = ", n, ")"),
+    Trait_name = trait.names[Trait],
+    Trait_name = factor(
+      Trait_name,
+      levels = unname(trait.names))) %>%
+  arrange(Species_n, Trait_name) %>%
+  select(Species_n, Trait_name, mean, sd, min, med, max)
+
+
+#final table
+summ.stats.all <- summ.stats2 %>%
+  gt(
+    rowname_col = "Trait_name",
+    groupname_col = "Species_n") %>%
+  fmt_number(
+    columns = c(mean, sd, min, med, max),
+    decimals = 2) %>%
+  tab_style(
+      style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+      locations = cells_body(columns = c(mean, sd, min, med, max))) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything())
+
+summ.stats.all
+
+
+
+```
+
+
+### Normality
+
+We will check the distribution for all metric traits; since meristic traits are count data, normal distributions do not apply. We will use Shapiro-Wilks tests, histograms and QQ plots to determine normality. 
+
+
+```{r}
+vars <- c("SL", "BD", "CPD", "CPL", "PreDL", "DbL", "HL", "HD", "HW", "SnL", "OL")
+
+##### Shapiro-Wilk test #####
+shapiro.results <- data.frame(
+  Variable = character(),
+  W = numeric(),
+  p.value = numeric(),
+  stringsAsFactors = FALSE)
+
+for(v in vars){
+  x <- raw2[[v]]
+  
+  
+    test <- shapiro.test(x)
+    shapiro.results <- rbind(shapiro.results,
+                             data.frame(Variable = v,
+                                        W = test$statistic,
+                                        p.value = test$p.value))}
+
+
+shapiro.results #all significant
+
+
+##### Histograms #####
+
+par(mfcol = c(6, 2),   
+    mar = c(2, 2, 1.5, 0.5), 
+    mgp = c(1, 0.4, 0))
+
+for(v in vars){
+  
+  hist(raw2[[v]],
+       main = paste("Histogram of", v),
+       xlab = v,
+       breaks = 30,
+       col = "gray80",
+       border = "black")}
+
+    ## all have slight right skew
+
+##### QQ plots #####
+
+par(mfcol = c(6, 2),   
+    mar = c(2, 2, 1.5, 0.5), 
+    mgp = c(1, 0.4, 0))
+
+for(v in vars){
+  x <- raw2[[v]]
+  
+ qqnorm(x,
+         main = paste("QQ Plot of", v),
+         pch = 16, cex = 0.6)
+  qqline(x, lwd = 1.5)}
+
+
+    ## most have slight upward trend towards both ends
+
+
+```
+
+
+**CONCLUSIONS:** All metric traits fail Shapiro-Wilks test. We will log transform these values in our models, as log transformations greatly improve normality (see below).
+
+#### *Log transformation*
+
+```{r}
+
+#log transform metric traits
+df_trans <- raw2
+df_trans[, c(13:23)] <- log(df_trans[, c(13:23)])
+
+
+#recheck normality
+
+##### Shapiro-Wilk test #####
+shapiro.results2 <- data.frame(
+  Variable = character(),
+  W = numeric(),
+  p.value = numeric(),
+  stringsAsFactors = FALSE)
+
+for(v in vars){
+  x <- df_trans[[v]]
+  
+  
+    test <- shapiro.test(x)
+    shapiro.results2 <- rbind(shapiro.results2,
+                             data.frame(Variable = v,
+                                        W = test$statistic,
+                                        p.value = test$p.value))}
+
+
+shapiro.results2 #HL and OL still significant but greatly improved
+
+
+##### Histograms #####
+
+par(mfcol = c(6, 2),   
+    mar = c(2, 2, 1.5, 0.5), 
+    mgp = c(1, 0.4, 0))
+
+for(v in vars){
+  
+  hist(df_trans[[v]],
+       main = paste("Histogram of", v),
+       xlab = v,
+       breaks = 30,
+       col = "gray80",
+       border = "black")}
+
+    ## no longer have right skew
+
+##### QQ plots #####
+
+par(mfcol = c(6, 2),   
+    mar = c(2, 2, 1.5, 0.5), 
+    mgp = c(1, 0.4, 0))
+
+for(v in vars){
+  x <- df_trans[[v]]
+  
+ qqnorm(x,
+         main = paste("QQ Plot of", v),
+         pch = 16, cex = 0.6)
+  qqline(x, lwd = 1.5)}
+
+
+    ## no longer have upward trend towards both ends
+
+```
+
+***
+***
+
+
+
+
+## **Analysis**
+
+### Individual trait models
+
+We are interested in whether there is a difference in morphological variance among the asexual Amazon molly and the sexual sailfin mollies. We will therefore need to use tests that allow for unequal variances among species, and see if this better fits the data compared to equal variances. We will also include standard length (SL) as a covariate to account for any affect of SL on the trait.
+
+For both metric and meristic traits, we will use a ***generalized linear mixed model (GLMM) analysis*** that allows for different dispersions by species.
+
+For metric traits, we will compare a model with equal variances (mod1 <- glmmTMB(log(trait)~log(SL) * species, family= gaussian)) to one that allows unequal variances among species (mod2 <- glmmTMB(log(trait)~log(SL) * species, dispformula=~species, family= gaussian))). We will compare models using an ANOVA test to determine if incorporating unequal variances among species better fits the data.
+
+For meristic traits, we will compare a model with equal variances (mod1 <- glmmTMB(trait~SL * species, family= compois)) to one that allows unequal variances among species (mod2 <- glmmTMB(trait~SL * species, dispformula=~species, family= compois))). We will compare models using an ANOVA test to determine if incorporating unequal variances among species better fits the data. A *Conway-Maxwell-poisson distribution* will be used to control for underdispersion (see note below).
+
+**NOTE:** we previously performed the meristic model analysis with a *poisson distribution* but all our dispersion ratios were <0.05 indicating severe underdispersion. This is not unexpected, given that most traits had very few values that all fish fell into (e.g. dorsal rays of 12, 13, or 14). So the analysis below is now using a *Conway-Maxwell-poisson distribution* to adjust for underdispersion. See **Poisson-meristic-analysis.R** for previous results. 
+
+**CONCLUSIONS:** All metric and meristic traits showed no difference in model support, and are thus best supported by an equal-variance model (aka no significant difference in variation among the species). 
+
+```{r}
+
+#create separate df for metric and meristic (count) data
+metric <- raw2 %>%
+  select(-c(5:12)) %>%
+  select(-c("FLA"))
+
+count <- raw2 %>%
+  select(-c(14:23)) #still includes SL for analysis
+
+met.vars <- c("BD", "CPD", "CPL", "PreDL", "DbL", "HL", "HD", "HW", "SnL", "OL")
+cnt.vars <- c("D", "P1", "P1.R", "A", "LLSC", "SALL", "SBLL", "SBDF", "FLA")
+
+
+# ───────────────────────────────────────────────────
+## METRIC ANALYSIS 
+# ───────────────────────────────────────────────────
+
+
+# Ensure Species is a factor
+metric$Species <- as.factor(metric$Species)
+metric$Species <- relevel(metric$Species, ref = "Amazon molly")
+
+results_list <- lapply(met.vars, function(trait) {
+  
+  # Build the formula string correctly
+  form_str <- paste0("log(", trait, ") ~ log(SL) * Species")
+  form <- as.formula(form_str)
+
+  # 1. Homogeneous variance model (with safety catch)
+  mod1 <- tryCatch({
+    glmmTMB(form, data = metric, family = gaussian)
+  }, error = function(e) { NULL }, warning = function(w) { NULL })
+  
+  # 2. Heterogeneous variance model (with strict optimization catching)
+  mod2 <- tryCatch({
+    glmmTMB(form, data = metric, family = gaussian, dispformula = ~Species)
+  }, 
+  error = function(e) { NULL }, 
+  warning = function(w) { 
+    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+      return(NULL) 
+    }
+    invokeRestart("muffleWarning") 
+  })
+  
+  # Verify clean convergence of both models
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) && 
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+
+  unique_species <- levels(as.factor(metric$Species))
+  
+  # --- PATH A: MODEL CONVERGED CLEANLY ---
+  if (models_valid) {
+    # Compare models
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    # Run DHARMa residual check
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Homogeneous (mod1)" else "Heterogeneous (mod2)"
+    
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    
+    # Plot the residuals automatically
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    # Extract predicted log-variance per species
+    rg <- ref_grid(mod2, component = "disp")
+    disp_means <- as.data.frame(emmeans(rg, specs = ~ Species))
+    disp_means$Variance <- exp(disp_means$emmean)
+    
+    # Pivot to easily calculate the single global ratio
+    ratio_df <- disp_means %>%
+      select(Species, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio  = `Sailfin molly` / `Amazon molly`,
+        Delta_AIC  = delta_aic, 
+        LRT_p      = pval,
+        Best_Model = best_mod_name)
+      
+  } else {
+    # --- PATH B: FALLBACK TO SIZE-CORRECTED LEVENE'S TEST ---
+    best_mod_name <- "Model Failed - Levene's Test Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Levene's Fallback. !!!"))
+    
+    # Step 1: Strip out body size dependencies using linear model on log traits
+    lm_check <- lm(as.formula(paste0("log(", trait, ") ~ log(SL)")), data = metric)
+    metric$Abs_Resid <- abs(residuals(lm_check))
+    
+    # Step 2: Run a formal Levene's-style test via anova on absolute deviations
+    lev_test <- tryCatch({
+      leveneTest(Abs_Resid ~ Species, data = metric)
+    }, error = function(e) { NULL })
+    fallback_p <- if(!is.null(lev_test)) lev_test$`Pr(>F)`[1] else NA
+    
+    # Step 3: Calculate empirical size-corrected variances per group
+    empirical_vars <- metric %>%
+      group_by(Species) %>%
+      summarise(Variance = var(log(!!sym(trait)), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Species = unique_species, fill = list(Variance = NA))
+    
+    ratio_df <- empirical_vars %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio  = `Sailfin molly` / `Amazon molly`,
+        Delta_AIC  = NA, # Marked NA so it shows as blank/dash in your table
+        LRT_p      = fallback_p,
+        Best_Model = best_mod_name)
+  }
+  
+  # Append baseline trait tracker string
+  ratio_df$Trait <- trait
+  return(ratio_df)
+})
+
+results_df <- do.call(rbind, results_list)
+
+results_df$p_adj <- p.adjust(results_df$LRT_p,
+                             method = "holm")
+
+met.results <- results_df %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ paste0("*p* < 0.001*"),
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE ~ sprintf("%.3f", p_adj))) %>%
+  mutate(
+    Trait_Name = factor(
+      trait.names[Trait],
+      levels = unname(trait.names))) %>%
+  arrange(Trait_Name) %>%
+  relocate(Trait_Name, .before = everything())
+
+met.tbl <- met.results %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj, Best_Model, "Sailfin molly", "Amazon molly")) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    Var_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value")) %>%
+  fmt_number(
+    columns = c(Var_Ratio, Delta_AIC),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, Delta_AIC, Var_Ratio))) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+  
+  
+met.tbl
+
+
+
+# ───────────────────────────────────────────────────
+## MERISTIC (COUNT) ANALYSIS 
+# ───────────────────────────────────────────────────
+
+# Ensure Species is a factor matching the metric settings
+count$Species <- as.factor(count$Species)
+count$Species <- relevel(count$Species, ref = "Amazon molly")
+
+results_list_cnt <- lapply(cnt.vars, function(trait) {
+  
+  form_str <- paste0(trait, " ~ SL * Species")
+  form <- as.formula(form_str)
+  
+  # 1. Fit Baseline Homogeneous Model
+  mod1 <- tryCatch({
+    glmmTMB(form, data = count, family = compois)
+  }, error = function(e) { NULL }, warning = function(w) { NULL })
+  
+  # 2. Fit Heterogeneous Model (with strict catching)
+  mod2 <- tryCatch({
+    glmmTMB(form, data = count, family = compois, dispformula = ~Species)
+  }, 
+  error = function(e) { NULL }, 
+  warning = function(w) { 
+    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+      return(NULL) 
+    }
+    invokeRestart("muffleWarning") 
+  })
+
+  # Verify if both models successfully converged
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) && 
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+
+  # Keep original factor levels intact
+  species_levels <- levels(count$Species)
+  
+  # --- PATH A: GLMMTMB CONVERGED CLEANLY ---
+  if (models_valid) {
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Homogeneous (mod1)" else "Heterogeneous (mod2)"
+    
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    # Extract Model Variances
+    mean_sl <- mean(count$SL, na.rm = TRUE)
+    
+    # FIX: Force exact factor levels to satisfy checkModelMatrix()
+    pred_data <- data.frame(
+      Species = factor(species_levels, levels = species_levels), 
+      SL = mean_sl)
+    
+    pred_data$Mean <- predict(mod2, newdata = pred_data, type = "response")
+    pred_data$Phi  <- exp(predict(mod2, newdata = pred_data, type = "disp"))
+    pred_data$Variance <- pred_data$Mean * pred_data$Phi
+    
+    output_df <- pred_data %>%
+      select(Species, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio   = `Sailfin molly` / `Amazon molly`,
+        Delta_AIC  = delta_aic,
+        LRT_p      = pval,
+        Best_Model = best_mod_name)
+      
+  } else {
+    # --- PATH B: CONVERGENCE FAILED -> FALLBACK TO LEVENE'S TEST ---
+    best_mod_name <- "Model Failed Optimization - Used Levene's Test Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Levene's Test Fallback. !!!"))
+    
+    levene_form <- as.formula(paste0(trait, " ~ Species"))
+    lev_test <- tryCatch({
+      leveneTest(levene_form, data = count)
+    }, error = function(e) { NULL })
+    
+    raw_vars <- count %>%
+      group_by(Species) %>%
+      summarise(Variance = var(!!sym(trait), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Species = species_levels, fill = list(Variance = NA))
+    
+    wide_vars <- raw_vars %>%
+      pivot_wider(names_from = Species, values_from = Variance)
+    
+    l_p <- if(!is.null(lev_test)) lev_test$`Pr(>F)`[1] else NA
+    
+    output_df <- wide_vars %>%
+      mutate(
+        Var_Ratio   = `Sailfin molly` / `Amazon molly`,
+        Delta_AIC  = NA,   
+        LRT_p      = l_p,  
+        Best_Model = best_mod_name)
+  }
+  
+  output_df$Trait <- trait
+  return(output_df)
+})
+
+final_cnt_df <- do.call(rbind, results_list_cnt)
+
+final_cnt_df$p_adj <- p.adjust(final_cnt_df$LRT_p, method = "holm")
+
+cnt.results <- final_cnt_df %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ paste0("*p* < 0.001*"),
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE ~ sprintf("%.3f", p_adj))) %>%
+  mutate(
+    Trait_Name = factor(
+      trait.names[Trait],
+      levels = unname(trait.names))) %>%
+  arrange(Trait_Name) %>%
+  relocate(Trait_Name, .before = everything())
+
+cnt.tbl <- cnt.results %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj, Best_Model, "Sailfin molly", "Amazon molly")) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    Var_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value")) %>%
+  fmt_number(
+    columns = c(Var_Ratio, Delta_AIC),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, Delta_AIC, Var_Ratio))) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+cnt.tbl
+
+  
+# ───────────────────────────────────────────────────
+## PLOTS
+# ───────────────────────────────────────────────────
+
+met.long <- metric %>%
+  pivot_longer(
+    cols = c(SL, BD, CPD, CPL, PreDL, DbL, HL, HD, HW, SnL, OL),
+    names_to = "Trait",
+    values_to = "Value")
+
+
+met.plots <- ggplot(met.long, aes(x=Species, y=Value, fill = Species)) + 
+  geom_boxplot() +
+  geom_point(color= "#8D8680", size=2, alpha=0.5) +
+  facet_wrap(~ Trait, scales = "free_y", axes = "margins") +
+  theme_classic(base_size = 10, base_family = "sans") + 
+  theme(
+    axis.title.y = element_text(size = 10, family = "sans"), 
+    axis.text.y  = element_text(size = 10, family = "sans"),
+    axis.text.x  = element_text(size = 10, family = "sans"),
+    strip.text    = element_text(size = 10, family = "sans"),
+    panel.spacing = unit(1.5, "lines")) +
+  scale_fill_manual(values = c("Sailfin molly"="#78B7C5",
+                               "Amazon molly"="#E1AF00")) +
+  xlab("") +
+  ylab("Length or Depth (mm)")
+met.plots
+
+
+cnt.long <- count %>%
+  pivot_longer(
+    cols = c(D, P1, A, P1.R, LLSC, SALL, SBLL, SBDF, SL, FLA),
+    names_to = "Trait",
+    values_to = "Value")
+
+cnt.plots <- ggplot(cnt.long, aes(x=Species, y=Value, fill = Species)) + 
+  geom_boxplot() +
+  geom_point(color= "#8D8680", size=2, alpha=0.5) +
+  facet_wrap(~ Trait, scales = "free_y", axes = "margins") +
+  theme_classic(base_size = 10, base_family = "sans") + 
+  theme(
+    axis.title.y = element_text(size = 10, family = "sans"), 
+    axis.text.y  = element_text(size = 10, family = "sans"),
+    axis.text.x  = element_text(size = 10, family = "sans"),
+    strip.text    = element_text(size = 10, family = "sans"),
+    panel.spacing = unit(1.5, "lines")) +
+  scale_fill_manual(values = c("Sailfin molly"="#78B7C5",
+                               "Amazon molly"="#E1AF00")) +
+  xlab("") +
+  ylab("Count")
+cnt.plots
+
+
+```
+
+***
+***
+
+### Overall shape variation (PCA)
+
+While none our 10 metric traits showed a significant difference in variation among species, many of these traits are not independent of each other. Therefore, we will assess overall shape variation among species using a ***principal component analysis (PCA)*** on centered and scaled data (all metric traits will also be log transformed to better approach normality). We will then perform a mean and variance test (e.g., ANOVA and Levene's test) to determine if overall shape variation differs between the species. 
+
+As meristic traits are count data, a normal PCA cannot be applied. Instead, we will use a ***categorical principal component analysis (CATPCA)*** that uses optimal scaling to deal with discrete integers. 
+
+#### *Loadings*
+
+```{r}
+
+# ───────────────────────────────────────────────────
+## METRIC ANALYSIS 
+# ───────────────────────────────────────────────────
+
+
+PCA.test <- prcomp(df_trans[, 13:23], center = TRUE, scale. = FALSE) 
+
+summary(PCA.test)
+(eig.val.test <- get_eigenvalue(PCA.test))
+
+
+# For many morphological studies, the first component is heavily weighted by body size and is often of less interest than components two and three (Humphries et al., 1981). Therefore, we will extract the first three dimensions
+
+ind.test <- get_pca_ind(PCA.test)
+head(ind.test$coord[,1:3])
+
+
+pca.df <- cbind(df_trans, ind.test$coord[,1:3])
+
+
+# Will investigate the influence of each trait on the first 3 dimensions
+(loadings <- PCA.test$rotation[, 1:3])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+
+
+
+# ───────────────────────────────────────────────────
+## MERISTIC (COUNT) ANALYSIS 
+# ───────────────────────────────────────────────────
+
+# Remove SL from count df
+count2 <- select(count, -c("SL"))
+
+# Run the Categorical PCA
+# 'ndim = 2' extracts the first two principal components
+# 'degrees = 1' treats the scaling transformations as piecewise linear (ideal for ordinal integers)
+
+catpca.test <- princals(count2[, 5:13], ndim = 2, degrees = 1)
+
+# Print the summary to see how much variance your new components explain
+summary(catpca.test)
+
+(cat.loadings <- catpca.test$loadings)
+
+sorted.loadings.4 <- cat.loadings[order(cat.loadings[, 1]), 1]
+myTitle <- "Loadings Plot for CATPC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.4, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.5 <- cat.loadings[order(cat.loadings[, 2]), 2]
+myTitle <- "Loadings Plot for CATPC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.5, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+# Extract the eigenvalues (one per dimension)
+eigenvals <- catpca.test$evals
+
+# Calculate the percentage of variation explained by each axis
+# (Divided by 9 because you have 9 meristic traits)
+pc1_percent <- round((eigenvals[1] / 9) * 100, 1)
+pc2_percent <- round((eigenvals[2] / 9) * 100, 1)
+
+# Quick print check to see your numbers (e.g., 24.5 and 14.2)
+print(paste0("CatPC1: ", pc1_percent, "%"))
+print(paste0("CatPC2: ", pc2_percent, "%"))
+
+# 1. Extract the object scores for the first two dimensions
+cat_pc_scores <- as.data.frame(catpca.test$objectscores)
+colnames(cat_pc_scores) <- c("CatPC1", "CatPC2")
+
+# 2. Combine them back with your species and size metadata
+catpca.df <- cbind(count, cat_pc_scores)
+
+```
+
+#### *Plots*
+
+```{r}
+
+#### METRIC
+
+pca.1<- autoplot(PCA.test, data = df_trans, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
+  scale_color_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00")) +
+  scale_fill_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00")) +
+  scale_shape_manual(name= 'Species', 
+                     values = c("Sailfin molly" = 17, "Amazon molly"=16)) +
+   guides(fill = guide_legend(override.aes = list(fill = NA)))+
+  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+pca.1
+
+
+pca.2<- autoplot(PCA.test, x=2, y=3, data = df_trans, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
+  scale_color_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00")) +
+  scale_fill_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00")) +
+  scale_shape_manual(name= 'Species', 
+                     values = c("Sailfin molly" = 17, "Amazon molly"=16)) +
+   guides(fill = guide_legend(override.aes = list(fill = NA)))+
+  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+pca.2
+
+
+#### MERISTIC
+
+catpca <- ggplot(catpca.df, aes(x = CatPC1, y = CatPC2, color = Species, fill = Species, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  stat_ellipse(geom = "polygon", alpha = 0.15, type = "norm", level = 0.95) +
+  scale_color_manual(name = "Species",
+                     values = c("Sailfin molly" = "#78B7C5", "Amazon molly" = "#E1AF00")) +
+  scale_fill_manual(name = "Species",
+                    values = c("Sailfin molly" = "#78B7C5", "Amazon molly" = "#E1AF00")) +
+  scale_shape_manual(name = "Species", 
+                     values = c("Sailfin molly" = 17, "Amazon molly" = 16)) +
+  guides(fill = guide_legend(override.aes = list(fill = NA))) +
+  labs(
+    title = "CATPCA Plot of Meristic Traits",
+    x = "Categorical PC1",
+    y = "Categorical PC2"
+  ) +
+  theme_classic() +
+  labs(
+    title = "CATPCA Plot of Meristic Traits",
+    x = paste0("Categorical PC1 (", pc1_percent, "%)"),
+    y = paste0("Categorical PC2 (", pc2_percent, "%)")
+  )
+
+catpca
+
+```
+
+
+#### *Post PCA tests*
+
+**CONCLUSIONS:** For our metric data, there is no significant difference in average shape distribution for PC1, but there is a significant difference for PC2 and PC3. This is expected, as amazons and sailfins have different body shapes and therefore occupy distinct morphospace. There was no significant difference in shape variation for any PC, indicating not overall difference in morphological variation among the two species when all traits are taken into account. This corroborates our individual results.
+
+For our meristic data, CatPC1 showed a significant difference in average meristic profiles, which makes sense as the majority of traits that load heavily on CatPC1 are species diagnostics (e.g., scales before dorsal fin, lateral line scale count, dorsal fin rays). There is also a significant difference in variation for CatPC1, with sailfins exhibiting higher variation than amazons. There was no significant difference in CatPC2 for both mean and variance. This differs from our individual trait analysis, indicating species differences in covariation among multiple meristic features. 
+
+
+```{r}
+
+#get species-only df for metric and meristic data
+lat.m <- pca.df[pca.df$Species == "Sailfin molly",]
+form.m <- pca.df[pca.df$Species == "Amazon molly",]
+
+lat.c <- catpca.df[catpca.df$Species == "Sailfin molly",]
+form.c <- catpca.df[catpca.df$Species == "Amazon molly",]
+
+#quick distribution checks to see what tests to use
+
+testmod <- lm(Dim.1 ~ Species, data = pca.df)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(Dim.2 ~ Species, data = pca.df)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(Dim.3 ~ Species, data = pca.df)
+plot(simulateResiduals(testmod)) #fails outlier test; will use wilcox
+
+testmod <- lm(CatPC1 ~ Species, data = catpca.df)
+plot(simulateResiduals(testmod)) #levene's test significant; will use wilcox
+
+testmod <- lm(CatPC2 ~ Species, data = catpca.df)
+plot(simulateResiduals(testmod)) #fails KS test, outlier test, and within-group deviation; will use wilcox
+
+
+
+
+# ───────────────────────────────────────────────────
+## MEDIAN TESTS (Wilcox Test for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+
+met.mean.1 <- wilcox.test(lat.m$Dim.1, form.m$Dim.1, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #not significant
+
+met.mean.2 <- wilcox.test(lat.m$Dim.2, form.m$Dim.2, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p<0.001); estimate = 0.286
+    (median(lat.m$Dim.2))    #  0.152
+    (median(form.m$Dim.2))   # -0.123
+
+
+met.mean.3 <- wilcox.test(lat.m$Dim.3, form.m$Dim.3, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p=0.008); estimate= 0.040
+    (median(lat.m$Dim.3))    #  0.010
+    (median(form.m$Dim.3))   # -0.025
+
+
+### Meristic Data
+
+
+cnt.mean.1 <- wilcox.test(lat.c$CatPC1, form.c$CatPC1, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p<0.001); estimate = 1.75
+    (median(lat.c$CatPC1))    #  1.0
+    (median(form.c$CatPC1))   # -0.797
+
+cnt.mean.2 <- wilcox.test(lat.c$CatPC2, form.c$CatPC2, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p=0.039); estimate = 0.052
+    (median(lat.c$CatPC2))    #  -0.203
+    (median(form.c$CatPC2))   # -0.246
+
+# ───────────────────────────────────────────────────
+## VARIANCE TESTS (Brown-Forsythe for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+met.var.1 <- leveneTest(Dim.1~Species, data= pca.df) #not significant
+
+met.var.2 <- leveneTest(Dim.2~Species, data= pca.df) #not significant
+
+met.var.3 <- leveneTest(Dim.3~Species, data= pca.df) #not significant
+
+
+### Meristic Data
+cnt.var.1 <- leveneTest(CatPC1~Species, data= catpca.df) #significant (0.050)
+    (var(lat.c$CatPC1))   # 0.289
+    (var(form.c$CatPC1))  # 0.238
+
+cnt.var.2 <- leveneTest(CatPC2~Species, data= catpca.df) #not significant
+
+
+# ───────────────────────────────────────────────────
+## TABLE
+# ───────────────────────────────────────────────────
+
+### Metric Data
+
+#get mean and variance for each dimension per species
+met_summary <- pca.df %>%
+  group_by(Species) %>%
+  summarise(
+    PC1_median = median(Dim.1, na.rm = TRUE),
+    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
+    PC2_median = median(Dim.2, na.rm = TRUE),
+    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
+    PC3_median = median(Dim.3, na.rm = TRUE),
+    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
+
+#isolate results
+amazon_met  <- filter(met_summary, Species == "Amazon molly")
+sailfin_met <- filter(met_summary, Species == "Sailfin molly")
+
+#extract wilcox test results, levene's results, and summary stats
+postPCA_result <- tibble(
+  Classifier = "Metric PCA",
+  Dimension = c("PC1", "PC2", "PC3"),
+  Amazon = c(
+    sprintf("%.2f (%.2f)", amazon_met$PC1_median, amazon_met$PC1_mad),
+    sprintf("%.2f (%.2f)", amazon_met$PC2_median, amazon_met$PC2_mad),
+    sprintf("%.2f (%.2f)", amazon_met$PC3_median, amazon_met$PC3_mad)),
+  Sailfin = c(
+    sprintf("%.2f (%.2f)", sailfin_met$PC1_median, sailfin_met$PC1_mad),
+    sprintf("%.2f (%.2f)", sailfin_met$PC2_median, sailfin_met$PC2_mad),
+    sprintf("%.2f (%.2f)", sailfin_met$PC3_median, sailfin_met$PC3_mad)),
+  W_value = c(met.mean.1$statistic,
+              met.mean.2$statistic,
+              met.mean.3$statistic),
+  p_wil = c(met.mean.1$p.value,
+           met.mean.2$p.value,
+           met.mean.3$p.value),
+  F_value = c(met.var.1$`F value`[1],
+              met.var.2$`F value`[1],
+              met.var.3$`F value`[1]),
+  p_lv = c(met.var.1$`Pr(>F)`[1],
+           met.var.2$`Pr(>F)`[1],
+           met.var.3$`Pr(>F)`[1])) %>%
+  mutate(
+    Med_test = case_when(
+      p_wil < 0.001 ~ paste0("W = ", sprintf("%.2f", W_value), 
+                            "<br>*p* < 0.001*"),
+      p_wil <0.05   ~ paste0("W = ", sprintf("%.2f", W_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_wil), "*"),
+       TRUE        ~ paste0("W = ", sprintf("%.2f", W_value),
+                            "<br>*p* = ", sprintf("%.3f", p_wil))),
+
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* < 0.001*"),
+      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
+                            "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+
+
+### Meristic Data
+
+#get mean and variance for each dimension per species
+cnt_summary <- catpca.df %>%
+  group_by(Species) %>%
+  summarise(
+    CPC1_median = median(CatPC1, na.rm = TRUE),
+    CPC1_mad  = mad(CatPC1, na.rm = TRUE),
+    CPC2_median = median(CatPC2, na.rm = TRUE),
+    CPC2_mad  = mad(CatPC2, na.rm = TRUE))
+
+#isolate results
+amazon_cnt  <- filter(cnt_summary, Species == "Amazon molly")
+sailfin_cnt <- filter(cnt_summary, Species == "Sailfin molly")
+
+
+#extract wilcox test results, levene's results, and summary stats
+postCPCA_result <- tibble(
+  Classifier = "Meristic CATPCA",
+  Dimension = c("CatPC1", "CatPC2"),
+  Amazon = c(
+    sprintf("%.2f (%.2f)", amazon_cnt$CPC1_median, amazon_cnt$CPC1_mad),
+    sprintf("%.2f (%.2f)", amazon_cnt$CPC2_median, amazon_cnt$CPC2_mad)),
+  Sailfin = c(
+    sprintf("%.2f (%.2f)", sailfin_cnt$CPC1_median, sailfin_cnt$CPC1_mad),
+    sprintf("%.2f (%.2f)", sailfin_cnt$CPC2_median, sailfin_cnt$CPC2_mad)),
+  W_value = c(cnt.mean.1$statistic,
+              cnt.mean.2$statistic),
+  p_wil = c(cnt.mean.1$p.value,
+           cnt.mean.2$p.value),
+  F_value = c(cnt.var.1$`F value`[1],
+              cnt.var.2$`F value`[1]),
+  p_lv = c(cnt.var.1$`Pr(>F)`[1],
+           cnt.var.2$`Pr(>F)`[1])) %>%
+  mutate(
+    Med_test = case_when(
+      p_wil < 0.001 ~ paste0("W = ", sprintf("%.2f", W_value), 
+                            "<br>*p* < 0.001*"),
+      p_wil <0.05   ~ paste0("W = ", sprintf("%.2f", W_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_wil), "*"),
+       TRUE        ~ paste0("W = ", sprintf("%.2f", W_value),
+                            "<br>*p* = ", sprintf("%.3f", p_wil))),
+
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* < 0.001*"),
+      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
+                            "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+
+### Combine & form table
+
+results_combined <- bind_rows(postPCA_result, postCPCA_result) 
+
+
+
+postPCA_table <- results_combined %>%
+  select(
+    Classifier,
+    Dimension,
+    Amazon,
+    Sailfin,
+    Med_test,
+    Variance_test) %>%
+  gt(groupname_col = "Classifier") %>%
+  fmt_markdown(
+    columns = c(Med_test, Variance_test)) %>%
+  cols_label(
+    Dimension = "         ",
+    Amazon = md("**Amazon**<br>Median (MAD)"),
+    Sailfin = md("**Sailfin**<br>Median (MAD)"),
+    Med_test = "Median comparison",
+    Variance_test = "Variance comparison") %>%
+  tab_options(row_group.font.weight = "bold") %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(Dimension, Amazon, Sailfin, Med_test))) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+#final table
+postPCA_table
+
+
+
+```
+
+***
+***
+
+
+
+## **Geographic Analysis**
+
+
+### Quick summary
+
+A quick summary, mostly of number of fish in each zone and basin.
+
+We find that there are at least 3 fish of each species in all zones, 7 of 11 basins, and 8 of 17 basins. Classifiers marked with an asterisk only have >3 of one species.
+
+```{r, echo=FALSE, warning=FALSE}
+
+zone.sum <-raw2 %>%
+  count(Species, Zone) %>%
+  tidyr::pivot_wider(
+    names_from  = Species,
+    values_from = n,
+    values_fill = 0) %>%
+  rename(classifier = Zone) %>%
+  mutate(classifier = as.character(classifier), 
+         classifier_type = "Zone")
+
+basin.sum <- raw2 %>%
+  count(Species, Basin) %>%
+  tidyr::pivot_wider(
+    names_from  = Species,
+    values_from = n,
+    values_fill = 0) %>%
+  rename(classifier = Basin) %>%
+  mutate(classifier = as.character(classifier), 
+         classifier_type = "Basin")
+
+
+sum.counts <- bind_rows(zone.sum, basin.sum)
+
+sum.counts %>%
+  group_by(classifier_type) %>%
+  mutate(classifier_type = paste0(classifier_type, " (n=", n(), ")")) %>%
+  ungroup() %>%
+  mutate(classifier_type = factor(classifier_type,
+                                  levels = grep("Zone", unique(classifier_type), value = TRUE) %>%
+                                           c(grep("Basin", unique(classifier_type), value = TRUE)) %>%
+                                           c(grep("Watershed", unique(classifier_type), value = TRUE))))%>%
+  arrange(classifier_type, classifier) %>%
+  select(classifier_type, classifier, everything()) %>%
+  gt(rowname_col = "classifier", groupname_col = "classifier_type") %>%
+  text_transform(
+    locations = cells_stub(),
+    fn = function(x) {
+      too.few <- sum.counts$`Amazon molly` < 3 | sum.counts$`Sailfin molly` < 3
+      
+      ifelse(sum.counts$classifier %in% x & too.few[match(x, sum.counts$classifier)], 
+             paste0(x, "*"), x)}) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(classifier, "Sailfin molly"))) %>%
+  opt_horizontal_padding(scale=2) %>%
+  cols_align(align="center", everything())
+
+
+
+```
+***
+***
+
+### Individual trait models
+
+We will be repeating our **generalized linear mixed models (GLMM)** with the addition of zones and basins to test if variation is partitioned across a geographic range. 
+
+#### *Zones*
+
+**CONCLUSIONS:** Five metric traits showed greater support for a model with unequal dispersion across species and zones. Caudal peduncle depth/length, and orbital length mostly show higher variation among sailfins with highest variation in zone 4. Head width/length show amazons to be more variable in all zones except zone 2, where sailfins are more variable. No meristic traits differed by zone.
+
+```{r}
+# ───────────────────────────────────────────────────
+## METRIC ANALYSIS--ZONES
+# ───────────────────────────────────────────────────
+
+
+results_geo <- lapply(met.vars, function(trait) {
+  
+  form_str <- paste0("log(", trait, ") ~ log(SL) * Species")
+  form = as.formula(form_str)
+
+  # 1. Species variance model
+  mod1 <- tryCatch({
+    glmmTMB(form, data = metric, family = gaussian, dispformula = ~Species)
+  }, error = function(e) { NULL }, warning = function(w) { NULL })
+  
+  # 2. Geographic variance model (with strict optimization catching)
+  mod2 <- tryCatch({
+    glmmTMB(form, data = metric, family = gaussian, dispformula = ~Species*Zone)
+  }, 
+  error = function(e) { NULL },
+  warning = function(w) {
+    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+      return(NULL)
+    }
+    invokeRestart("muffleWarning")
+  })
+  
+  # Verify clean convergence of both models
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) &&
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+  
+  unique_zones <- levels(as.factor(metric$Zone))
+  
+  # --- PATH A: MODELS CONVERGED CLEANLY ---
+  if (models_valid) {
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Species-Only (mod1)" else "Geographic (mod2)"
+    
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    rg <- ref_grid(mod2, component = "disp")
+    disp_means <- as.data.frame(emmeans(rg, specs = ~ Species * Zone))
+    disp_means$Variance <- exp(disp_means$emmean)
+    
+    ratios_by_zone <- disp_means %>%
+      select(Species, Zone, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait = trait, 
+        Delta_AIC = delta_aic, 
+        LRT_p = pval,
+        Best_Model = best_mod_name)
+      
+  } else {
+    # --- PATH B: FALLBACK SYSTEM FOR METRIC ---
+    best_mod_name <- "Model Failed - Residual ANOVA Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Fallback. !!!"))
+    
+    # Non-parametric fallback: test if absolute size-corrected residuals differ by Species * Zone
+    lm_check <- lm(as.formula(paste0("log(", trait, ") ~ log(SL)")), data = metric)
+    metric$Abs_Resid <- abs(residuals(lm_check))
+    aov_fallback <- anova(lm(Abs_Resid ~ Species * Zone, data = metric))
+    fallback_p <- aov_fallback$`Pr(>F)`[3] # p-value for the interaction term
+    
+    # Calculate direct empirical variance ratios per zone
+    empirical_ratios <- metric %>%
+      group_by(Zone, Species) %>%
+      summarise(Variance = var(!!sym(trait), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Zone = unique_zones, Species = c("Amazon molly", "Sailfin molly"), fill = list(Variance = NA)) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait = trait,
+        Delta_AIC = NA,
+        LRT_p = fallback_p,
+        Best_Model = best_mod_name)
+    
+    ratios_by_zone <- empirical_ratios
+  }
+  
+  return(ratios_by_zone)
+})
+
+
+geo_results_df <- do.call(rbind, results_geo)
+
+
+p_adjusted_df <- geo_results_df %>%
+  select(Trait, LRT_p, Delta_AIC) %>%
+  distinct() %>%
+  mutate(p_adj = p.adjust(LRT_p, method = "holm")) %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ "*p* < 0.001*",
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE          ~ sprintf("%.3f", p_adj)),
+    Trait_Name = factor(trait.names[Trait], levels = unname(trait.names)))
+
+ratios_wide <- geo_results_df %>%
+  select(Trait, Zone, Var_Ratio) %>%
+  pivot_wider(
+    names_from = Zone, 
+    values_from = Var_Ratio, 
+    names_prefix = "Ratio_")
+
+geo_wide_results <- p_adjusted_df %>%
+  left_join(ratios_wide, by = "Trait") %>%
+  arrange(Trait_Name)
+
+geo.met.tbl <- geo_wide_results %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj)) %>%
+  cols_move_to_start(columns = Trait_Name) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value"),
+    `Ratio_Zone 1` = "Zone 1",  
+    `Ratio_Zone 2` = "Zone 2",  
+    `Ratio_Zone 3` = "Zone 3",
+    `Ratio_Zone 4` = "Zone 4") %>%
+  tab_spanner(
+    label = md("Variance Ratio *(Sailfin / Amazon)*"),
+    columns = starts_with("Ratio_")) %>%
+  fmt_number(
+    columns = c(Delta_AIC, starts_with("Ratio_")),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, p.display))
+  ) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+geo.met.tbl
+
+
+# ───────────────────────────────────────────────────
+## MERISTIC (COUNT) ANALYSIS--ZONES
+# ───────────────────────────────────────────────────
+
+
+results_geo_cnt <- lapply(cnt.vars, function(trait) {
+  
+  form_str <- paste0(trait, " ~ SL * Species")
+  form <- as.formula(form_str)
+
+  # 1. Species variance model 
+  mod1 <- tryCatch({
+    glmmTMB(form, data = count, family = compois, dispformula = ~Species)
+  }, error = function(e) { NULL }, warning = function(w) { NULL })
+  
+  # 2. Geographic variance model (compois with strict warning catching)
+  mod2 <- tryCatch({
+    withCallingHandlers(
+      glmmTMB(form, data = count, family = compois, dispformula = ~Species*Zone),
+      warning = function(w) {
+        if (grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+          stop(w$message) }
+        invokeRestart("muffleWarning")})}, error = function(e) { NULL })
+  
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) && 
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+
+  unique_zones <- levels(as.factor(count$Zone))
+  
+  # --- PATH A: MODELS CONVERGED CLEANLY ---
+  if (models_valid) {
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Species-Only (mod1)" else "Geographic (mod2)"
+    
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    mean_sl <- mean(count$SL, na.rm = TRUE)
+    pred_data <- expand.grid(Species = c("Amazon molly", "Sailfin molly"), Zone = unique_zones)
+    pred_data$SL <- mean_sl
+    
+    pred_data$Mean <- predict(mod2, newdata = pred_data, type = "response")
+    pred_data$Nu   <- exp(predict(mod2, newdata = pred_data, type = "disp"))
+    pred_data$Variance <- pred_data$Mean / pred_data$Nu # COM-Poisson variance block
+    
+    zone_output <- pred_data %>%
+      select(Zone, Species, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait     = trait,
+        Delta_AIC = delta_aic,
+        LRT_p     = pval,
+        Best_Model = best_mod_name)
+  } else {
+    # --- PATH B: FALLBACK SYSTEM FOR MERISTIC ---
+    best_mod_name <- "Model Failed - Residual ANOVA Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Fallback. !!!"))
+    
+    # Fit basic poisson to get residuals safely without optimization breaking
+    glance_mod <- glm(as.formula(paste0(trait, " ~ SL")), data = count, family = poisson)
+    count$Abs_Resid <- abs(residuals(glance_mod, type = "response"))
+    aov_fallback <- anova(lm(Abs_Resid ~ Species * Zone, data = count))
+    fallback_p <- aov_fallback$`Pr(>F)`[3]
+    
+    empirical_ratios <- count %>%
+      group_by(Zone, Species) %>%
+      summarise(Variance = var(!!sym(trait), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Zone = unique_zones, Species = c("Amazon molly", "Sailfin molly"), fill = list(Variance = NA)) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait     = trait,
+        Delta_AIC = NA,
+        LRT_p     = fallback_p,
+        Best_Model = best_mod_name)
+    
+    zone_output <- empirical_ratios
+  }
+  
+  return(zone_output)
+})
+
+geo_cnt_df <- do.call(rbind, results_geo_cnt)
+
+
+p_adj_cnt_df <- geo_cnt_df %>%
+  select(Trait, LRT_p, Delta_AIC, Best_Model) %>%
+  distinct() %>%
+  mutate(p_adj = p.adjust(LRT_p, method = "holm")) %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ "*p* < 0.001*",
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE          ~ sprintf("%.3f", p_adj)),
+    Trait_Name = factor(trait.names[Trait], levels = unname(trait.names)))
+
+ratios_wide2 <- geo_cnt_df %>%
+  select(Trait, Zone, Var_Ratio) %>%
+  pivot_wider(
+    names_from = Zone, 
+    values_from = Var_Ratio, 
+    names_prefix = "Ratio_")
+
+geo_wide_cnt <- p_adj_cnt_df %>%
+  left_join(ratios_wide2, by = "Trait") %>%
+  arrange(Trait_Name)
+
+geo.cnt.tbl <- geo_wide_cnt %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj)) %>%
+  cols_move_to_start(columns = Trait_Name) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value"),
+    `Ratio_Zone 1` = "Zone 1",  
+    `Ratio_Zone 2` = "Zone 2",  
+    `Ratio_Zone 3` = "Zone 3",
+    `Ratio_Zone 4` = "Zone 4") %>%
+  tab_spanner(
+    label = md("Variance Ratio *(Sailfin / Amazon)*"),
+    columns = starts_with("Ratio_")) %>%
+  fmt_number(
+    columns = c(Delta_AIC, starts_with("Ratio_")),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, p.display))
+  ) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+geo.cnt.tbl
+
+```
+
+
+
+#### *Basins*
+
+First need to filter for basins with a minimum of 3 of each species.
+
+```{r}
+# Filtering for basins with n>=3 for both species
+valid_basins <- raw2 %>%
+  group_by(Basin, Species) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  tidyr::pivot_wider(names_from = Species, values_from = n, values_fill = 0) %>%
+  filter(`Amazon molly` >= 3 & `Sailfin molly` >= 3) %>%
+  pull(Basin)
+
+metric2 <- metric %>% filter(Basin %in% valid_basins) %>% droplevels()
+count2 <- count %>% filter(Basin %in% valid_basins) %>% droplevels()
+
+
+
+```
+
+
+**CONCLUSIONS:** All metric traits showed greater support for a model with unequal dispersion across species and basins. There is no consistent pattern across traits or across basins, indicating that local deviations are likely reflecting stochastic, demographic, or sampling-related effects rather than any differences from reproductive mode. Again, no meristic traits differed across basins. 
+
+```{r}
+# ───────────────────────────────────────────────────
+## METRIC ANALYSIS--BASINS
+# ───────────────────────────────────────────────────
+
+
+results_geo2 <- lapply(met.vars, function(trait) {
+  
+  form_str <- paste0("log(", trait, ") ~ log(SL) * Species")
+  form = as.formula(form_str)
+
+  # 1. Species variance model
+  mod1 <- tryCatch({
+    glmmTMB(form, data = metric2, family = gaussian, dispformula = ~Species)
+  }, error = function(e) { NULL }, warning = function(w) { NULL })
+  
+  # 2. Geographic variance model (with strict optimization catching)
+  mod2 <- tryCatch({
+    glmmTMB(form, data = metric2, family = gaussian, dispformula = ~Species*Basin)
+  }, 
+  error = function(e) { NULL },
+  warning = function(w) {
+    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+      return(NULL)
+    }
+    invokeRestart("muffleWarning")
+  })
+  
+  # Verify clean convergence of both models
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) &&
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+  
+  unique_basins <- levels(as.factor(metric2$Basin))
+  
+  # --- PATH A: MODELS CONVERGED CLEANLY ---
+  if (models_valid) {
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Species-Only (mod1)" else "Geographic (mod2)"
+    
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    rg <- ref_grid(mod2, component = "disp")
+    disp_means <- as.data.frame(emmeans(rg, specs = ~ Species * Basin))
+    disp_means$Variance <- exp(disp_means$emmean)
+    
+    ratios_by_basin <- disp_means %>%
+      select(Species, Basin, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait = trait, 
+        Delta_AIC = delta_aic, 
+        LRT_p = pval,
+        Best_Model = best_mod_name)
+      
+  } else {
+    # --- PATH B: FALLBACK SYSTEM FOR METRIC ---
+    best_mod_name <- "Model Failed - Residual ANOVA Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Fallback. !!!"))
+    
+    # Non-parametric fallback: test if absolute size-corrected residuals differ by Species * Zone
+    lm_check <- lm(as.formula(paste0("log(", trait, ") ~ log(SL)")), data = metric2)
+    metric2$Abs_Resid <- abs(residuals(lm_check))
+    aov_fallback <- anova(lm(Abs_Resid ~ Species * Basin, data = metric2))
+    fallback_p <- aov_fallback$`Pr(>F)`[3] # p-value for the interaction term
+    
+    # Calculate direct empirical variance ratios per zone
+    empirical_ratios <- metric2 %>%
+      group_by(Basin, Species) %>%
+      summarise(Variance = var(!!sym(trait), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Basin = unique_basins, Species = c("Amazon molly", "Sailfin molly"), fill = list(Variance = NA)) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait = trait,
+        Delta_AIC = NA,
+        LRT_p = fallback_p,
+        Best_Model = best_mod_name)
+    
+    ratios_by_basin <- empirical_ratios
+  }
+  
+  return(ratios_by_basin)
+})
+
+
+geo_results_df2 <- do.call(rbind, results_geo2)
+
+
+p_adjusted_df2 <- geo_results_df2 %>%
+  select(Trait, LRT_p, Delta_AIC) %>%
+  distinct() %>%
+  mutate(p_adj = p.adjust(LRT_p, method = "holm")) %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ "*p* < 0.001*",
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE          ~ sprintf("%.3f", p_adj)),
+    Trait_Name = factor(trait.names[Trait], levels = unname(trait.names)))
+
+ratios_wide_bas <- geo_results_df2 %>%
+  select(Trait, Basin, Var_Ratio) %>%
+  pivot_wider(
+    names_from = Basin, 
+    values_from = Var_Ratio, 
+    names_prefix = "Ratio_")
+
+geo_wide_results2 <- p_adjusted_df2 %>%
+  left_join(ratios_wide_bas, by = "Trait") %>%
+  arrange(Trait_Name)
+
+geo.met.tbl2 <- geo_wide_results2 %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj)) %>%
+  cols_move_to_start(columns = Trait_Name) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value"),
+    `Ratio_San Antonio-Guadalupe`             = "San Antonio-Guadalupe",  
+    `Ratio_San Antonio-Nueces Coastal`        = "San Antonio-Nueces Coastal",  
+    `Ratio_Upper Southwest Texas Coastal`     = "Upper Southwest Texas Coastal",
+    `Ratio_Lower Southwest Texas Coastal`     = "Lower Southwest Texas Coastal",
+    `Ratio_Lower Río Grande`                  = "Lower Río Grande",
+    `Ratio_Lagunas de San Andrés-Morales`     = "Lagunas de San Andrés-Morales",
+    `Ratio_Río Tamesí`                        = "Río Tamesí") %>%
+  tab_spanner(
+    label = md("Variance Ratio *(Sailfin / Amazon)*"),
+    columns = starts_with("Ratio_")) %>%
+  fmt_number(
+    columns = c(Delta_AIC, starts_with("Ratio_")),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, p.display))) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+geo.met.tbl2
+
+
+# ───────────────────────────────────────────────────
+## MERISTIC (COUNT) ANALYSIS--BASINS
+# ───────────────────────────────────────────────────
+
+
+results_geo_cnt2 <- lapply(cnt.vars, function(trait) {
+  
+  form_str <- paste0(trait, " ~ SL * Species")
+  form <- as.formula(form_str)
+
+  # 1. Species variance model 
+  mod1 <- tryCatch({
+    glmmTMB(form, data = count2, family = compois, dispformula = ~Species)
+  }, error = function(e) { NULL }, warning = function(w) { NULL })
+  
+  # 2. Geographic variance model (compois with strict warning catching)
+  mod2 <- tryCatch({
+    withCallingHandlers(
+      glmmTMB(form, data = count2, family = compois, dispformula = ~Species*Basin),
+      warning = function(w) {
+        if (grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+          stop(w$message) }
+        invokeRestart("muffleWarning")})}, error = function(e) { NULL })
+  
+  
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) && 
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+
+  unique_basins <- levels(as.factor(count2$Basin))
+  
+  # --- PATH A: MODELS CONVERGED CLEANLY ---
+  if (models_valid) {
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Species-Only (mod1)" else "Geographic (mod2)"
+    
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    mean_sl <- mean(count2$SL, na.rm = TRUE)
+    pred_data <- expand.grid(Species = c("Amazon molly", "Sailfin molly"), Basin = unique_basins)
+    pred_data$SL <- mean_sl
+    
+    pred_data$Mean <- predict(mod2, newdata = pred_data, type = "response")
+    pred_data$Nu   <- exp(predict(mod2, newdata = pred_data, type = "disp"))
+    pred_data$Variance <- pred_data$Mean / pred_data$Nu # COM-Poisson variance block
+    
+    basin_output <- pred_data %>%
+      select(Basin, Species, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait     = trait,
+        Delta_AIC = delta_aic,
+        LRT_p     = pval,
+        Best_Model = best_mod_name)
+  } else {
+    # --- PATH B: FALLBACK SYSTEM FOR MERISTIC ---
+    best_mod_name <- "Model Failed - Residual ANOVA Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Fallback. !!!"))
+    
+    # Fit basic poisson to get residuals safely without optimization breaking
+    glance_mod <- glm(as.formula(paste0(trait, " ~ SL")), data = count2, family = poisson)
+    count2$Abs_Resid <- abs(residuals(glance_mod, type = "response"))
+    aov_fallback <- anova(lm(Abs_Resid ~ Species * Basin, data = count2))
+    fallback_p <- aov_fallback$`Pr(>F)`[3]
+    
+    empirical_ratios <- count2 %>%
+      group_by(Basin, Species) %>%
+      summarise(Variance = var(!!sym(trait), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Basin = unique_basins, Species = c("Amazon molly", "Sailfin molly"), fill = list(Variance = NA)) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        Var_Ratio = `Sailfin molly` / `Amazon molly`,
+        Trait     = trait,
+        Delta_AIC = NA,
+        LRT_p     = fallback_p,
+        Best_Model = best_mod_name)
+    
+    basin_output <- empirical_ratios
+  }
+  
+  return(basin_output)
+})
+
+geo_cnt_df2 <- do.call(rbind, results_geo_cnt2)
+
+
+p_adj_cnt_df2 <- geo_cnt_df2 %>%
+  select(Trait, LRT_p, Delta_AIC) %>%
+  distinct() %>%
+  mutate(p_adj = p.adjust(LRT_p, method = "holm")) %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ "*p* < 0.001*",
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE          ~ sprintf("%.3f", p_adj)),
+    Trait_Name = factor(trait.names[Trait], levels = unname(trait.names)))
+
+ratios_wide_bas2 <- geo_cnt_df2 %>%
+  select(Trait, Basin, Var_Ratio) %>%
+  pivot_wider(
+    names_from = Basin, 
+    values_from = Var_Ratio, 
+    names_prefix = "Ratio_")
+
+geo_wide_cnt2 <- p_adj_cnt_df %>%
+  left_join(ratios_wide_bas2, by = "Trait") %>%
+  arrange(Trait_Name)
+
+geo.cnt.tbl2 <- geo_wide_cnt2 %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj)) %>%
+  cols_move_to_start(columns = Trait_Name) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value"),
+    `Ratio_San Antonio-Guadalupe`             = "San Antonio-Guadalupe",  
+    `Ratio_San Antonio-Nueces Coastal`        = "San Antonio-Nueces Coastal",  
+    `Ratio_Upper Southwest Texas Coastal`     = "Upper Southwest Texas Coastal",
+    `Ratio_Lower Southwest Texas Coastal`     = "Lower Southwest Texas Coastal",
+    `Ratio_Lower Río Grande`                  = "Lower Río Grande",
+    `Ratio_Lagunas de San Andrés-Morales`     = "Lagunas de San Andrés-Morales",
+    `Ratio_Río Tamesí`                        = "Río Tamesí") %>%
+  tab_spanner(
+    label = md("Variance Ratio *(Sailfin / Amazon)*"),
+    columns = starts_with("Ratio_")) %>%
+  fmt_number(
+    columns = c(Delta_AIC, starts_with("Ratio_")),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, p.display))) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+geo.cnt.tbl2
+
+```
+
+
+***
+***
+
+
+
+### Overall shape variation (PCA)
+
+This will still use the same PCA as above, but now the post-PCA tests will include geographic classifiers (zones, basins).
+
+#### *Zones*
+
+**CONCLUSIONS:** Median comparisons were significant for PC1, PC2, PC3 and CatPC1, but not for CatPC2; variance was significant for PC2 and PC3. For PC1, zone 1 shows a significant differences in morphospace occupied by the species and zone 4 is a marginal difference. For PC2 all zones showed a significant difference in morphospace occupied by the species, but only zone 1 shows a difference in variation with Amazons exhibiting more variation. For PC3, only zones 3 and 4 show a significant difference in morphospace occupation, and again only zone 1 shows a difference in variaiton with Amazons exhibiting more variation. For CatPC1, all zones show a significant difference in morphospace occupied.
+
+```{r}
+#quick distribution check
+testmod <- lm(Dim.1~Species*Zone, data= pca.df)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(Dim.2~Species*Zone, data= pca.df)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(Dim.3~Species*Zone, data= pca.df)
+plot(simulateResiduals(testmod)) #fails outlier test and levene's test significant; will use glmm
+
+testmod <- lm(CatPC1~Species*Zone, data= catpca.df)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(CatPC2~Species*Zone, data= catpca.df)
+plot(simulateResiduals(testmod)) #fails KS test, outlier test, and within-group deviation; will use glmm
+
+
+# ───────────────────────────────────────────────────
+## MEDIAN TESTS (GLMM for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+geo.met.mean.1 <- glmmTMB(Dim.1 ~Species*Zone, dispformula = ~Species * Zone, data = pca.df)
+(gmm1 <- Anova(geo.met.mean.1, type = "III")) #all effects significant (all p<0.001)
+plot(simulateResiduals(geo.met.mean.1)) #failed outlier, but qqplot shows good alignment
+
+    post_hoc1 <- emmeans(geo.met.mean.1,  ~ Species | Zone)
+    summary(post_hoc1)
+    pw1 <- pairs(post_hoc1)
+    (pair1 <- as.data.frame(rbind(pw1, adjust = "holm"))) #significant species difference in zone 1 (p<0.001) and marginal for zone 4 (p=0.056)
+
+
+
+geo.met.mean.2 <- glmmTMB(Dim.2 ~Species*Zone, dispformula = ~Species*Zone, data = pca.df) 
+(gmm2 <- Anova(geo.met.mean.2, type = "III")) #all effects significant: species (p<0.001), zone (p<0.001), species:zone (p=0.003)
+plot(simulateResiduals(geo.met.mean.2)) #all good
+
+    post_hoc2 <- emmeans(geo.met.mean.2,  ~ Species | Zone)
+    summary(post_hoc2)
+    pw2 <- pairs(post_hoc2)
+    (pair2 <- as.data.frame(rbind(pw2, adjust = "holm"))) #all zones significant (p<0.001)
+
+
+geo.met.mean.3 <- glmmTMB(Dim.3 ~Species*Zone, dispformula = ~Species*Zone, data = pca.df) 
+(gmm3<- Anova(geo.met.mean.3, type = "III")) #zone and species:zone significant (p<0.001) but not species
+plot(simulateResiduals(geo.met.mean.3)) #failed outlier test, but qqplot shows good alignment
+
+    post_hoc3 <- emmeans(geo.met.mean.3,  ~ Species | Zone)
+    summary(post_hoc3)
+    pw3 <- pairs(post_hoc3)
+    (pair3 <- as.data.frame(rbind(pw3, adjust = "holm"))) #only zone 3 (p=0.010) and zone 4 (p<0.001) significant
+
+### Meristic Data
+geo.cnt.mean.1 <- glmmTMB(CatPC1 ~Species*Zone, dispformula = ~Species*Zone, data = catpca.df)
+(gcm1<- Anova(geo.cnt.mean.1, type = "III")) # species (p<0.001) and species:zone (p=0.002) significant, but not zones
+plot(simulateResiduals(geo.cnt.mean.1)) #all good
+
+    post_hoc4 <- emmeans(geo.cnt.mean.1,  ~ Species | Zone)
+    summary(post_hoc4)
+    pw4 <- pairs(post_hoc4)
+    (pair4 <- as.data.frame(rbind(pw4, adjust = "holm"))) #all zones significant (p<0.001)
+
+#default gaussian family still failed residual tests; switching to Student-t distribution due to extreme tail ends
+geo.cnt.mean.2 <- glmmTMB(CatPC2 ~Species*Zone, dispformula = ~Species*Zone, family = t_family(), data = catpca.df)
+(gcm2<- Anova(geo.cnt.mean.2, type = "III")) #species significant (p=0.006) but not zone or species:zone
+plot(simulateResiduals(geo.cnt.mean.2)) #fails KS test but qqplot shows good alignment
+
+
+# ───────────────────────────────────────────────────
+## VARIANCE TESTS (Brown-Forsythe for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+geo.met.var.1 <- leveneTest(Dim.1~Species*Zone, data= pca.df) #not significant
+
+geo.met.var.2 <- leveneTest(Dim.2~Species*Zone, data= pca.df) #significant (p=0.03)
+    post_hoc5 <- emmeans(geo.met.mean.2,  ~ Species | Zone, component = "disp")
+    summary(post_hoc5)
+    pw5 <- pairs(post_hoc5)
+    (pair5 <- as.data.frame(rbind(pw5, adjust = "holm"))) #only zone 1 significant (p=0.03)
+    
+geo.met.var.3 <- leveneTest(Dim.3~Species*Zone, data= pca.df) #significant (p=0.003)
+    post_hoc6 <- emmeans(geo.met.mean.3,  ~ Species | Zone, component = "disp")
+    summary(post_hoc6)
+    pw6 <- pairs(post_hoc6)
+    (pair6 <- as.data.frame(rbind(pw6, adjust = "holm"))) #only zone 1 significant (p<0.001)
+    
+
+### Meristic Data
+geo.cnt.var.1 <- leveneTest(CatPC1~Species*Zone, data= catpca.df) #not significant
+
+geo.cnt.var.2 <- leveneTest(CatPC2~Species*Zone, data= catpca.df) #not significant
+
+
+# ───────────────────────────────────────────────────
+## TABLE
+# ───────────────────────────────────────────────────
+
+### Metric Data
+
+#get medians and median absolute deviations for each dimension per species per zone
+geo_met_summary <- pca.df %>%
+  group_by(Species, Zone) %>%
+  summarise(
+    PC1_median = median(Dim.1, na.rm = TRUE),
+    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
+    PC2_median = median(Dim.2, na.rm = TRUE),
+    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
+    PC3_median = median(Dim.3, na.rm = TRUE),
+    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
+
+#format summary stats
+geo_met_long <- geo_met_summary %>%
+  pivot_longer(
+    cols = starts_with("PC"),
+    names_to = c("Dimension", ".value"),
+    names_pattern = "(PC\\d)_(.*)") %>%
+  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
+  select(Species, Zone, Dimension, stat_string) %>%
+  pivot_wider(names_from = Species, values_from = stat_string)
+
+
+#extract Anova(model) results and levene's results
+stats_results <- tibble(
+  Dimension = c("PC1", "PC2", "PC3"),
+  Chi_value = c(
+    gmm1["Species:Zone", "Chisq"], 
+    gmm2["Species:Zone", "Chisq"], 
+    gmm3["Species:Zone", "Chisq"]),
+  p_int     = c(
+    gmm1["Species:Zone", "Pr(>Chisq)"], 
+    gmm2["Species:Zone", "Pr(>Chisq)"], 
+    gmm3["Species:Zone", "Pr(>Chisq)"]),
+  F_value   = c(
+    geo.met.var.1$`F value`[1], 
+    geo.met.var.2$`F value`[1], 
+    geo.met.var.3$`F value`[1]),
+  p_lv      = c(
+    geo.met.var.1$`Pr(>F)`[1], 
+    geo.met.var.2$`Pr(>F)`[1], 
+    geo.met.var.3$`Pr(>F)`[1]))
+
+
+#format results for final table
+postPCA_geo_result <- geo_met_long %>%
+  left_join(stats_results, by = "Dimension") %>%
+  mutate(
+    Classifier = "Metric PCA",
+    Med_test = case_when(
+      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
+      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
+      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+
+
+### Meristic Data
+
+
+#get medians and median absolute deviations for each dimension per species per zone
+geo_cnt_summary <- catpca.df %>%
+  group_by(Species, Zone) %>%
+  summarise(
+    CatPC1_median = median(CatPC1, na.rm = TRUE),
+    CatPC1_mad  = mad(CatPC1, na.rm = TRUE, constant = 1),
+    CatPC2_median = median(CatPC2, na.rm = TRUE),
+    CatPC2_mad  = mad(CatPC2, na.rm = TRUE, constant = 1))
+
+#format summary stats
+geo_cnt_long <- geo_cnt_summary %>%
+  pivot_longer(
+    cols = starts_with("CatPC"),
+    names_to = c("Dimension", ".value"),
+    names_pattern = "(CatPC\\d)_(.*)") %>%
+  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
+  select(Species, Zone, Dimension, stat_string) %>%
+  pivot_wider(names_from = Species, values_from = stat_string)
+
+
+#extract Anova(model) results and levene's results
+stats_results2 <- tibble(
+  Dimension = c("CatPC1", "CatPC2"),
+  Chi_value = c(
+    gcm1["Species:Zone", "Chisq"], 
+    gcm2["Species:Zone", "Chisq"]),
+  p_int     = c(
+    gcm1["Species:Zone", "Pr(>Chisq)"], 
+    gcm2["Species:Zone", "Pr(>Chisq)"]),
+  F_value   = c(
+    geo.cnt.var.1$`F value`[1], 
+    geo.cnt.var.2$`F value`[1]),
+  p_lv      = c(
+    geo.cnt.var.1$`Pr(>F)`[1], 
+    geo.cnt.var.2$`Pr(>F)`[1]))
+
+
+#format results for final table
+postCPCA_geo_result <- geo_cnt_long %>%
+  left_join(stats_results2, by = "Dimension") %>%
+  mutate(
+    Classifier = "Meristic CatPCA",
+    Med_test = case_when(
+      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
+      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
+      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+### Add posthoc test results
+extract_pairs <- function(pair_obj, dim_name, type = "Med") {
+  if (is.null(pair_obj)) return(NULL)
+  
+  pair_obj %>%
+    mutate(
+      Dimension = dim_name,
+      Zone = as.character(Zone),
+      p_fmt = case_when(
+        p.value < 0.001 ~ "*p* < 0.001*",
+        p.value < 0.05  ~ sprintf("*p* = %.3f*", p.value),
+        TRUE            ~ sprintf("*p* = %.3f", p.value)),
+      PostHoc_Sum = sprintf("<b>%s:</b> %.2f (&plusmn;%.2f); %s", type, estimate, SE, p_fmt)) %>%
+    select(Dimension, Zone, PostHoc_Sum)
+}
+
+# Bind all pairwise comparisons together
+posthoc_ref <- bind_rows(
+  extract_pairs(pair1, "PC1", "M"),
+  extract_pairs(pair2, "PC2", "M"),
+  extract_pairs(pair3, "PC3", "M"),
+  extract_pairs(pair4, "CatPC1", "M"),
+  extract_pairs(pair5, "PC2", "V"),
+  extract_pairs(pair6, "PC3", "V")) %>%
+  group_by(Dimension, Zone) %>%
+  summarise(
+    PostHoc_Summary = paste(PostHoc_Sum, collapse = "<br>"),
+    .groups = "drop")
+
+
+### Combine & form table
+
+geo_results_combined <- bind_rows(postPCA_geo_result, postCPCA_geo_result) %>%
+  mutate(
+    Med_Part = paste0("Median: &chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), 
+                      " (*p* ", ifelse(p_int < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_int), ifelse(p_int < 0.05, "*", ""))), ")"),
+    Var_Part = paste0("Variance: F = ", sprintf("%.2f", F_value), 
+                      " (*p* ", ifelse(p_lv < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_lv), ifelse(p_lv < 0.05, "*", ""))), ")"),
+    Test_Summary = paste0(Med_Part, " &nbsp;&bull;&nbsp; ", Var_Part),
+    Group_Label = paste0("**", Classifier, "**<br>",
+                         "***", Dimension, "***<br>",
+                         "<span style='font-size: 85%'>", Test_Summary, "</span>"),
+    Zone = as.character(Zone)) %>%
+  left_join(posthoc_ref, by = c("Dimension", "Zone")) %>%
+  mutate(PostHoc_Summary = coalesce(PostHoc_Summary, "&mdash;"))
+  
+
+
+postPCA_geo_table <- geo_results_combined %>%
+  select(
+    Group_Label,
+    Zone,
+    `Amazon molly`,
+    `Sailfin molly`,
+    PostHoc_Summary) %>%
+  gt(groupname_col = "Group_Label", process_md = TRUE) %>%
+  fmt_markdown(columns = everything()) %>%
+  cols_label(
+    Zone = " ",
+    `Amazon molly` = md("**Amazon**<br>Median (MAD)"),
+    `Sailfin molly` = md("**Sailfin**<br>Median (MAD)"),
+    PostHoc_Summary = md("**Post-hoc Contrasts**<br>(M)edian / (V)ariance<br><span style='font-size:90%; font-weight:normal;'>est. (SE); adj. p</span>")) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(Zone, `Amazon molly`, `Sailfin molly`))) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+#final table
+postPCA_geo_table
+
+
+
+
+
+```
+
+***
+***
+
+#### *Basins*
+
+**CONCLUSIONS:** Median comparisons were significant for all PCs and CatPCs; variation comparisons were significant for PC1 and PC3 (marginally). For PC1 species occupied different morphospace in: San Antonio-Nueces Coastal, Upper and Lower Southwest Texas Coastal, and Rio Tamesi; variation was significantly different in Upper SWTX coastal and Lower Rio Grande (marginally), where Amazons had higher variation. For PC2 species occupied different morphospace in all basins. For PC3 species occupied different morphospace in San Antonio-Guadalupe and Lower SWTX coastal; variation was significantly different in Lower SWTX coastal, where Amazons exhibited more variation. For CatPC1 species occupied different morphospace in all basins. For CatPC2, the medians were not equivalent across basins (leading to a significant result for median comparison) but posthoc analysis did not show any significant basin (indicating that they were not significantly different from a 0 estimate).
+
+```{r}
+#filter for basins with >3 for each species
+pca.df2 <- pca.df %>% filter(Basin %in% valid_basins) %>% droplevels()
+catpca.df2 <- catpca.df %>% filter(Basin %in% valid_basins) %>% droplevels()
+
+#quick distribution check
+testmod <- lm(Dim.1~Species*Basin, data= pca.df2)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(Dim.2~Species*Basin, data= pca.df2)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(Dim.3~Species*Basin, data= pca.df2)
+plot(simulateResiduals(testmod)) #fails outlier test; will use glmm
+
+testmod <- lm(CatPC1~Species*Basin, data= catpca.df2)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(CatPC2~Species*Basin, data= catpca.df2)
+plot(simulateResiduals(testmod)) #fails KS test, outlier test, and combined adjusted quantile test; will use glmm
+
+
+# ───────────────────────────────────────────────────
+## MEDIAN TESTS (GLMM for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+geo2.met.mean.1 <- glmmTMB(Dim.1 ~Species*Basin, dispformula = ~Species * Basin, data = pca.df2)
+(g2mm1 <- Anova(geo2.met.mean.1, type = "III")) #basin and species:basin significant (p<0.001) but not species
+plot(simulateResiduals(geo2.met.mean.1)) #all good
+
+    post_hoc2.1 <- emmeans(geo2.met.mean.1,  ~ Species | Basin)
+    summary(post_hoc2.1)
+    pw2.1 <- pairs(post_hoc2.1)
+    (pair2.1 <- as.data.frame(rbind(pw2.1, adjust = "holm"))) #significant species difference in San Antonio-Nueces Coastal (p<0.001), Upper and Lower Southwest Texas coastal (p=0.003 and p<0.001) and Rio Tamesi (p=0.014)
+
+geo2.met.mean.2 <- glmmTMB(Dim.2 ~Species*Basin, dispformula = ~Species*Basin, data = pca.df2) 
+(g2mm2 <- Anova(geo2.met.mean.2, type = "III")) #all effects significant (all p<0.001)
+plot(simulateResiduals(geo2.met.mean.2)) #all good
+
+    post_hoc2.2 <- emmeans(geo2.met.mean.2,  ~ Species | Basin)
+    summary(post_hoc2.2)
+    pw2.2 <- pairs(post_hoc2.2)
+    (pair2.2 <- as.data.frame(rbind(pw2.2, adjust = "holm"))) #all Basins significant (p<0.001)
+
+
+geo2.met.mean.3 <- glmmTMB(Dim.3 ~Species*Basin, dispformula = ~Species*Basin, data = pca.df2) 
+(g2mm3<- Anova(geo2.met.mean.3, type = "III")) #all effects significant (p<0.001)
+plot(simulateResiduals(geo2.met.mean.3)) #all good
+
+    post_hoc2.3 <- emmeans(geo2.met.mean.3,  ~ Species | Basin)
+    summary(post_hoc2.3)
+    pw2.3 <- pairs(post_hoc2.3)
+    (pair2.3 <- as.data.frame(rbind(pw2.3, adjust = "holm"))) #only San Antonio-Guadalupe (p<0.001) and Lower Southwest Texas coastal (p=0.003) significant
+
+### Meristic Data
+geo2.cnt.mean.1 <- glmmTMB(CatPC1 ~Species*Basin, dispformula = ~Species*Basin, data = catpca.df2)
+(g2cm1<- Anova(geo2.cnt.mean.1, type = "III")) # species (p<0.001) and species:Basin (p=0.013) significant, but not Basins
+plot(simulateResiduals(geo2.cnt.mean.1)) #all good
+
+    post_hoc2.4 <- emmeans(geo2.cnt.mean.1,  ~ Species | Basin)
+    summary(post_hoc2.4)
+    pw2.4 <- pairs(post_hoc2.4)
+    (pair2.4 <- as.data.frame(rbind(pw2.4, adjust = "holm"))) #all Basins significant (p<0.001)
+
+    
+#default gaussian family still failed residual tests; switching to Student-t distribution due to extreme tail ends
+geo2.cnt.mean.2 <- glmmTMB(CatPC2 ~Species*Basin, dispformula = ~Species*Basin, family= t_family, data = catpca.df2)
+(g2cm2<- Anova(geo2.cnt.mean.2, type = "III")) #basin (p<0.001) and species:basin (p=0.037) significant, but not species
+plot(simulateResiduals(geo2.cnt.mean.2)) #shows quantile deviations for 0.75 but a n.s. adjusted quantile test and aligned qqplot
+
+    post_hoc2.5 <- emmeans(geo2.cnt.mean.2,  ~ Species | Basin)
+    summary(post_hoc2.5)
+    pw2.5 <- pairs(post_hoc2.5)
+    (pair2.5 <- as.data.frame(rbind(pw2.5, adjust = "holm"))) #no Basins significant
+
+# ───────────────────────────────────────────────────
+## VARIANCE TESTS (Brown-Forsythe for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+geo2.met.var.1 <- leveneTest(Dim.1~Species*Basin, data= pca.df2) #significant (p<0.001)
+    post_hoc2.6 <- emmeans(geo2.met.mean.1,  ~ Species | Basin, component = "disp")
+    summary(post_hoc2.6)
+    pw2.6 <- pairs(post_hoc2.6)
+    (pair2.6 <- as.data.frame(rbind(pw2.6, adjust = "holm"))) #only Upper SW Texas Coastal (p<0.001) and Lower Rio Grande (p=0.049) significant
+
+
+geo2.met.var.2 <- leveneTest(Dim.2~Species*Basin, data= pca.df2) #not significant
+   
+    
+geo2.met.var.3 <- leveneTest(Dim.3~Species*Basin, data= pca.df2) #marginal (p=0.050)
+    post_hoc2.7 <- emmeans(geo2.met.mean.3,  ~ Species | Basin, component = "disp")
+    summary(post_hoc2.7)
+    pw2.7 <- pairs(post_hoc2.7)
+    (pair2.7 <- as.data.frame(rbind(pw2.7, adjust = "holm"))) #only Lower SW Texas Coastal significant (p<0.001)
+    
+
+### Meristic Data
+geo2.cnt.var.1 <- leveneTest(CatPC1~Species*Basin, data= catpca.df2) #not significant
+
+geo2.cnt.var.2 <- leveneTest(CatPC2~Species*Basin, data= catpca.df2) #not significant
+
+
+# ───────────────────────────────────────────────────
+## TABLE
+# ───────────────────────────────────────────────────
+
+### Metric Data
+
+#get medians and median absolute deviations for each dimension per species per Basin
+geo2_met_summary <- pca.df2 %>%
+  group_by(Species, Basin) %>%
+  summarise(
+    PC1_median = median(Dim.1, na.rm = TRUE),
+    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
+    PC2_median = median(Dim.2, na.rm = TRUE),
+    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
+    PC3_median = median(Dim.3, na.rm = TRUE),
+    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
+
+#format summary stats
+geo2_met_long <- geo2_met_summary %>%
+  pivot_longer(
+    cols = starts_with("PC"),
+    names_to = c("Dimension", ".value"),
+    names_pattern = "(PC\\d)_(.*)") %>%
+  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
+  select(Species, Basin, Dimension, stat_string) %>%
+  pivot_wider(names_from = Species, values_from = stat_string)
+
+
+#extract Anova(model) results and levene's results
+stats_results2.1 <- tibble(
+  Dimension = c("PC1", "PC2", "PC3"),
+  Chi_value = c(
+    g2mm1["Species:Basin", "Chisq"], 
+    g2mm2["Species:Basin", "Chisq"], 
+    g2mm3["Species:Basin", "Chisq"]),
+  p_int     = c(
+    g2mm1["Species:Basin", "Pr(>Chisq)"], 
+    g2mm2["Species:Basin", "Pr(>Chisq)"], 
+    g2mm3["Species:Basin", "Pr(>Chisq)"]),
+  F_value   = c(
+    geo2.met.var.1$`F value`[1], 
+    geo2.met.var.2$`F value`[1], 
+    geo2.met.var.3$`F value`[1]),
+  p_lv      = c(
+    geo2.met.var.1$`Pr(>F)`[1], 
+    geo2.met.var.2$`Pr(>F)`[1], 
+    geo2.met.var.3$`Pr(>F)`[1]))
+
+
+#format results for final table
+postPCA_geo2_result <- geo2_met_long %>%
+  left_join(stats_results2.1, by = "Dimension") %>%
+  mutate(
+    Classifier = "Metric PCA",
+    Med_test = case_when(
+      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
+      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
+      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+
+
+### Meristic Data
+
+
+#get medians and median absolute deviations for each dimension per species per Basin
+geo2_cnt_summary <- catpca.df2 %>%
+  group_by(Species, Basin) %>%
+  summarise(
+    CatPC1_median = median(CatPC1, na.rm = TRUE),
+    CatPC1_mad  = mad(CatPC1, na.rm = TRUE, constant = 1),
+    CatPC2_median = median(CatPC2, na.rm = TRUE),
+    CatPC2_mad  = mad(CatPC2, na.rm = TRUE, constant = 1))
+
+#format summary stats
+geo2_cnt_long <- geo2_cnt_summary %>%
+  pivot_longer(
+    cols = starts_with("CatPC"),
+    names_to = c("Dimension", ".value"),
+    names_pattern = "(CatPC\\d)_(.*)") %>%
+  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
+  select(Species, Basin, Dimension, stat_string) %>%
+  pivot_wider(names_from = Species, values_from = stat_string)
+
+
+#extract Anova(model) results and levene's results
+stats_results2.2 <- tibble(
+  Dimension = c("CatPC1", "CatPC2"),
+  Chi_value = c(
+    g2cm1["Species:Basin", "Chisq"], 
+    g2cm2["Species:Basin", "Chisq"]),
+  p_int     = c(
+    g2cm1["Species:Basin", "Pr(>Chisq)"], 
+    g2cm2["Species:Basin", "Pr(>Chisq)"]),
+  F_value   = c(
+    geo2.cnt.var.1$`F value`[1], 
+    geo2.cnt.var.2$`F value`[1]),
+  p_lv      = c(
+    geo2.cnt.var.1$`Pr(>F)`[1], 
+    geo2.cnt.var.2$`Pr(>F)`[1]))
+
+
+#format results for final table
+postCPCA_geo2_result <- geo2_cnt_long %>%
+  left_join(stats_results2.2, by = "Dimension") %>%
+  mutate(
+    Classifier = "Meristic CatPCA",
+    Med_test = case_when(
+      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
+      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
+      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+
+### Add posthoc test results
+extract_pairs2 <- function(pair_obj, dim_name, type = "Med") {
+  if (is.null(pair_obj)) return(NULL)
+  
+  pair_obj %>%
+    mutate(
+      Dimension = dim_name,
+      Basin = as.character(Basin),
+      p_fmt = case_when(
+        p.value < 0.001 ~ "*p* < 0.001*",
+        p.value < 0.05  ~ sprintf("*p* = %.3f*", p.value),
+        TRUE            ~ sprintf("*p* = %.3f", p.value)),
+      PostHoc_Sum = sprintf("<b>%s:</b> %.2f (&plusmn;%.2f); %s", type, estimate, SE, p_fmt)) %>%
+    select(Dimension, Basin, PostHoc_Sum)
+}
+
+# Bind all pairwise comparisons together
+posthoc_ref2 <- bind_rows(
+  extract_pairs2(pair2.1, "PC1", "M"),
+  extract_pairs2(pair2.2, "PC2", "M"),
+  extract_pairs2(pair2.3, "PC3", "M"),
+  extract_pairs2(pair2.4, "CatPC1", "M"),
+  extract_pairs2(pair2.5, "CatPC2", "M"),
+  extract_pairs2(pair2.6, "PC1", "V"),
+  extract_pairs2(pair2.7, "PC3", "V")) %>%
+  group_by(Dimension, Basin) %>%
+  summarise(
+    PostHoc_Summary = paste(PostHoc_Sum, collapse = "<br>"),
+    .groups = "drop")
+
+
+### Combine & form table
+
+geo2_results_combined <- bind_rows(postPCA_geo2_result, postCPCA_geo2_result) %>%
+  mutate(
+    Med_Part = paste0("Median: &chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), 
+                      " (*p* ", ifelse(p_int < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_int), ifelse(p_int < 0.05, "*", ""))), ")"),
+    Var_Part = paste0("Variance: F = ", sprintf("%.2f", F_value), 
+                      " (*p* ", ifelse(p_lv < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_lv), ifelse(p_lv < 0.05, "*", ""))), ")"),
+    Test_Summary = paste0(Med_Part, " &nbsp;&bull;&nbsp; ", Var_Part),
+    Group_Label = paste0("**", Classifier, "**<br>",
+                         "***", Dimension, "***<br>",
+                         "<span style='font-size: 85%'>", Test_Summary, "</span>"),
+    Basin = as.character(Basin)) %>%
+  left_join(posthoc_ref2, by = c("Dimension", "Basin")) %>%
+  mutate(PostHoc_Summary = coalesce(PostHoc_Summary, "&mdash;"))
+  
+
+
+postPCA_geo2_table <- geo2_results_combined %>%
+  select(
+    Group_Label,
+    Basin,
+    `Amazon molly`,
+    `Sailfin molly`,
+    PostHoc_Summary) %>%
+  gt(groupname_col = "Group_Label", process_md = TRUE) %>%
+  fmt_markdown(columns = everything()) %>%
+  cols_label(
+    Basin = " ",
+    `Amazon molly` = md("**Amazon**<br>Median (MAD)"),
+    `Sailfin molly` = md("**Sailfin**<br>Median (MAD)"),
+    PostHoc_Summary = md("**Post-hoc Contrasts**<br>(M)edian / (V)ariance<br><span style='font-size:90%; font-weight:normal;'>est. (SE); adj. p</span>")) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(Basin, `Amazon molly`, `Sailfin molly`))) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+#final table
+postPCA_geo2_table
+
+
+
+
+
+```
+***
+***
+
+## **Tampico MX Analysis**
+
+For this analysis, we will compare sailfin, amazon and atlantic mollies from the Tampico, Mexico region. This is the proposed origin of Amazon mollies, and the only region in which all three species coexist. 
+
+After filtering for individuals where the county/state information was recorded as Tamaulipas/MX, we have 32 sailfin molly, 28 Amazon molly, and 32 Atlantic molly.
+
+### Individual trait models
+
+**CONCLUSIONS:** Body depth, predorsal length, and dorsal base length were best supported with an unequal variance model; in all cases, the sexual species (sailfin & atlantic) were more variable than the amazon. All remaining metric traits and all meristic traits were best supported with an equal variance model (aka no significant difference in variation among the species). 
+
+
+```{r}
+#create separate df for metric and meristic (count) data
+metric3 <- geo %>%
+  select(-c(5:12)) %>%
+  select(-c("FLA"))
+
+count3 <- geo %>%
+  select(-c(14:23)) #still includes SL for analysis
+
+
+
+# ───────────────────────────────────────────────────
+## METRIC ANALYSIS 
+# ───────────────────────────────────────────────────
+
+# Ensure Species is a factor
+metric3$Species <- as.factor(metric3$Species)
+metric3$Species <- relevel(metric3$Species, ref = "Amazon molly")
+
+tm_results_list <- lapply(met.vars, function(trait) {
+  
+  # Build the formula string correctly
+  form_str <- paste0("log(", trait, ") ~ log(SL) * Species")
+  form <- as.formula(form_str)
+
+  # 1. Homogeneous variance model (with safety catch)
+  mod1 <- tryCatch({
+    glmmTMB(form, data = metric3, family = gaussian)
+  }, error = function(e) { NULL }, warning = function(w) { NULL })
+  
+  # 2. Heterogeneous variance model (with strict optimization catching)
+  mod2 <- tryCatch({
+    glmmTMB(form, data = metric3, family = gaussian, dispformula = ~Species)
+  }, 
+  error = function(e) { NULL }, 
+  warning = function(w) { 
+    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+      return(NULL) 
+    }
+    invokeRestart("muffleWarning") 
+  })
+  
+  # Verify clean convergence of both models
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) && 
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+
+  unique_species <- levels(as.factor(metric3$Species))
+  
+  # --- PATH A: MODEL CONVERGED CLEANLY ---
+  if (models_valid) {
+    # Compare models
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    # Run DHARMa residual check
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Homogeneous (mod1)" else "Heterogeneous (mod2)"
+    
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    
+    # Plot the residuals automatically
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    # Extract predicted log-variance per species
+    rg <- ref_grid(mod2, component = "disp")
+    disp_means <- as.data.frame(emmeans(rg, specs = ~ Species))
+    disp_means$Variance <- exp(disp_means$emmean)
+    
+    # Pivot to easily calculate the single global ratio
+    ratio_df <- disp_means %>%
+      select(Species, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        SA_Ratio  = `Sailfin molly` / `Amazon molly`,
+        AA_Ratio  = `Atlantic molly` / `Amazon molly`,
+        Delta_AIC  = delta_aic, 
+        LRT_p      = pval,
+        Best_Model = best_mod_name)
+      
+  } else {
+    # --- PATH B: FALLBACK TO SIZE-CORRECTED LEVENE'S TEST ---
+    best_mod_name <- "Model Failed - Levene's Test Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Levene's Fallback. !!!"))
+    
+    # Step 1: Strip out body size dependencies using linear model on log traits
+    lm_check <- lm(as.formula(paste0("log(", trait, ") ~ log(SL)")), data = metric3)
+    metric$Abs_Resid <- abs(residuals(lm_check))
+    
+    # Step 2: Run a formal Levene's-style test via anova on absolute deviations
+    lev_test <- tryCatch({
+      leveneTest(Abs_Resid ~ Species, data = metric3)
+    }, error = function(e) { NULL })
+    fallback_p <- if(!is.null(lev_test)) lev_test$`Pr(>F)`[1] else NA
+    
+    # Step 3: Calculate empirical size-corrected variances per group
+    empirical_vars <- metric3 %>%
+      group_by(Species) %>%
+      summarise(Variance = var(log(!!sym(trait)), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Species = unique_species, fill = list(Variance = NA))
+    
+    ratio_df <- empirical_vars %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        SA_Ratio  = `Sailfin molly` / `Amazon molly`,
+        AA_Ratio  = `Atlantic molly` / `Amazon molly`,
+        Delta_AIC  = NA, # Marked NA so it shows as blank/dash in your table
+        LRT_p      = fallback_p,
+        Best_Model = best_mod_name)
+  }
+  
+  # Append baseline trait tracker string
+  ratio_df$Trait <- trait
+  return(ratio_df)
+})
+
+tam_results_df <- do.call(rbind, tam_results_list)
+
+tam_results_df$p_adj <- p.adjust(tam_results_df$LRT_p,
+                             method = "holm")
+
+tam.met.results <- tam_results_df %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ paste0("*p* < 0.001*"),
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE ~ sprintf("%.3f", p_adj))) %>%
+  mutate(
+    Trait_Name = factor(
+      trait.names[Trait],
+      levels = unname(trait.names))) %>%
+  arrange(Trait_Name) %>%
+  relocate(Trait_Name, .before = everything())
+
+tam.met.tbl <- tam.met.results %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj, "Sailfin molly", "Amazon molly", "Atlantic molly")) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    SA_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
+    AA_Ratio = md("Variance ratio <br>(Atlantic / Amazon)"),
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value")) %>%
+  fmt_number(
+    columns = c(SA_Ratio, AA_Ratio, Delta_AIC),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, Delta_AIC, SA_Ratio, AA_Ratio))) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+  
+  
+tam.met.tbl
+
+
+
+# ───────────────────────────────────────────────────
+## MERISTIC (COUNT) ANALYSIS 
+# ───────────────────────────────────────────────────
+### NOTE: issues with convergence since variation is so small and data is truncated
+
+tam_results_list_count <- lapply(cnt.vars, function(trait) {
+  
+  form_str <- paste0(trait, " ~ SL * Species")
+  form <- as.formula(form_str)
+  
+  # Initialize status tracking flags
+  mod2_failed <- FALSE
+  levene_failed <- FALSE
+  
+  # 1. Fit Baseline Homogeneous Model
+  mod1 <- tryCatch({
+    glmmTMB(form, data = count3, family = compois)
+  }, error = function(e) { NULL }, warning = function(w) { NULL }) # Rejects if optimizer warns
+  
+  # 2. Fit Heterogeneous Model (with strict warning/error catching)
+  mod2 <- tryCatch({
+    glmmTMB(form, data = count3, family = compois, dispformula = ~Species)
+  }, 
+  error = function(e) { NULL }, 
+  warning = function(w) { 
+    # Catch internal optimization/evaluation warnings and treat them as failures
+    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+      return(NULL) 
+    }
+    # Allow minor, harmless warnings to pass through
+    invokeRestart("muffleWarning") 
+  })
+
+  # Verify if both models successfully and cleanly converged
+  models_valid <- !is.null(mod1) && !is.null(mod2) && 
+                  !is.na(AIC(mod1)) && !is.na(AIC(mod2)) && 
+                  !any(is.nan(summary(mod2)$coefficients$disp[,2]))
+
+  unique_species <- levels(as.factor(count3$Species))
+  
+  # --- PATH A: GLMMTMB CONVERGED CLEANLY ---
+  if (models_valid) {
+    comp <- anova(mod1, mod2)
+    pval <- comp$`Pr(>Chisq)`[2]
+    delta_aic <- AIC(mod2) - AIC(mod1)
+    
+    best_mod <- if (AIC(mod1) < AIC(mod2)) mod1 else mod2
+    best_mod_name <- if (AIC(mod1) < AIC(mod2)) "Homogeneous (mod1)" else "Heterogeneous (mod2)"
+    
+    # Run DHARMa diagnostics safely
+    message(paste0("--- DHARMa Diagnostics for Trait: ", trait, " (Best Model: ", best_mod_name, ") ---"))
+    sim_res <- simulateResiduals(best_mod, plot = FALSE)
+    plot(sim_res) 
+    title(main = paste(trait, "-", best_mod_name), line = 2.5)
+    
+    # Extract Model Variances
+    mean_sl <- mean(count3$SL, na.rm = TRUE)
+    pred_data <- data.frame(Species = unique_species, SL = mean_sl)
+    pred_data$Mean <- predict(mod2, newdata = pred_data, type = "response")
+    pred_data$Phi  <- exp(predict(mod2, newdata = pred_data, type = "disp"))
+    pred_data$Variance <- pred_data$Mean * pred_data$Phi
+    
+    output_df <- pred_data %>%
+      select(Species, Variance) %>%
+      pivot_wider(names_from = Species, values_from = Variance) %>%
+      mutate(
+        SA_Ratio   = `Sailfin molly` / `Amazon molly`,
+        AA_Ratio   = `Atlantic molly` / `Amazon molly`,
+        Delta_AIC  = delta_aic,
+        LRT_p      = pval,
+        Best_Model = best_mod_name)
+      
+  } else {
+    # --- PATH B: CONVERGENCE FAILED -> FALLBACK TO LEVENE'S TEST ---
+    best_mod_name <- "Model Failed Optimization - Used Levene's Test Fallback"
+    message(paste0("!!! glmmTMB Failed for Trait: ", trait, ". Running Levene's Test Fallback. !!!"))
+    
+    # Run Levene's Test on the raw response variable across species
+    levene_form <- as.formula(paste0(trait, " ~ Species"))
+    lev_test <- tryCatch({
+      leveneTest(levene_form, data = count3)
+    }, error = function(e) { NULL })
+    
+    # Extract empirical variances directly from the raw data
+    raw_vars <- count3 %>%
+      group_by(Species) %>%
+      summarise(Variance = var(!!sym(trait), na.rm = TRUE), .groups = 'drop') %>%
+      complete(Species = unique_species, fill = list(Variance = NA)) # handle missing classes
+    
+    # Calculate ratios using the empirical data
+    wide_vars <- raw_vars %>%
+      pivot_wider(names_from = Species, values_from = Variance)
+    
+    # Pull p-value from Levene's test table
+    l_p <- if(!is.null(lev_test)) lev_test$`Pr(>F)`[1] else NA
+    
+    output_df <- wide_vars %>%
+      mutate(
+        SA_Ratio   = `Sailfin molly` / `Amazon molly`,
+        AA_Ratio   = `Atlantic molly` / `Amazon molly`,
+        Delta_AIC  = NA,   # AIC is invalid because the likelihood engine failed
+        LRT_p      = l_p,  # Storing Levene's p-value here so it seamlessly passes into p_adj
+        Best_Model = best_mod_name)
+  }
+  
+  # Append the raw trait identifier string
+  output_df$Trait <- trait
+  return(output_df)
+})
+
+
+# Combine into a clean data frame
+tam_cnt_df <- do.call(rbind, tam_results_list_count)
+
+tam_cnt_df$p_adj <- p.adjust(tam_cnt_df$LRT_p,
+                             method = "holm")
+
+tam.cnt.results <- tam_cnt_df %>%
+  mutate(
+    p.display = case_when(
+      p_adj < 0.001 ~ paste0("*p* < 0.001*"),
+      p_adj < 0.05  ~ paste0(sprintf("%.3f", p_adj), "*"),
+      TRUE ~ sprintf("%.3f", p_adj))) %>%
+  mutate(
+    Trait_Name = factor(
+      trait.names[Trait],
+      levels = unname(trait.names))) %>%
+  arrange(Trait_Name) %>%
+  relocate(Trait_Name, .before = everything())
+
+tam.cnt.tbl <- tam.cnt.results %>%
+  gt() %>%
+  cols_hide(c(Trait, LRT_p, p_adj, "Sailfin molly", "Amazon molly", "Atlantic molly")) %>%
+  cols_label(
+    Trait_Name = "Trait",
+    SA_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
+    AA_Ratio = md("Variance ratio <br>(Atlantic / Amazon)"),
+    Delta_AIC = md("&Delta;AIC"),
+    p.display = md("*p*-value")) %>%
+  fmt_number(
+    columns = c(SA_Ratio, AA_Ratio, Delta_AIC),
+    decimals = 2) %>%
+  fmt_markdown(columns = p.display) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)),
+    locations = cells_body(columns = c(Trait_Name, Delta_AIC, SA_Ratio, AA_Ratio))) %>%
+  cols_align("center", everything()) %>%
+  opt_horizontal_padding(scale = 2)
+  
+  
+tam.cnt.tbl
+
+# ───────────────────────────────────────────────────
+## PLOTS
+# ───────────────────────────────────────────────────
+
+met.long2 <- metric3 %>%
+  pivot_longer(
+    cols = c(SL, BD, CPD, CPL, PreDL, DbL, HL, HD, HW, SnL, OL),
+    names_to = "Trait",
+    values_to = "Value")
+
+
+tam.met.plots <- ggplot(met.long2, aes(x=Species, y=Value, fill = Species)) + 
+  geom_boxplot() +
+  geom_point(color= "#8D8680", size=2, alpha=0.5) +
+  facet_wrap(~ Trait, scales = "free_y", axes = "margins") +
+  theme_classic(base_size = 10, base_family = "sans") + 
+  theme(
+    axis.title.y = element_text(size = 10, family = "sans"), 
+    axis.text.y  = element_text(size = 10, family = "sans"),
+    axis.text.x  = element_text(size = 10, family = "sans"),
+    strip.text    = element_text(size = 10, family = "sans"),
+    panel.spacing = unit(1.5, "lines")) +
+  scale_fill_manual(values = c("Sailfin molly"="#78B7C5",
+                               "Amazon molly"="#E1AF00",
+                               "Atlantic molly"="#9986A5")) +
+  scale_x_discrete(labels = c("Sailfin molly" = "Sailfin\nmolly", 
+                              "Amazon molly" = "Amazon\nmolly", 
+                              "Atlantic molly" = "Atlantic\nmolly")) +
+  xlab("") +
+  ylab("Length or Depth (mm)")
+tam.met.plots
+
+
+cnt.long2 <- count3 %>%
+  pivot_longer(
+    cols = c(D, P1, A, P1.R, LLSC, SALL, SBLL, SBDF, FLA),
+    names_to = "Trait",
+    values_to = "Value")
+
+tam.cnt.plots <- ggplot(cnt.long2, aes(x=Species, y=Value, fill = Species)) + 
+  geom_boxplot() +
+  geom_point(color= "#8D8680", size=2, alpha=0.5) +
+  facet_wrap(~ Trait, scales = "free_y", axes = "margins") +
+  theme_classic(base_size = 10, base_family = "sans") + 
+  theme(
+    axis.title.y = element_text(size = 10, family = "sans"), 
+    axis.text.y  = element_text(size = 10, family = "sans"),
+    axis.text.x  = element_text(size = 10, family = "sans"),
+    strip.text    = element_text(size = 10, family = "sans"),
+    panel.spacing = unit(1.5, "lines")) +
+  scale_fill_manual(values = c("Sailfin molly"="#78B7C5",
+                               "Amazon molly"="#E1AF00",
+                               "Atlantic molly"="#9986A5")) +
+  scale_x_discrete(labels = c("Sailfin molly" = "Sailfin\nmolly", 
+                              "Amazon molly" = "Amazon\nmolly", 
+                              "Atlantic molly" = "Atlantic\nmolly")) +
+  xlab("") +
+  ylab("Count")
+tam.cnt.plots
+
+
+```
+
+***
+***
+
+### Overall shape variation (PCA)
+
+As before, we will assess overall shape variation among species using a ***principal component analysis (PCA)*** on centered and scaled data (all metric traits will also be log transformed to better approach normality). We will then perform a mean and variance test (e.g., ANOVA and Levene's test) to determine if overall shape variation differs between the species. 
+
+As meristic traits are count data, a normal PCA cannot be applied. Instead, we will use a ***categorical principal component analysis (CATPCA)*** that uses optimal scaling to deal with discrete integers. 
+
+#### *Loadings*
+
+```{r}
+#log transform metric traits
+df_trans2 <- geo
+df_trans2[, c(13:23)] <- log(df_trans2[, c(13:23)])
+
+# ───────────────────────────────────────────────────
+## METRIC ANALYSIS 
+# ───────────────────────────────────────────────────
+
+
+PCA.test2 <- prcomp(df_trans2[, 13:23], center = TRUE, scale. = FALSE) 
+
+summary(PCA.test2)
+(eig.val.test <- get_eigenvalue(PCA.test2))
+
+
+# For many morphological studies, the first component is heavily weighted by body size and is often of less interest than components two and three (Humphries et al., 1981). Therefore, we will extract the first three dimensions
+
+ind.test <- get_pca_ind(PCA.test2)
+head(ind.test$coord[,1:3])
+
+
+pca.df2 <- cbind(df_trans2, ind.test$coord[,1:3])
+
+
+# Will investigate the influence of each trait on the first 3 dimensions
+(loadings <- PCA.test2$rotation[, 1:3])
+
+sorted.loadings.1 <- loadings[order(loadings[, 1]), 1]
+myTitle <- "Loadings Plot for PC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.1, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.2 <- loadings[order(loadings[, 2]), 2]
+myTitle <- "Loadings Plot for PC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.2, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.3 <- loadings[order(loadings[, 3]), 3]
+myTitle <- "Loadings Plot for PC3" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.3, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+
+
+
+# ───────────────────────────────────────────────────
+## MERISTIC (COUNT) ANALYSIS 
+# ───────────────────────────────────────────────────
+
+# Remove SL from count df
+count4 <- select(count3, -c("SL"))
+
+# Run the Categorical PCA
+# 'ndim = 2' extracts the first two principal components
+# 'degrees = 1' treats the scaling transformations as piecewise linear (ideal for ordinal integers)
+
+catpca.test2 <- princals(count4[, 5:13], ndim = 2, degrees = 1)
+
+# Print the summary to see how much variance your new components explain
+summary(catpca.test2)
+
+(cat.loadings <- catpca.test2$loadings)
+
+sorted.loadings.4 <- cat.loadings[order(cat.loadings[, 1]), 1]
+myTitle <- "Loadings Plot for CATPC1" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.4, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+sorted.loadings.5 <- cat.loadings[order(cat.loadings[, 2]), 2]
+myTitle <- "Loadings Plot for CATPC2" 
+myXlab  <- "Variable Loadings"
+dotchart(sorted.loadings.5, main=myTitle, xlab=myXlab, cex=0.5, col="blue")
+
+# Extract the eigenvalues (one per dimension)
+eigenvals <- catpca.test2$evals
+
+# Calculate the percentage of variation explained by each axis
+# (Divided by 9 because you have 9 meristic traits)
+pc1_percent <- round((eigenvals[1] / 9) * 100, 1)
+pc2_percent <- round((eigenvals[2] / 9) * 100, 1)
+
+# Quick print check to see your numbers (e.g., 24.5 and 14.2)
+print(paste0("CatPC1: ", pc1_percent, "%"))
+print(paste0("CatPC2: ", pc2_percent, "%"))
+
+# 1. Extract the object scores for the first two dimensions
+cat_pc_scores <- as.data.frame(catpca.test2$objectscores)
+colnames(cat_pc_scores) <- c("CatPC1", "CatPC2")
+
+# 2. Combine them back with your species and size metadata
+catpca.df2 <- cbind(count4, cat_pc_scores)
+
+```
+
+#### *Plots*
+
+```{r}
+
+#### METRIC
+
+tam.pca.1<- autoplot(PCA.test2, data = df_trans2, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
+  scale_color_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00", "Atlantic molly"="#9986A5")) +
+  scale_fill_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00", "Atlantic molly"="#9986A5")) +
+  scale_shape_manual(name= 'Species', 
+                     values = c("Sailfin molly" = 17, "Amazon molly"=16, "Atlantic molly"= 3)) +
+   guides(fill = guide_legend(override.aes = list(fill = NA)))+
+  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+tam.pca.1
+
+
+tam.pca.2<- autoplot(PCA.test2, x=2, y=3, data = df_trans2, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
+  scale_color_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00", "Atlantic molly"="#9986A5")) +
+  scale_fill_manual(name="Species",
+                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00", "Atlantic molly"="#9986A5")) +
+  scale_shape_manual(name= 'Species', 
+                     values = c("Sailfin molly" = 17, "Amazon molly"=16, "Atlantic molly"= 3)) +
+   guides(fill = guide_legend(override.aes = list(fill = NA)))+
+  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
+tam.pca.2
+
+
+#### MERISTIC
+
+tam.catpca <- ggplot(catpca.df2, aes(x = CatPC1, y = CatPC2, color = Species, fill = Species, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  stat_ellipse(geom = "polygon", alpha = 0.15, type = "norm", level = 0.95) +
+  scale_color_manual(name = "Species",
+                     values = c("Sailfin molly" = "#78B7C5", "Amazon molly" = "#E1AF00", "Atlantic molly"="#9986A5")) +
+  scale_fill_manual(name = "Species",
+                    values = c("Sailfin molly" = "#78B7C5", "Amazon molly" = "#E1AF00", "Atlantic molly"="#9986A5")) +
+  scale_shape_manual(name = "Species", 
+                     values = c("Sailfin molly" = 17, "Amazon molly" = 16, "Atlantic molly"= 3)) +
+  guides(fill = guide_legend(override.aes = list(fill = NA))) +
+  labs(
+    x = "Categorical PC1",
+    y = "Categorical PC2"
+  ) +
+  theme_classic() +
+  labs(
+    x = paste0("Categorical PC1 (", pc1_percent, "%)"),
+    y = paste0("Categorical PC2 (", pc2_percent, "%)")
+  )
+
+tam.catpca
+
+```
+
+
+#### *Post PCA tests*
+
+**CONCLUSIONS:** For our metric data, there is no significant difference in average shape distribution for PC1 or PC3, but there is a significant difference for PC2. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. PC1 is influenced by body size, so PC2 and PC3 are of more interest. The species occupy a different morphospace for PC2 which explains 27.1% of the shape variation, but occupy similar morphospace for PC3 which only explains 4.48%. 
+
+PC1 and PC2 both show a significant difference in variation, with pochoc tests revealing the sailfin-Atlantic comparisons to be driving this. Some of the traits that load heavily on PC1 and PC2 (e.g. body depth, dorsal base length) are also the traits that were best supported by unequal variances in our individual models, with the sexual species again having more variation than the asexual, so the PCA results seem to corroborate this. This indicates that for both individual traits and when traits are taken all together, the sexual species in Tampico, Mexico are more variable than the asexual species.
+
+
+For our meristic data, both CatPC1 and CatPC2 showed a significant difference in average meristic profiles, which again makes sense as many of the meristic traits are species specific. There is also a significant difference in variation for CatPC1, with the pairwise comparisons showing a significant difference for sailfin and atlantic only; there was no significant difference in CatPC2. This differs from our individual trait analysis, indicating species differences in covariation among multiple meristic features. 
+
+```{r}
+#quick test
+
+# ───────────────────────────────────────────────────
+## MEDIAN TESTS 
+# ───────────────────────────────────────────────────
+
+### Metric Data
+
+tam.met.mean.1 <- glmmTMB(Dim.1~Species, data = pca.df2) 
+(test1<- Anova(tam.met.mean.1, type = "III")) #significant (p=0.008)
+plot(simulateResiduals(tam.met.mean.1)) #fails levene's test
+
+    test.ph <- emmeans(tam.met.mean.1,  ~ Species)
+    summary(test.ph)
+    test.pw <- pairs(test.ph)
+    (pair.test <- as.data.frame(rbind(test.pw, adjust = "holm"))) #only amazon and atlantic sig (p=0.008)
+    
+tam.met.mean.2 <- glmmTMB(Dim.2~Species, data = pca.df2) #not significant
+(test2<- Anova(tam.met.mean.2, type = "III")) #significant (p<0.001)
+plot(simulateResiduals(tam.met.mean.2)) #all good
+    post_hocTEST <- emmeans(tam.met.mean.1,  ~ Species)
+    summary(post_hocTEST)
+    pwTEST <- pairs(post_hocTEST)
+    (pairTEST <- as.data.frame(rbind(pwTEST, adjust = "holm"))) 
+
+
+tam.met.mean.3 <- kruskal.test(Dim.3~Species, data = pca.df2) #not significant
+
+
+### Meristic Data
+
+
+tam.cnt.mean.1 <- kruskal.test(CatPC1~Species, data = catpca.df2) #significant (p<0.001)
+    tam_post_hoc2 <- dunnTest(CatPC1 ~ Species, data = catpca.df2, method = "holm")
+    tam_post_hoc2 #all comparisons significant (p<0.001)
+
+tam.cnt.mean.2 <- kruskal.test(CatPC2~Species, data = catpca.df2) #significant (p=0.009)
+    tam_post_hoc3 <- dunnTest(CatPC2 ~ Species, data = catpca.df2, method = "holm")
+    tam_post_hoc3 #amazon-atlantic (p=0.0.019) and sailfin-atlatnic (p=0.021) significant but not amazon-sailfin
+
+# ───────────────────────────────────────────────────
+## VARIANCE TESTS (Brown-Forsythe for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+tam.met.var.1 <- leveneTest(Dim.1~Species, data= pca.df2) #significant (p=0.016)
+
+    tam_post_hoc4 <- with(pca.df2, {
+      medians <- tapply(Dim.1, Species, median, na.rm = TRUE)
+      abs_devs <- abs(Dim.1 - medians[Species])
+      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
+    tam_post_hoc4 #amazon-sailfin marginal (p=0.056), sailfin-atlantic significant (p=0.009) and amazon-atlatnic not significant
+
+
+tam.met.var.2 <- leveneTest(Dim.2~Species, data= pca.df2) #significant (p=0.005)
+    tam_post_hoc5 <- with(pca.df2, {
+      medians <- tapply(Dim.2, Species, median, na.rm = TRUE)
+      abs_devs <- abs(Dim.2 - medians[Species])
+      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
+    tam_post_hoc5 #amazon-atlantic marginal (p=0.049), sailfin-atlantic significant (p=0.012) and amazon-sailfin not significant
+
+tam.met.var.3 <- leveneTest(Dim.3~Species, data= pca.df2) #not significant
+
+
+### Meristic Data
+tam.cnt.var.1 <- leveneTest(CatPC1~Species, data= catpca.df2) #significant (p=0.002)
+    tam_post_hoc6 <- with(catpca.df2, {
+      medians <- tapply(CatPC1, Species, median, na.rm = TRUE)
+      abs_devs <- abs(CatPC1 - medians[Species])
+      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
+    tam_post_hoc6 #sailfin-atlantic significant (p=0.004) and amazon-sailfin and amazon-atlantic not significant
+
+tam.cnt.var.2 <- leveneTest(CatPC2~Species, data= catpca.df2) #not significant
+
+
+
+
+```
+
+
+
+```{r}
+
+#quick distribution checks to see what tests to use
+
+testmod <- lm(Dim.1 ~ Species, data = pca.df2)
+plot(simulateResiduals(testmod)) #fails levene's test; will use kruskal-wallis
+
+testmod <- lm(Dim.2 ~ Species, data = pca.df2)
+plot(simulateResiduals(testmod)) #fails levene's test; will use kruskal-wallis
+
+testmod <- lm(Dim.3 ~ Species, data = pca.df2)
+plot(simulateResiduals(testmod)) #all good
+
+testmod <- lm(CatPC1 ~ Species, data = catpca.df2)
+plot(simulateResiduals(testmod)) #fails outlier and levene's test; will use kruskal-wallis
+
+testmod <- lm(CatPC2 ~ Species, data = catpca.df2)
+plot(simulateResiduals(testmod)) #fails KS test and outlier test; will use kruskal-wallis
+
+
+
+
+# ───────────────────────────────────────────────────
+## MEDIAN TESTS (Kruskal-Wallis test for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+
+tam.met.mean.1 <- kruskal.test(Dim.1~Species, data = pca.df2) #not significant
+
+tam.met.mean.2 <- kruskal.test(Dim.2~Species, data = pca.df2) #significant (p<0.001)
+    tam_post_hoc1 <- dunnTest(Dim.2 ~ Species, data = pca.df2, method = "holm")
+    tam_post_hoc1 #all comparisons significant (p<0.001)
+
+
+tam.met.mean.3 <- kruskal.test(Dim.3~Species, data = pca.df2) #not significant
+
+
+### Meristic Data
+
+
+tam.cnt.mean.1 <- kruskal.test(CatPC1~Species, data = catpca.df2) #significant (p<0.001)
+    tam_post_hoc2 <- dunnTest(CatPC1 ~ Species, data = catpca.df2, method = "holm")
+    tam_post_hoc2 #all comparisons significant (p<0.001)
+
+tam.cnt.mean.2 <- kruskal.test(CatPC2~Species, data = catpca.df2) #significant (p=0.009)
+    tam_post_hoc3 <- dunnTest(CatPC2 ~ Species, data = catpca.df2, method = "holm")
+    tam_post_hoc3 #amazon-atlantic (p=0.0.019) and sailfin-atlatnic (p=0.021) significant but not amazon-sailfin
+
+# ───────────────────────────────────────────────────
+## VARIANCE TESTS (Brown-Forsythe for all)
+# ───────────────────────────────────────────────────
+
+### Metric Data
+tam.met.var.1 <- leveneTest(Dim.1~Species, data= pca.df2) #significant (p=0.016)
+
+    tam_post_hoc4 <- with(pca.df2, {
+      medians <- tapply(Dim.1, Species, median, na.rm = TRUE)
+      abs_devs <- abs(Dim.1 - medians[Species])
+      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
+    tam_post_hoc4 #amazon-sailfin marginal (p=0.056), sailfin-atlantic significant (p=0.009) and amazon-atlatnic not significant
+
+
+tam.met.var.2 <- leveneTest(Dim.2~Species, data= pca.df2) #significant (p=0.005)
+    tam_post_hoc5 <- with(pca.df2, {
+      medians <- tapply(Dim.2, Species, median, na.rm = TRUE)
+      abs_devs <- abs(Dim.2 - medians[Species])
+      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
+    tam_post_hoc5 #amazon-atlantic marginal (p=0.049), sailfin-atlantic significant (p=0.012) and amazon-sailfin not significant
+
+tam.met.var.3 <- leveneTest(Dim.3~Species, data= pca.df2) #not significant
+
+
+### Meristic Data
+tam.cnt.var.1 <- leveneTest(CatPC1~Species, data= catpca.df2) #significant (p=0.002)
+    tam_post_hoc6 <- with(catpca.df2, {
+      medians <- tapply(CatPC1, Species, median, na.rm = TRUE)
+      abs_devs <- abs(CatPC1 - medians[Species])
+      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
+    tam_post_hoc6 #sailfin-atlantic significant (p=0.004) and amazon-sailfin and amazon-atlantic not significant
+
+tam.cnt.var.2 <- leveneTest(CatPC2~Species, data= catpca.df2) #not significant
+
+
+# ───────────────────────────────────────────────────
+## TABLE
+# ───────────────────────────────────────────────────
+
+### Metric Data
+
+#get mean and variance for each dimension per species
+met_summary2 <- pca.df2 %>%
+  group_by(Species) %>%
+  summarise(
+    PC1_median = median(Dim.1, na.rm = TRUE),
+    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
+    PC2_median = median(Dim.2, na.rm = TRUE),
+    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
+    PC3_median = median(Dim.3, na.rm = TRUE),
+    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
+
+#isolate results
+amazon_met  <- filter(met_summary2, Species == "Amazon molly")
+sailfin_met <- filter(met_summary2, Species == "Sailfin molly")
+atlantic_met <- filter(met_summary2, Species == "Atlantic molly")
+
+#extract wilcox test results, levene's results, and summary stats
+tam_postPCA_result <- tibble(
+  Classifier = "Metric PCA",
+  Dimension = c("PC1", "PC2", "PC3"),
+  Amazon = c(
+    sprintf("%.2f (%.2f)", amazon_met$PC1_median, amazon_met$PC1_mad),
+    sprintf("%.2f (%.2f)", amazon_met$PC2_median, amazon_met$PC2_mad),
+    sprintf("%.2f (%.2f)", amazon_met$PC3_median, amazon_met$PC3_mad)),
+  Sailfin = c(
+    sprintf("%.2f (%.2f)", sailfin_met$PC1_median, sailfin_met$PC1_mad),
+    sprintf("%.2f (%.2f)", sailfin_met$PC2_median, sailfin_met$PC2_mad),
+    sprintf("%.2f (%.2f)", sailfin_met$PC3_median, sailfin_met$PC3_mad)),
+  Atlantic = c(
+    sprintf("%.2f (%.2f)", atlantic_met$PC1_median, atlantic_met$PC1_mad),
+    sprintf("%.2f (%.2f)", atlantic_met$PC2_median, atlantic_met$PC2_mad),
+    sprintf("%.2f (%.2f)", atlantic_met$PC3_median, atlantic_met$PC3_mad)),
+  H_value = c(tam.met.mean.1$statistic,
+              tam.met.mean.2$statistic,
+              tam.met.mean.3$statistic),
+  p_kw = c(tam.met.mean.1$p.value,
+           tam.met.mean.2$p.value,
+           tam.met.mean.3$p.value),
+  F_value = c(tam.met.var.1$`F value`[1],
+              tam.met.var.2$`F value`[1],
+              tam.met.var.3$`F value`[1]),
+  p_lv = c(tam.met.var.1$`Pr(>F)`[1],
+           tam.met.var.2$`Pr(>F)`[1],
+           tam.met.var.3$`Pr(>F)`[1])) %>%
+  mutate(
+    Med_test = case_when(
+      p_kw < 0.001 ~ paste0("H = ", sprintf("%.2f", H_value), 
+                            "<br>*p* < 0.001*"),
+      p_kw <0.05   ~ paste0("H = ", sprintf("%.2f", H_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_kw), "*"),
+       TRUE        ~ paste0("H = ", sprintf("%.2f", H_value),
+                            "<br>*p* = ", sprintf("%.3f", p_kw))),
+
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* < 0.001*"),
+      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
+                            "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+
+
+### Meristic Data
+
+#get mean and variance for each dimension per species
+cnt_summary2 <- catpca.df2 %>%
+  group_by(Species) %>%
+  summarise(
+    CPC1_median = median(CatPC1, na.rm = TRUE),
+    CPC1_mad  = mad(CatPC1, na.rm = TRUE),
+    CPC2_median = median(CatPC2, na.rm = TRUE),
+    CPC2_mad  = mad(CatPC2, na.rm = TRUE))
+
+#isolate results
+amazon_cnt  <- filter(cnt_summary2, Species == "Amazon molly")
+sailfin_cnt <- filter(cnt_summary2, Species == "Sailfin molly")
+atlantic_cnt <- filter(cnt_summary2, Species == "Atlantic molly")
+
+
+#extract wilcox test results, levene's results, and summary stats
+tam_postCPCA_result <- tibble(
+  Classifier = "Meristic CATPCA",
+  Dimension = c("CatPC1", "CatPC2"),
+  Amazon = c(
+    sprintf("%.2f (%.2f)", amazon_cnt$CPC1_median, amazon_cnt$CPC1_mad),
+    sprintf("%.2f (%.2f)", amazon_cnt$CPC2_median, amazon_cnt$CPC2_mad)),
+  Sailfin = c(
+    sprintf("%.2f (%.2f)", sailfin_cnt$CPC1_median, sailfin_cnt$CPC1_mad),
+    sprintf("%.2f (%.2f)", sailfin_cnt$CPC2_median, sailfin_cnt$CPC2_mad)),
+  Atlantic = c(
+    sprintf("%.2f (%.2f)", atlantic_cnt$CPC1_median, atlantic_cnt$CPC1_mad),
+    sprintf("%.2f (%.2f)", atlantic_cnt$CPC2_median, atlantic_cnt$CPC2_mad)),
+  H_value = c(tam.cnt.mean.1$statistic,
+              tam.cnt.mean.2$statistic),
+  p_kw = c(tam.cnt.mean.1$p.value,
+           tam.cnt.mean.2$p.value),
+  F_value = c(tam.cnt.var.1$`F value`[1],
+              tam.cnt.var.2$`F value`[1]),
+  p_lv = c(tam.cnt.var.1$`Pr(>F)`[1],
+           tam.cnt.var.2$`Pr(>F)`[1])) %>%
+  mutate(
+    Med_test = case_when(
+      p_kw < 0.001 ~ paste0("H = ", sprintf("%.2f", H_value), 
+                            "<br>*p* < 0.001*"),
+      p_kw <0.05   ~ paste0("H = ", sprintf("%.2f", H_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_kw), "*"),
+       TRUE        ~ paste0("H = ", sprintf("%.2f", H_value),
+                            "<br>*p* = ", sprintf("%.3f", p_kw))),
+
+    Variance_test = case_when(
+      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* < 0.001*"),
+      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
+                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
+       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
+                            "<br>*p* = ", sprintf("%.3f", p_lv))))
+
+
+
+
+### Add posthoc test results
+tam_extract_pairs <- function(pair_obj, dim_name, test.type = "M") {
+  if (is.null(pair_obj)) return(NULL)
+  
+  # CASE A: If it's a Dunn Test object (FSA package for Medians)
+  if (inherits(pair_obj, "dunnTest") || "res" %in% names(pair_obj)) {
+    df <- pair_obj$res %>%
+      rename(Contrast = Comparison, p.value = P.adj)
+  } 
+  # CASE B: If it's a pairwise.t.test object (Base R matrix for Variances)
+  else if (inherits(pair_obj, "pairwise.htest")) {
+    p_mat <- pair_obj$p.value
+    df <- as.data.frame(as.table(p_mat)) %>%
+      filter(!is.na(Freq)) %>%
+      mutate(Contrast = paste0(Var2, " - ", Var1)) %>%
+      rename(p.value = Freq)
+  } else {
+    return(NULL)
+  }
+  
+  df %>%
+    mutate(
+      Dimension = dim_name,
+      type = test.type,
+      p_fmt = case_when(
+        p.value < 0.001 ~ "*p* < 0.001*",
+        p.value < 0.05  ~ sprintf("*p* = %.3f*", p.value),
+        TRUE            ~ sprintf("*p* = %.3f", p.value)),
+      Contrast = gsub(" molly", "", Contrast), 
+      PostHoc_Sum = sprintf("%s: %s", Contrast, p_fmt)) %>%
+    select(Dimension, type, PostHoc_Sum)
+}
+
+
+posthoc_ref2 <- bind_rows(
+  tam_extract_pairs(tam_post_hoc1, "PC2", "M"),
+  tam_extract_pairs(tam_post_hoc2, "CatPC1", "M"),
+  tam_extract_pairs(tam_post_hoc3, "CatPC2", "M"),
+  tam_extract_pairs(tam_post_hoc4, "PC1", "V"),
+  tam_extract_pairs(tam_post_hoc5, "PC2", "V"),
+  tam_extract_pairs(tam_post_hoc6, "CatPC1", "V")) %>%
+  group_by(Dimension, type) %>%
+  summarise(
+    Combined_Pairs = paste(PostHoc_Sum, collapse = "<br>"), .groups = "drop") %>%
+  pivot_wider(
+    names_from = type,
+    values_from = Combined_Pairs,
+    names_prefix = "PostHoc_")
+
+### Combine & form table
+
+tam_results_combined <- bind_rows(tam_postPCA_result, tam_postCPCA_result) %>%
+  mutate(
+    Med_Part = paste0("Median: H = ", sprintf("%.2f", H_value), 
+                      " (*p* ", ifelse(p_kw < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_kw), ifelse(p_kw < 0.05, "*", ""))), ")"),
+    Var_Part = paste0("Variance: F = ", sprintf("%.2f", F_value), 
+                      " (*p* ", ifelse(p_lv < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_lv), ifelse(p_lv < 0.05, "*", ""))), ")"),
+    Test_Summary = paste0(Med_Part, "<br> ", Var_Part),
+    Group_Label = paste0("**", Classifier, "**<br>",
+                         "***", Dimension, "***<br>",
+                         "<span style='font-size: 85%'>", Test_Summary, "</span>")) %>%
+  left_join(posthoc_ref2, by = "Dimension") %>%
+  mutate(PostHoc_M = coalesce(PostHoc_M, "&mdash;"),
+         PostHoc_V = coalesce(PostHoc_V, "&mdash;"))
+  
+
+
+
+tam_postPCA_table <- tam_results_combined %>%
+  select(
+    Group_Label,
+    Amazon,
+    Sailfin,
+    Atlantic,
+    PostHoc_M,
+    PostHoc_V) %>%
+  gt() %>%
+  fmt_markdown(columns = everything()) %>%
+  cols_label(
+    Group_Label ="",
+    Amazon = md("**Amazon**<br>Median (MAD)"),
+    Sailfin = md("**Sailfin**<br>Median (MAD)"),
+    Atlantic = md("**Atlantic**<br>Median (MAD)"),
+    PostHoc_M = md("**Pairwise Medians**<br><span style='font-size:85%; font-weight:normal;'>Holm-adj. p</span>"),
+    PostHoc_V = md("**Pairwise Variances**<br><span style='font-size:85%; font-weight:normal;'>Holm-adj. p</span>")) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(Group_Label, Amazon, Sailfin, Atlantic, PostHoc_M))) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  opt_horizontal_padding(scale = 2)
+
+#final table
+tam_postPCA_table
+
+
+
+
+```
+
+***
+***
