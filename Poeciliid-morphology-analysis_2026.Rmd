@@ -1964,7 +1964,7 @@ plot(simulateResiduals(geo.cnt.mean.2)) #fails KS test but qqplot shows good ali
     pw5 <- pairs(post_hoc5)
     (pair5 <- as.data.frame(rbind(pw5, adjust = "holm"))) #zone 1 sig 
 # ───────────────────────────────────────────────────
-## VARIANCE TESTS (Brown-Forsythe for all)
+## VARIANCE TESTS (Extract dispersion)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
@@ -2294,7 +2294,7 @@ plot(simulateResiduals(geo2.cnt.mean.2)) #shows quantile deviations for 0.75 but
     (pair2.5 <- as.data.frame(rbind(pw2.5, adjust = "holm"))) #San Antonio-Nueces Coastal (p=0.001), Upper SWTX Coastal (p<0.001), Rio Tamesi (p=0.004)
 
 # ───────────────────────────────────────────────────
-## VARIANCE TESTS (Brown-Forsythe for all)
+## VARIANCE TESTS (Extract dispersion)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
@@ -3105,86 +3105,6 @@ tam.catpca
 **CONCLUSIONS:** PC1 and PC2 but not PC3 have significant mean differences; both CatPCs have significant mean differences. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. 
 
 PC1, PC2 and CatPC1 show a significant difference in variation among the species. Atlantic have highest estimated variance for PC1, whereas sailfin have highest estimated variance for PC2 and CatPC1; Amazons contain the lowest amount of variation in all PCs. Sailfin differ from both species for PC1 but amazon and atlantic don't differ. Atlantic differ from both species for PC2 but sailfin and amazon don't differ. All species differ for CatPC1. This differs slightly from our individual trait results: in individual trait results, only a few metric traits showed support for a unequal-dispersion model, and none of our meristic traits showed support for unequal-disperson models. This indicates species differences in covariation among multiple metric and meristic features.
-
-```{r}
-#quick test
-
-# ───────────────────────────────────────────────────
-## MEDIAN TESTS 
-# ───────────────────────────────────────────────────
-
-### Metric Data
-
-tam.met.mean.1 <- glmmTMB(Dim.1~Species, data = pca.df2) 
-(test1<- Anova(tam.met.mean.1, type = "III")) #significant (p=0.008)
-plot(simulateResiduals(tam.met.mean.1)) #fails levene's test
-
-    test.ph <- emmeans(tam.met.mean.1,  ~ Species)
-    summary(test.ph)
-    test.pw <- pairs(test.ph)
-    (pair.test <- as.data.frame(rbind(test.pw, adjust = "holm"))) #only amazon and atlantic sig (p=0.008)
-    
-tam.met.mean.2 <- glmmTMB(Dim.2~Species, data = pca.df2) #not significant
-(test2<- Anova(tam.met.mean.2, type = "III")) #significant (p<0.001)
-plot(simulateResiduals(tam.met.mean.2)) #all good
-    post_hocTEST <- emmeans(tam.met.mean.1,  ~ Species)
-    summary(post_hocTEST)
-    pwTEST <- pairs(post_hocTEST)
-    (pairTEST <- as.data.frame(rbind(pwTEST, adjust = "holm"))) 
-
-
-tam.met.mean.3 <- kruskal.test(Dim.3~Species, data = pca.df2) #not significant
-
-
-### Meristic Data
-
-
-tam.cnt.mean.1 <- kruskal.test(CatPC1~Species, data = catpca.df2) #significant (p<0.001)
-    tam_post_hoc2 <- dunnTest(CatPC1 ~ Species, data = catpca.df2, method = "holm")
-    tam_post_hoc2 #all comparisons significant (p<0.001)
-
-tam.cnt.mean.2 <- kruskal.test(CatPC2~Species, data = catpca.df2) #significant (p=0.009)
-    tam_post_hoc3 <- dunnTest(CatPC2 ~ Species, data = catpca.df2, method = "holm")
-    tam_post_hoc3 #amazon-atlantic (p=0.0.019) and sailfin-atlatnic (p=0.021) significant but not amazon-sailfin
-
-# ───────────────────────────────────────────────────
-## VARIANCE TESTS (Brown-Forsythe for all)
-# ───────────────────────────────────────────────────
-
-### Metric Data
-tam.met.var.1 <- leveneTest(Dim.1~Species, data= pca.df2) #significant (p=0.016)
-
-    tam_post_hoc4 <- with(pca.df2, {
-      medians <- tapply(Dim.1, Species, median, na.rm = TRUE)
-      abs_devs <- abs(Dim.1 - medians[Species])
-      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
-    tam_post_hoc4 #amazon-sailfin marginal (p=0.056), sailfin-atlantic significant (p=0.009) and amazon-atlatnic not significant
-
-
-tam.met.var.2 <- leveneTest(Dim.2~Species, data= pca.df2) #significant (p=0.005)
-    tam_post_hoc5 <- with(pca.df2, {
-      medians <- tapply(Dim.2, Species, median, na.rm = TRUE)
-      abs_devs <- abs(Dim.2 - medians[Species])
-      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
-    tam_post_hoc5 #amazon-atlantic marginal (p=0.049), sailfin-atlantic significant (p=0.012) and amazon-sailfin not significant
-
-tam.met.var.3 <- leveneTest(Dim.3~Species, data= pca.df2) #not significant
-
-
-### Meristic Data
-tam.cnt.var.1 <- leveneTest(CatPC1~Species, data= catpca.df2) #significant (p=0.002)
-    tam_post_hoc6 <- with(catpca.df2, {
-      medians <- tapply(CatPC1, Species, median, na.rm = TRUE)
-      abs_devs <- abs(CatPC1 - medians[Species])
-      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
-    tam_post_hoc6 #sailfin-atlantic significant (p=0.004) and amazon-sailfin and amazon-atlantic not significant
-
-tam.cnt.var.2 <- leveneTest(CatPC2~Species, data= catpca.df2) #not significant
-
-
-
-
-```
 
 ```{r}
 testmod <- lm(Dim.1 ~ Species, data = pca.df2)
