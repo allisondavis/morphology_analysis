@@ -767,7 +767,7 @@ cnt.plots
 
 ### Overall shape variation (PCA)
 
-While none our 10 metric traits showed a significant difference in variation among species, many of these traits are not independent of each other. Therefore, we will assess overall shape variation among species using a ***principal component analysis (PCA)*** on centered and scaled data (all metric traits will also be log transformed to better approach normality). We will then perform a mean and variance test (e.g., ANOVA and Levene's test) to determine if overall shape variation differs between the species. 
+While none our 10 metric traits showed a significant difference in variation among species, many of these traits are not independent of each other. Therefore, we will assess overall shape variation among species using a ***principal component analysis (PCA)*** on centered and scaled data (all metric traits will also be log transformed to better approach normality). We will then perform a mean and variance test to determine if overall shape variation differs between the species. 
 
 As meristic traits are count data, a normal PCA cannot be applied. Instead, we will use a ***categorical principal component analysis (CATPCA)*** that uses optimal scaling to deal with discrete integers. 
 
@@ -928,7 +928,7 @@ catpca
 
 **CONCLUSIONS:** For our metric data, there is no significant difference in average shape distribution for PC1, but there is a significant difference for PC2 and PC3. This is expected, as amazons and sailfins have different body shapes and therefore occupy distinct morphospace. There was no significant difference in shape variation for any PC, indicating not overall difference in morphological variation among the two species when all traits are taken into account. This corroborates our individual results.
 
-For our meristic data, both CatPC1 and CatPC2 showed a significant difference in average meristic profiles, which makes sense as the majority of the meristic tratis are species diagnostics (e.g., scales before dorsal fin, lateral line scale count, dorsal fin rays). Neither CatPC differed in variation, which corroborates our individual trait findings.
+For our meristic data, both CatPC1 and CatPC2 showed a significant difference in average meristic profiles, which makes sense as the majority of the meristic traits are species diagnostics (e.g., scales before dorsal fin, lateral line scale count, dorsal fin rays). Neither CatPC differed in variation, which corroborates our individual trait findings.
 
 
 ```{r}
@@ -1887,7 +1887,7 @@ This will still use the same PCA as above, but now the post-PCA tests will inclu
 
 #### *Zones*
 
-**CONCLUSIONS:** Species:zone interactions for PC1, PC2, PC3 and CatPC1 were significant, but not CatPC2; variance was significant for PC2 and PC3 with zone 1 being the only significant zone. PC1: only zone 1 showed a difference in means; PC2: all zones showed differences in means; PC3: zone 3 and 4 showed differences in means; CatPC1: all zones showed a difference in means.
+**CONCLUSIONS:** Species:zone interactions for PC1, PC2, PC3 and CatPC1 were significant, but not CatPC2; variance was significant for PC1, PC2 and PC3 but only PC2 and PC3 showed any pairwise significant differences, with zone 1 being the only significant zone in each. PC1: only zone 1 showed a difference in means; PC2: all zones showed differences in means; PC3: zone 3 and 4 showed differences in means; CatPC1: all zones showed a difference in means.
 
 NOTE: CatPC2 shows a significant difference in zone 1, but this is an artifact from how emmeans splits data. The global test for this pc showed no species:zone interaction.
 
@@ -1962,7 +1962,7 @@ plot(simulateResiduals(geo.cnt.mean.2)) #fails KS test but qqplot shows good ali
     post_hoc5 <- emmeans(geo.cnt.mean.2,  ~ Species | Zone)
     summary(post_hoc5)
     pw5 <- pairs(post_hoc5)
-    (pair5 <- as.data.frame(rbind(pw5, adjust = "holm"))) #all zones sig (p<0.001)
+    (pair5 <- as.data.frame(rbind(pw5, adjust = "holm"))) #zone 1 sig 
 # ───────────────────────────────────────────────────
 ## VARIANCE TESTS (Brown-Forsythe for all)
 # ───────────────────────────────────────────────────
@@ -2114,17 +2114,56 @@ postCPCA_geo_result <- meristic_combined %>%
   rename(Amazon_mean = `Mean_Str_Amazon molly`, Sailfin_mean = `Mean_Str_Sailfin molly`,
          Amazon_var = `Var_Str_Amazon molly`, Sailfin_var = `Var_Str_Sailfin molly`)
 
-  
-### Combine & form table
+## Grab global stats
 
+global_mean_chisq_met <- c(gmm1["Species:Zone", "Chisq"], gmm2["Species:Zone", "Chisq"], gmm3["Species:Zone", "Chisq"])
+
+global_mean_p_met     <- c(gmm1["Species:Zone", "Pr(>Chisq)"], gmm2["Species:Zone", "Pr(>Chisq)"], gmm3["Species:Zone", "Pr(>Chisq)"])
+
+global_var_chisq_met  <- c((summary(geo.met.mean.1)$coefficients$disp[2,3])^2, (summary(geo.met.mean.2)$coefficients$disp[2,3])^2, (summary(geo.met.mean.3)$coefficients$disp[2,3])^2)
+
+global_var_p_met      <- c(summary(geo.met.mean.1)$coefficients$disp[2,4], summary(geo.met.mean.2)$coefficients$disp[2,4], summary(geo.met.mean.3)$coefficients$disp[2,4])
+
+global_mean_chisq_cnt <- c(gcm1["Species:Zone", "Chisq"], gcm2["Species:Zone", "Chisq"])
+
+global_mean_p_cnt     <- c(gcm1["Species:Zone", "Pr(>Chisq)"], gcm2["Species:Zone", "Pr(>Chisq)"])
+
+global_var_chisq_cnt  <- c((summary(geo.cnt.mean.1)$coefficients$disp[2,3])^2, (summary(geo.cnt.mean.2)$coefficients$disp[2,3])^2)
+
+global_var_p_cnt      <- c(summary(geo.cnt.mean.1)$coefficients$disp[2,4], summary(geo.cnt.mean.2)$coefficients$disp[2,4])
+
+# Combine global stats and map to dimensions
+global_lookup <- tibble(
+  Dimension = c("PC1", "PC2", "PC3", "CatPC1", "CatPC2"),
+  g_m_chi   = c(global_mean_chisq_met, global_mean_chisq_cnt),
+  g_m_p     = c(global_mean_p_met, global_mean_p_cnt),
+  g_v_chi   = c(global_var_chisq_met, global_var_chisq_cnt),
+  g_v_p     = c(global_var_p_met, global_var_p_cnt))
+
+##Combine tables
 geo_results_combined <- bind_rows(postPCA_geo_result, postCPCA_geo_result) %>%
-  arrange(Classifier, Dimension, Zone) %>%
+  left_join(global_lookup, by = "Dimension") %>%
   group_by(Classifier, Dimension) %>%
-  mutate(Dimension_Display = ifelse(row_number() == 1, Dimension, "")) %>%
+  mutate(
+    mean_str = case_when(
+      g_m_p < 0.001 ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*<0.001*"),
+      g_m_p < 0.05  ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p), "*"),
+      TRUE          ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p))),
+    
+    var_str = case_when(
+      g_v_p < 0.001 ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*<0.001*"),
+      g_v_p < 0.05  ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p), "*"),
+      TRUE          ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p))),
+    
+    Dimension_Display = case_when(
+      row_number() == 1 ~ paste0("**", Dimension, "**"),
+      row_number() == 2 ~ mean_str,
+      row_number() == 3 ~ var_str,
+      TRUE              ~ "")) %>%
   ungroup()
 
 
-
+#build table 
 postPCA_geo_table <- geo_results_combined %>%
   select(
     Classifier,
@@ -2137,37 +2176,37 @@ postPCA_geo_table <- geo_results_combined %>%
     Sailfin_var,
     Variance_test) %>%
   gt(groupname_col = "Classifier") %>%
-  fmt_markdown(
-    columns = everything()) %>%
+  fmt_markdown(columns = everything()) %>%
   cols_label(
     Dimension_Display = " ",
-    Zone = " ",
-    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
-    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
-    Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
-    Amazon_var = md("**Amazon**<br>Est. Variance"),
-    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
-    Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+    Zone             = " ",
+    Amazon_mean       = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
+    Sailfin_mean      = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Mean_test         = html("Pairwise Mean Contrast<br>(adj. *p*)"), 
+    Amazon_var        = md("**Amazon**<br>Est. Variance"),
+    Sailfin_var       = md("**Sailfin**<br>Est. Variance"),
+    Variance_test     = html("Pairwise Var Contrast<br>(adj. *p*)")) %>%
   tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = c("top", "bottom"), color = "transparent"),
     locations = cells_body(
+      columns = Dimension_Display)) %>%
+  tab_style(
+    style = cell_text(align = "left", size = "small"),
+    locations = cells_body(
       columns = Dimension_Display,
-      rows = Dimension_Display == "")) %>%
+      rows = grepl("Mean:|Var:", Dimension_Display))) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
     locations = cells_body(columns = c(Dimension_Display, Zone, Sailfin_mean, Mean_test, Sailfin_var))) %>%
   tab_style(
     style = cell_borders(sides = "bottom", color = "lightgray", weight = px(2.5)),
-    locations = cells_body(
-      rows = Zone == "Zone 4")) %>%
-  cols_align(align = "center", columns = everything()) %>%
+    locations = cells_body(rows = Zone == "Zone 4")) %>%
+  cols_align(align = "center", columns = -Dimension_Display) %>%
   opt_horizontal_padding(scale = 1.5)
 
 ### Final table
 postPCA_geo_table
-
-
 
 ```
 
@@ -2176,7 +2215,7 @@ postPCA_geo_table
 
 #### *Basins*
 
-**CONCLUSIONS:** Species:basin interaction effects significant for all PCs and CatPCs. No consistent pattern across basins (e.g. not a select few basins with higher mean differences than the rest) suggesting these are random local differences or sampling effects. Variance significant for PC1 and PC3; two basins in PC1 differ in variation with amazons having more variation than sailfin, and only one basin in PC3 differ in variation with amazons again having higher variation.
+**CONCLUSIONS:** Species:basin interaction effects significant for all PCs and CatPCs. No consistent pattern across basins (e.g. not a select few basins with higher mean differences than the rest) suggesting these are random local differences or sampling effects. Global variance is not significant for any PC. However, pairwise variance shows significant for PC1 and PC3; two basins in PC1 differ in variation with amazons having more variation than sailfin, and only one basin in PC3 differ in variation with amazons again having higher variation.
 
 ```{r}
 #filter for basins with >3 for each species
@@ -2408,16 +2447,57 @@ postCPCA_geo2_result <- meristic_combined %>%
          Amazon_var = `Var_Str_Amazon molly`, Sailfin_var = `Var_Str_Sailfin molly`)
 
   
-### Combine & form table
+## Grab global stats
 
+global_mean_chisq_met <- c(g2mm1["Species:Basin", "Chisq"], g2mm2["Species:Basin", "Chisq"], g2mm3["Species:Basin", "Chisq"])
+
+global_mean_p_met     <- c(g2mm1["Species:Basin", "Pr(>Chisq)"], g2mm2["Species:Basin", "Pr(>Chisq)"], g2mm3["Species:Basin", "Pr(>Chisq)"])
+
+global_var_chisq_met  <- c((summary(geo2.met.mean.1)$coefficients$disp[2,3])^2, (summary(geo2.met.mean.2)$coefficients$disp[2,3])^2, (summary(geo2.met.mean.3)$coefficients$disp[2,3])^2)
+
+global_var_p_met      <- c(summary(geo2.met.mean.1)$coefficients$disp[2,4], summary(geo2.met.mean.2)$coefficients$disp[2,4], summary(geo2.met.mean.3)$coefficients$disp[2,4])
+
+global_mean_chisq_cnt <- c(g2cm1["Species:Basin", "Chisq"], g2cm2["Species:Basin", "Chisq"])
+
+global_mean_p_cnt     <- c(g2cm1["Species:Basin", "Pr(>Chisq)"], g2cm2["Species:Basin", "Pr(>Chisq)"])
+
+global_var_chisq_cnt  <- c((summary(geo2.cnt.mean.1)$coefficients$disp[2,3])^2, (summary(geo2.cnt.mean.2)$coefficients$disp[2,3])^2)
+
+global_var_p_cnt      <- c(summary(geo2.cnt.mean.1)$coefficients$disp[2,4], summary(geo2.cnt.mean.2)$coefficients$disp[2,4])
+
+# Combine global stats and map to dimensions
+global_lookup <- tibble(
+  Dimension = c("PC1", "PC2", "PC3", "CatPC1", "CatPC2"),
+  g_m_chi   = c(global_mean_chisq_met, global_mean_chisq_cnt),
+  g_m_p     = c(global_mean_p_met, global_mean_p_cnt),
+  g_v_chi   = c(global_var_chisq_met, global_var_chisq_cnt),
+  g_v_p     = c(global_var_p_met, global_var_p_cnt))
+
+
+##Combine tables
 geo2_results_combined <- bind_rows(postPCA_geo2_result, postCPCA_geo2_result) %>%
-  arrange(Classifier, Dimension, Basin) %>%
+  left_join(global_lookup, by = "Dimension") %>%
   group_by(Classifier, Dimension) %>%
-  mutate(Dimension_Display = ifelse(row_number() == 1, Dimension, "")) %>%
+  mutate(
+    mean_str = case_when(
+      g_m_p < 0.001 ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*<0.001*"),
+      g_m_p < 0.05  ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p), "*"),
+      TRUE          ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p))),
+    
+    var_str = case_when(
+      g_v_p < 0.001 ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*<0.001*"),
+      g_v_p < 0.05  ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p), "*"),
+      TRUE          ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p))),
+    
+    Dimension_Display = case_when(
+      row_number() == 1 ~ paste0("**", Dimension, "**"),
+      row_number() == 2 ~ mean_str,
+      row_number() == 3 ~ var_str,
+      TRUE              ~ "")) %>%
   ungroup()
 
 
-
+#build table 
 postPCA_geo2_table <- geo2_results_combined %>%
   select(
     Classifier,
@@ -2430,37 +2510,37 @@ postPCA_geo2_table <- geo2_results_combined %>%
     Sailfin_var,
     Variance_test) %>%
   gt(groupname_col = "Classifier") %>%
-  fmt_markdown(
-    columns = everything()) %>%
+  fmt_markdown(columns = everything()) %>%
   cols_label(
     Dimension_Display = " ",
-    Basin = " ",
-    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
-    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
-    Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
-    Amazon_var = md("**Amazon**<br>Est. Variance"),
-    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
-    Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+    Basin             = " ",
+    Amazon_mean       = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
+    Sailfin_mean      = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Mean_test         = html("Pairwise Mean Contrast<br>(adj. *p*)"), 
+    Amazon_var        = md("**Amazon**<br>Est. Variance"),
+    Sailfin_var       = md("**Sailfin**<br>Est. Variance"),
+    Variance_test     = html("Pairwise Var Contrast<br>(adj. *p*)")) %>%
   tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = c("top", "bottom"), color = "transparent"),
     locations = cells_body(
+      columns = Dimension_Display)) %>%
+  tab_style(
+    style = cell_text(align = "left", size = "small"),
+    locations = cells_body(
       columns = Dimension_Display,
-      rows = Dimension_Display == "")) %>%
+      rows = grepl("Mean:|Var:", Dimension_Display))) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
     locations = cells_body(columns = c(Dimension_Display, Basin, Sailfin_mean, Mean_test, Sailfin_var))) %>%
   tab_style(
     style = cell_borders(sides = "bottom", color = "lightgray", weight = px(2.5)),
-    locations = cells_body(
-      rows = Basin == "Upper Southwest Texas Coastal")) %>%
-  cols_align(align = "center", columns = everything()) %>%
+    locations = cells_body(rows = Basin == "Río Tamesí")) %>%
+  cols_align(align = "center", columns = -Dimension_Display) %>%
   opt_horizontal_padding(scale = 1.5)
 
 ### Final table
 postPCA_geo2_table
-
-
 
 
 
@@ -3022,9 +3102,9 @@ tam.catpca
 
 #### *Post PCA tests*
 
-**CONCLUSIONS:** For our metric data, PC1 and PC2 but not PC3 have significant mean differences. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. 
+**CONCLUSIONS:** PC1 and PC2 but not PC3 have significant mean differences; both CatPCs have significant mean differences. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. 
 
-PC1, PC2 and CatPC1 show a significant difference in variation among the species. Sailfin differ from both species for PC1 but amazon and atlantic don't differ. Atlantic differ from both species for PC2 but sailfin and amazon don't differ. All species differ for CatPC1. This differs slightly from our individual trait results: in individual trait results, only a few metric traits showed support for a unequal-dispersion model, and none of our meristic traits showed support for unequal-disperson models. This indicates species differences in covariation among multiple metric and meristic features.
+PC1, PC2 and CatPC1 show a significant difference in variation among the species. Atlantic have highest estimated variance for PC1, whereas sailfin have highest estimated variance for PC2 and CatPC1; Amazons contain the lowest amount of variation in all PCs. Sailfin differ from both species for PC1 but amazon and atlantic don't differ. Atlantic differ from both species for PC2 but sailfin and amazon don't differ. All species differ for CatPC1. This differs slightly from our individual trait results: in individual trait results, only a few metric traits showed support for a unequal-dispersion model, and none of our meristic traits showed support for unequal-disperson models. This indicates species differences in covariation among multiple metric and meristic features.
 
 ```{r}
 #quick test
@@ -3219,9 +3299,9 @@ tcv2 <- pairs(tam.cnt.var.2) #not significant
 tph1 <- as.data.frame(tph1)
 tph2 <- as.data.frame(tph2)
 tph3 <- as.data.frame(tph3)
-tam.met.var.1 <- as.data.frame(met.var.1)
-tam.met.var.2 <- as.data.frame(met.var.2)
-tam.met.var.3 <- as.data.frame(met.var.3)
+tam.met.var.1 <- as.data.frame(tam.met.var.1)
+tam.met.var.2 <- as.data.frame(tam.met.var.2)
+tam.met.var.3 <- as.data.frame(tam.met.var.3)
 
 
 ## pull species-specific model results
@@ -3234,9 +3314,9 @@ amazon_m2  <- sprintf("%.2f (%.2f)", tph2$emmean[1], tph2$SE[1])
 atlantic_m2 <- sprintf("%.2f (%.2f)", tph2$emmean[2], tph2$SE[2])
 sailfin_m2 <- sprintf("%.2f (%.2f)", tph2$emmean[3], tph2$SE[3])
 
-amazon_m3  <- sprintf("%.2f (%.2f)", ph3$emmean[1], ph3$SE[1])
-atlantic_m3 <- sprintf("%.2f (%.2f)", ph3$emmean[2], ph3$SE[2])
-sailfin_m3 <- sprintf("%.2f (%.2f)", ph3$emmean[3], ph3$SE[3])
+amazon_m3  <- sprintf("%.2f (%.2f)", tph3$emmean[1], tph3$SE[1])
+atlantic_m3 <- sprintf("%.2f (%.2f)", tph3$emmean[2], tph3$SE[2])
+sailfin_m3 <- sprintf("%.2f (%.2f)", tph3$emmean[3], tph3$SE[3])
 
 Amazon_mean <- c(amazon_m1, amazon_m2, amazon_m3)
 
@@ -3298,8 +3378,8 @@ tam_postPCA_result <- tibble(
 ## ensure all results are as df
 tph4 <- as.data.frame(tph4)
 tph5 <- as.data.frame(tph5)
-tam.cnt.var.1 <- as.data.frame(cnt.var.1)
-tam.cnt.var.2 <- as.data.frame(cnt.var.2)
+tam.cnt.var.1 <- as.data.frame(tam.cnt.var.1)
+tam.cnt.var.2 <- as.data.frame(tam.cnt.var.2)
 
 
 ## pull species-specific model results
