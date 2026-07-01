@@ -33,7 +33,7 @@ For the main analysis, we will use only Amazons and sailfin; comparisons to Atla
 
 ## **Data**
 
-All analyses were conducted using R version 4.4.2 
+All analyses were conducted using R version 4.6.1
 
 ### Load required libraries 
 
@@ -41,46 +41,46 @@ Remove the '#' before `install.packages` if it is the first time installing libr
 
 ```{r, warning=FALSE}
 
-#install.packages("curl")             #v5.2.1
+#install.packages("curl")             #v7.1.0
 library(curl)
 
-#install.packages("dplyr")            #v1.1.4
+#install.packages("dplyr")            #v2.6.0
 library(dplyr)
 
 #install.packages("tidyverse")        #v2.0.0
 library(tidyverse)
 
-#install.packages("tidyr")            #v1.3.1
+#install.packages("tidyr")            #v1.3.2
 library(tidyr)
 
-#install.packages("gt")               #v0.11.1
+#install.packages("gt")               #v1.3.0
 library(gt)
 
-#install.packages("factoextra")       #v1.0.7
+#install.packages("factoextra")       #v2.1.0
 library(factoextra)
 
-#install.packages("car")              #v3.1-2
+#install.packages("car")              #v3.1-5
 library(car)
 
-#install.packages("AMR")              #v2.1.1 
+#install.packages("AMR")              #v3.0.1
 library(AMR)
 
-#install.packages("ggplot2")          #v3.5.1
+#install.packages("ggplot2")          #v4.0.3
 library(ggplot2)
 
-#install.packages("ggfortify")        #v0.4.17
+#install.packages("ggfortify")        #v0.4.19
 library(ggfortify)
 
 #install.packages("ggbiplot")         #v0.6.2
 library(ggbiplot)
 
-#install.packages("emmeans")          #v2.0.1
+#install.packages("emmeans")          #v2.0.3
 library(emmeans)
 
 #install.packages("glmmTMB")          #v1.1.14
 library(glmmTMB)
 
-#install.packages("DHARMa")           #v0.4.7
+#install.packages("DHARMa")           #v0.5.0
 library(DHARMa)
 
 #install.packages("Gifi)              #v1.0-0
@@ -928,18 +928,10 @@ catpca
 
 **CONCLUSIONS:** For our metric data, there is no significant difference in average shape distribution for PC1, but there is a significant difference for PC2 and PC3. This is expected, as amazons and sailfins have different body shapes and therefore occupy distinct morphospace. There was no significant difference in shape variation for any PC, indicating not overall difference in morphological variation among the two species when all traits are taken into account. This corroborates our individual results.
 
-For our meristic data, CatPC1 showed a significant difference in average meristic profiles, which makes sense as the majority of traits that load heavily on CatPC1 are species diagnostics (e.g., scales before dorsal fin, lateral line scale count, dorsal fin rays). There is also a significant difference in variation for CatPC1, with sailfins exhibiting higher variation than amazons. There was no significant difference in CatPC2 for both mean and variance. This differs from our individual trait analysis, indicating species differences in covariation among multiple meristic features. 
+For our meristic data, both CatPC1 and CatPC2 showed a significant difference in average meristic profiles, which makes sense as the majority of the meristic tratis are species diagnostics (e.g., scales before dorsal fin, lateral line scale count, dorsal fin rays). Neither CatPC differed in variation, which corroborates our individual trait findings.
 
 
 ```{r}
-
-#get species-only df for metric and meristic data
-lat.m <- pca.df[pca.df$Species == "Sailfin molly",]
-form.m <- pca.df[pca.df$Species == "Amazon molly",]
-
-lat.c <- catpca.df[catpca.df$Species == "Sailfin molly",]
-form.c <- catpca.df[catpca.df$Species == "Amazon molly",]
-
 #quick distribution checks to see what tests to use
 
 testmod <- lm(Dim.1 ~ Species, data = pca.df)
@@ -949,184 +941,208 @@ testmod <- lm(Dim.2 ~ Species, data = pca.df)
 plot(simulateResiduals(testmod)) #all good
 
 testmod <- lm(Dim.3 ~ Species, data = pca.df)
-plot(simulateResiduals(testmod)) #fails outlier test; will use wilcox
+plot(simulateResiduals(testmod)) #fails outlier test
 
 testmod <- lm(CatPC1 ~ Species, data = catpca.df)
-plot(simulateResiduals(testmod)) #levene's test significant; will use wilcox
+plot(simulateResiduals(testmod)) #levene's test significant
 
 testmod <- lm(CatPC2 ~ Species, data = catpca.df)
-plot(simulateResiduals(testmod)) #fails KS test, outlier test, and within-group deviation; will use wilcox
+plot(simulateResiduals(testmod)) #fails KS test, outlier test, and within-group deviation
 
-
+#since some models fail residual checks, I will use a GLMM with a by-species dispersion factor and test mean and variance differences from that; default family=gaussian unless otherwise specified
 
 
 # ───────────────────────────────────────────────────
-## MEDIAN TESTS (Wilcox Test for all)
+## MEAN TESTS (GLMM w/ ~Species dispersion for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
 
-met.mean.1 <- wilcox.test(lat.m$Dim.1, form.m$Dim.1, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #not significant
+met.mean.1 <- glmmTMB(Dim.1 ~ Species, dispformula = ~Species, data = pca.df) 
+(mm1<- Anova(met.mean.1, type = "III")) #not significant
+plot(simulateResiduals(met.mean.1)) #all good
+    ph1 <- as.data.frame(emmeans(met.mean.1, ~Species)) #to use for table later
+    
+met.mean.2 <- glmmTMB(Dim.2 ~ Species, dispformula = ~Species, data = pca.df) 
+(mm2<- Anova(met.mean.2, type = "III")) #significant (p<0.001)
+plot(simulateResiduals(met.mean.2)) #all good
+    ph2 <- as.data.frame(emmeans(met.mean.2,  ~ Species))
+    summary(ph2)
 
-met.mean.2 <- wilcox.test(lat.m$Dim.2, form.m$Dim.2, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p<0.001); estimate = 0.286
-    (median(lat.m$Dim.2))    #  0.152
-    (median(form.m$Dim.2))   # -0.123
-
-
-met.mean.3 <- wilcox.test(lat.m$Dim.3, form.m$Dim.3, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p=0.008); estimate= 0.040
-    (median(lat.m$Dim.3))    #  0.010
-    (median(form.m$Dim.3))   # -0.025
-
+met.mean.3 <- glmmTMB(Dim.3 ~ Species, dispformula = ~Species, data = pca.df) 
+(mm3<- Anova(met.mean.3, type = "III")) #significant (p=0.009)
+plot(simulateResiduals(met.mean.3)) #failed outlier test, but qqplot with near perfect alignment
+    ph3 <- as.data.frame(emmeans(met.mean.3,  ~ Species))
+    summary(ph3)
+    
 
 ### Meristic Data
 
 
-cnt.mean.1 <- wilcox.test(lat.c$CatPC1, form.c$CatPC1, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p<0.001); estimate = 1.75
-    (median(lat.c$CatPC1))    #  1.0
-    (median(form.c$CatPC1))   # -0.797
+cnt.mean.1 <- glmmTMB(CatPC1 ~ Species, dispformula = ~Species, data = catpca.df) 
+(cm1<- Anova(cnt.mean.1, type = "III")) #significant (p<0.001)
+plot(simulateResiduals(cnt.mean.1)) #all good
+    ph4 <- as.data.frame(emmeans(cnt.mean.1,  ~ Species))
+    summary(ph4)
 
-cnt.mean.2 <- wilcox.test(lat.c$CatPC2, form.c$CatPC2, alternative = "two.sided", exact = FALSE, conf.int = TRUE) #significant (p=0.039); estimate = 0.052
-    (median(lat.c$CatPC2))    #  -0.203
-    (median(form.c$CatPC2))   # -0.246
+
+#default gaussian family failed residual checks; changing to Student t-distribution due to extreme tails
+cnt.mean.2 <- glmmTMB(CatPC2 ~ Species, dispformula = ~Species, family = t_family, data = catpca.df) 
+(cm2<- Anova(cnt.mean.2, type = "III")) #significant (p=0.004)
+plot(simulateResiduals(cnt.mean.2)) #failed KS test but qqplot w/ near perfect alignment
+    ph5 <- as.data.frame(emmeans(cnt.mean.2,  ~ Species))
+    summary(ph5)
 
 # ───────────────────────────────────────────────────
-## VARIANCE TESTS (Brown-Forsythe for all)
+## VARIANCE TESTS (Extract dispersion info for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
-met.var.1 <- leveneTest(Dim.1~Species, data= pca.df) #not significant
+met.var.1 <- emmeans(met.mean.1, ~ Species, component = "disp", type = "response")
+(mv1 <- as.data.frame(pairs(met.var.1))) #not significant
 
-met.var.2 <- leveneTest(Dim.2~Species, data= pca.df) #not significant
+met.var.2 <- emmeans(met.mean.2, ~ Species, component = "disp", type = "response")
+(mv2 <- as.data.frame(pairs(met.var.2))) #not significant
 
-met.var.3 <- leveneTest(Dim.3~Species, data= pca.df) #not significant
+met.var.3 <- emmeans(met.mean.3, ~ Species, component = "disp", type = "response")
+(mv3 <- as.data.frame(pairs(met.var.3))) #not significant
 
 
 ### Meristic Data
-cnt.var.1 <- leveneTest(CatPC1~Species, data= catpca.df) #significant (0.050)
-    (var(lat.c$CatPC1))   # 0.289
-    (var(form.c$CatPC1))  # 0.238
+cnt.var.1 <- emmeans(cnt.mean.1, ~ Species, component = "disp", type = "response")
+(cv1 <- as.data.frame(pairs(cnt.var.1))) #not significant
 
-cnt.var.2 <- leveneTest(CatPC2~Species, data= catpca.df) #not significant
+cnt.var.2 <- emmeans(cnt.mean.2, ~ Species, component = "disp", type = "response")
+(cv2 <- as.data.frame(pairs(cnt.var.2))) #not significant
 
 
 # ───────────────────────────────────────────────────
 ## TABLE
 # ───────────────────────────────────────────────────
 
-### Metric Data
+### Metric data 
 
-#get mean and variance for each dimension per species
-met_summary <- pca.df %>%
-  group_by(Species) %>%
-  summarise(
-    PC1_median = median(Dim.1, na.rm = TRUE),
-    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
-    PC2_median = median(Dim.2, na.rm = TRUE),
-    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
-    PC3_median = median(Dim.3, na.rm = TRUE),
-    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
+## ensure all results are as df
+met.var.1 <- as.data.frame(met.var.1)
+met.var.2 <- as.data.frame(met.var.2)
+met.var.3 <- as.data.frame(met.var.3)
 
-#isolate results
-amazon_met  <- filter(met_summary, Species == "Amazon molly")
-sailfin_met <- filter(met_summary, Species == "Sailfin molly")
 
-#extract wilcox test results, levene's results, and summary stats
+## pull species-specific model results
+# Means
+amazon_m1  <- sprintf("%.2f (%.2f)", ph1$emmean[1], ph1$SE[1])
+sailfin_m1 <- sprintf("%.2f (%.2f)", ph1$emmean[2], ph1$SE[2])
+
+amazon_m2  <- sprintf("%.2f (%.2f)", ph2$emmean[1], ph2$SE[1])
+sailfin_m2 <- sprintf("%.2f (%.2f)", ph2$emmean[2], ph2$SE[2])
+
+amazon_m3  <- sprintf("%.2f (%.2f)", ph3$emmean[1], ph3$SE[1])
+sailfin_m3 <- sprintf("%.2f (%.2f)", ph3$emmean[2], ph3$SE[2])
+
+Amazon_mean <- c(amazon_m1, amazon_m2, amazon_m3)
+
+Sailfin_mean <- c(sailfin_m1, sailfin_m2, sailfin_m3)
+
+# variance
+Amazon_var <- sprintf("%.2f", c(met.var.1$response[1], met.var.2$response[1], met.var.3$response[1]))
+
+Sailfin_var <- sprintf("%.2f", c(met.var.1$response[2], met.var.2$response[2], met.var.3$response[2]))
+
+
+## pull model stats
+Chisq_mean <- c(mm1["Species", "Chisq"], mm2["Species", "Chisq"], mm3["Species", "Chisq"])
+
+p_mean <- c(mm1["Species", "Pr(>Chisq)"], mm2["Species", "Pr(>Chisq)"], mm3["Species", "Pr(>Chisq)"])
+
+Chisq_var <- c((summary(met.mean.1)$coefficients$disp[2,3])^2, (summary(met.mean.2)$coefficients$disp[2,3])^2, (summary(met.mean.3)$coefficients$disp[2,3])^2)
+
+p_var <- c(summary(met.mean.1)$coefficients$disp[2,4], summary(met.mean.2)$coefficients$disp[2,4], summary(met.mean.3)$coefficients$disp[2,4])
+  
+
+## create tibble
 postPCA_result <- tibble(
-  Classifier = "Metric PCA",
-  Dimension = c("PC1", "PC2", "PC3"),
-  Amazon = c(
-    sprintf("%.2f (%.2f)", amazon_met$PC1_median, amazon_met$PC1_mad),
-    sprintf("%.2f (%.2f)", amazon_met$PC2_median, amazon_met$PC2_mad),
-    sprintf("%.2f (%.2f)", amazon_met$PC3_median, amazon_met$PC3_mad)),
-  Sailfin = c(
-    sprintf("%.2f (%.2f)", sailfin_met$PC1_median, sailfin_met$PC1_mad),
-    sprintf("%.2f (%.2f)", sailfin_met$PC2_median, sailfin_met$PC2_mad),
-    sprintf("%.2f (%.2f)", sailfin_met$PC3_median, sailfin_met$PC3_mad)),
-  W_value = c(met.mean.1$statistic,
-              met.mean.2$statistic,
-              met.mean.3$statistic),
-  p_wil = c(met.mean.1$p.value,
-           met.mean.2$p.value,
-           met.mean.3$p.value),
-  F_value = c(met.var.1$`F value`[1],
-              met.var.2$`F value`[1],
-              met.var.3$`F value`[1]),
-  p_lv = c(met.var.1$`Pr(>F)`[1],
-           met.var.2$`Pr(>F)`[1],
-           met.var.3$`Pr(>F)`[1])) %>%
+  Classifier   = "Metric PCA",
+  Dimension    = c("PC1", "PC2", "PC3"),
+  Amazon_mean  = Amazon_mean,
+  Sailfin_mean = Sailfin_mean,
+  Chisq_mean   = Chisq_mean,
+  p_mean       = p_mean,
+  Amazon_var   = Amazon_var,
+  Sailfin_var  = Sailfin_var,
+  Chisq_var    = Chisq_var,
+  p_var        = p_var) %>%
   mutate(
-    Med_test = case_when(
-      p_wil < 0.001 ~ paste0("W = ", sprintf("%.2f", W_value), 
-                            "<br>*p* < 0.001*"),
-      p_wil <0.05   ~ paste0("W = ", sprintf("%.2f", W_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_wil), "*"),
-       TRUE        ~ paste0("W = ", sprintf("%.2f", W_value),
-                            "<br>*p* = ", sprintf("%.3f", p_wil))),
-
+    Mean_test = case_when(
+      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
+      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
+      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
+    
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* < 0.001*"),
-      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
-                            "<br>*p* = ", sprintf("%.3f", p_lv))))
-
-
-
+      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
+  
 
 ### Meristic Data
 
-#get mean and variance for each dimension per species
-cnt_summary <- catpca.df %>%
-  group_by(Species) %>%
-  summarise(
-    CPC1_median = median(CatPC1, na.rm = TRUE),
-    CPC1_mad  = mad(CatPC1, na.rm = TRUE),
-    CPC2_median = median(CatPC2, na.rm = TRUE),
-    CPC2_mad  = mad(CatPC2, na.rm = TRUE))
+## ensure all results are as df
+cnt.var.1 <- as.data.frame(cnt.var.1)
+cnt.var.2 <- as.data.frame(cnt.var.2)
 
-#isolate results
-amazon_cnt  <- filter(cnt_summary, Species == "Amazon molly")
-sailfin_cnt <- filter(cnt_summary, Species == "Sailfin molly")
+## pull species-specific model results
+# Means
+amazon_c1  <- sprintf("%.2f (%.2f)", ph4$emmean[1], ph4$SE[1])
+sailfin_c1 <- sprintf("%.2f (%.2f)", ph4$emmean[2], ph4$SE[2])
+
+amazon_c2  <- sprintf("%.2f (%.2f)", ph5$emmean[1], ph5$SE[1])
+sailfin_c2 <- sprintf("%.2f (%.2f)", ph5$emmean[2], ph5$SE[2])
+
+Amazon_mean <- c(amazon_c1, amazon_c2)
+
+Sailfin_mean <- c(sailfin_c1, sailfin_c2)
+
+# variance
+Amazon_var <- sprintf("%.2f", c(cnt.var.1$response[1], cnt.var.2$response[1]))
+
+Sailfin_var <- sprintf("%.2f", c(cnt.var.1$response[2], cnt.var.2$response[2]))
 
 
-#extract wilcox test results, levene's results, and summary stats
+## pull model stats
+Chisq_mean <- c(cm1["Species", "Chisq"], cm2["Species", "Chisq"])
+
+p_mean <- c(cm1["Species", "Pr(>Chisq)"], cm2["Species", "Pr(>Chisq)"])
+
+Chisq_var <- c((summary(cnt.mean.1)$coefficients$disp[2,3])^2, (summary(cnt.mean.2)$coefficients$disp[2,3])^2)
+
+p_var <- c(summary(cnt.mean.1)$coefficients$disp[2,4], summary(cnt.mean.2)$coefficients$disp[2,4])
+  
+
+## create tibble
 postCPCA_result <- tibble(
-  Classifier = "Meristic CATPCA",
-  Dimension = c("CatPC1", "CatPC2"),
-  Amazon = c(
-    sprintf("%.2f (%.2f)", amazon_cnt$CPC1_median, amazon_cnt$CPC1_mad),
-    sprintf("%.2f (%.2f)", amazon_cnt$CPC2_median, amazon_cnt$CPC2_mad)),
-  Sailfin = c(
-    sprintf("%.2f (%.2f)", sailfin_cnt$CPC1_median, sailfin_cnt$CPC1_mad),
-    sprintf("%.2f (%.2f)", sailfin_cnt$CPC2_median, sailfin_cnt$CPC2_mad)),
-  W_value = c(cnt.mean.1$statistic,
-              cnt.mean.2$statistic),
-  p_wil = c(cnt.mean.1$p.value,
-           cnt.mean.2$p.value),
-  F_value = c(cnt.var.1$`F value`[1],
-              cnt.var.2$`F value`[1]),
-  p_lv = c(cnt.var.1$`Pr(>F)`[1],
-           cnt.var.2$`Pr(>F)`[1])) %>%
+  Classifier   = "Meristic CatPCA",
+  Dimension    = c("CatPC1", "CatPC2"),
+  Amazon_mean  = Amazon_mean,
+  Sailfin_mean = Sailfin_mean,
+  Chisq_mean   = Chisq_mean,
+  p_mean       = p_mean,
+  Amazon_var   = Amazon_var,
+  Sailfin_var  = Sailfin_var,
+  Chisq_var    = Chisq_var,
+  p_var        = p_var) %>%
   mutate(
-    Med_test = case_when(
-      p_wil < 0.001 ~ paste0("W = ", sprintf("%.2f", W_value), 
-                            "<br>*p* < 0.001*"),
-      p_wil <0.05   ~ paste0("W = ", sprintf("%.2f", W_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_wil), "*"),
-       TRUE        ~ paste0("W = ", sprintf("%.2f", W_value),
-                            "<br>*p* = ", sprintf("%.3f", p_wil))),
-
+    Mean_test = case_when(
+      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
+      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
+      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
+    
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* < 0.001*"),
-      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
-                            "<br>*p* = ", sprintf("%.3f", p_lv))))
+      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
 
 
 
+  
 ### Combine & form table
 
 results_combined <- bind_rows(postPCA_result, postCPCA_result) 
@@ -1137,30 +1153,32 @@ postPCA_table <- results_combined %>%
   select(
     Classifier,
     Dimension,
-    Amazon,
-    Sailfin,
-    Med_test,
+    Amazon_mean,
+    Sailfin_mean,
+    Mean_test,
+    Amazon_var,
+    Sailfin_var,
     Variance_test) %>%
   gt(groupname_col = "Classifier") %>%
   fmt_markdown(
-    columns = c(Med_test, Variance_test)) %>%
+    columns = everything()) %>%
   cols_label(
-    Dimension = "         ",
-    Amazon = md("**Amazon**<br>Median (MAD)"),
-    Sailfin = md("**Sailfin**<br>Median (MAD)"),
-    Med_test = "Median comparison",
-    Variance_test = "Variance comparison") %>%
+    Dimension = " ",
+    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
+    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
+    Amazon_var = md("**Amazon**<br>Est. Variance"),
+    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
+    Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
   tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(Dimension, Amazon, Sailfin, Med_test))) %>%
+    locations = cells_body(columns = c(Dimension, Sailfin_mean, Mean_test, Sailfin_var))) %>%
   cols_align(align = "center", columns = everything()) %>%
-  opt_horizontal_padding(scale = 2)
+  opt_horizontal_padding(scale = 1.5)
 
-#final table
+### Final table
 postPCA_table
-
-
 
 ```
 
@@ -1239,7 +1257,7 @@ We will be repeating our **generalized linear mixed models (GLMM)** with the add
 
 #### *Zones*
 
-**CONCLUSIONS:** Five metric traits showed greater support for a model with unequal dispersion across species and zones. Caudal peduncle depth/length, and orbital length mostly show higher variation among sailfins with highest variation in zone 4. Head width/length show amazons to be more variable in all zones except zone 2, where sailfins are more variable. No meristic traits differed by zone.
+**CONCLUSIONS:** Five metric traits showed greater support for a model with unequal dispersion across species and zones. Caudal peduncle depth/length, and orbital length mostly show higher variation among sailfins with highest variation in zone 4. Head width/length show amazons to be more variable in all zones except zone 2, where sailfins are more variable. Four meristic traits showed greater support for a model with unequal dispersion across species and zones. Dorsal rays and lateral line scale counts show higher variation among sailfin than amazons, whereas left pectoral rays and scales before dorsal fin show slightly more variation among amazons. Anal rays failed model checks (likely due to near identical values), but the fallback residual ANOVA showed a significant difference in variation with sailfins containing more variation. 
 
 ```{r}
 # ───────────────────────────────────────────────────
@@ -1557,7 +1575,7 @@ count2 <- count %>% filter(Basin %in% valid_basins) %>% droplevels()
 ```
 
 
-**CONCLUSIONS:** All metric traits showed greater support for a model with unequal dispersion across species and basins. There is no consistent pattern across traits or across basins, indicating that local deviations are likely reflecting stochastic, demographic, or sampling-related effects rather than any differences from reproductive mode. Again, no meristic traits differed across basins. 
+**CONCLUSIONS:** All metric traits showed greater support for a model with unequal dispersion across species and basins. There is no consistent pattern across traits or across basins, indicating that local deviations are likely reflecting stochastic, demographic, or sampling-related effects rather than any differences from reproductive mode. Again, four meristic traits show greater support for the unequal-dispersion model. In general, most basins show higher variation in sailfins, but some basins do have low variance ratios (aka amazons vary more), such as a ratio of 0.38 for left pectoral rays in Lower Rio Grande. Anal rays again failed model comparisons, and the fallback residual ANOVA showed a significant difference in variation among species and basins, with amazons containing more variation. However, it is important to note that while we filtered for basins with >=3 of each species, some sample sizes were still very small or variation very sparce that several Inf/NA variance ratios pop up and may be affecting overal results.
 
 ```{r}
 # ───────────────────────────────────────────────────
@@ -1869,7 +1887,9 @@ This will still use the same PCA as above, but now the post-PCA tests will inclu
 
 #### *Zones*
 
-**CONCLUSIONS:** Median comparisons were significant for PC1, PC2, PC3 and CatPC1, but not for CatPC2; variance was significant for PC2 and PC3. For PC1, zone 1 shows a significant differences in morphospace occupied by the species and zone 4 is a marginal difference. For PC2 all zones showed a significant difference in morphospace occupied by the species, but only zone 1 shows a difference in variation with Amazons exhibiting more variation. For PC3, only zones 3 and 4 show a significant difference in morphospace occupation, and again only zone 1 shows a difference in variaiton with Amazons exhibiting more variation. For CatPC1, all zones show a significant difference in morphospace occupied.
+**CONCLUSIONS:** Species:zone interactions for PC1, PC2, PC3 and CatPC1 were significant, but not CatPC2; variance was significant for PC2 and PC3 with zone 1 being the only significant zone. PC1: only zone 1 showed a difference in means; PC2: all zones showed differences in means; PC3: zone 3 and 4 showed differences in means; CatPC1: all zones showed a difference in means.
+
+NOTE: CatPC2 shows a significant difference in zone 1, but this is an artifact from how emmeans splits data. The global test for this pc showed no species:zone interaction.
 
 ```{r}
 #quick distribution check
@@ -1880,17 +1900,17 @@ testmod <- lm(Dim.2~Species*Zone, data= pca.df)
 plot(simulateResiduals(testmod)) #all good
 
 testmod <- lm(Dim.3~Species*Zone, data= pca.df)
-plot(simulateResiduals(testmod)) #fails outlier test and levene's test significant; will use glmm
+plot(simulateResiduals(testmod)) #fails outlier test and levene's test significant
 
 testmod <- lm(CatPC1~Species*Zone, data= catpca.df)
 plot(simulateResiduals(testmod)) #all good
 
 testmod <- lm(CatPC2~Species*Zone, data= catpca.df)
-plot(simulateResiduals(testmod)) #fails KS test, outlier test, and within-group deviation; will use glmm
+plot(simulateResiduals(testmod)) #fails KS test, outlier test, and within-group deviation
 
 
 # ───────────────────────────────────────────────────
-## MEDIAN TESTS (GLMM for all)
+## MEAN TESTS (GLMM for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
@@ -1912,253 +1932,240 @@ plot(simulateResiduals(geo.met.mean.2)) #all good
     post_hoc2 <- emmeans(geo.met.mean.2,  ~ Species | Zone)
     summary(post_hoc2)
     pw2 <- pairs(post_hoc2)
-    (pair2 <- as.data.frame(rbind(pw2, adjust = "holm"))) #all zones significant (p<0.001)
+    (pair2 <- as.data.frame(rbind(pw2, adjust = "holm"))) #all zones sig (p<0.001)
 
 
 geo.met.mean.3 <- glmmTMB(Dim.3 ~Species*Zone, dispformula = ~Species*Zone, data = pca.df) 
-(gmm3<- Anova(geo.met.mean.3, type = "III")) #zone and species:zone significant (p<0.001) but not species
+(gmm3<- Anova(geo.met.mean.3, type = "III")) #zone and species:zone sig (p<0.001) 
 plot(simulateResiduals(geo.met.mean.3)) #failed outlier test, but qqplot shows good alignment
 
     post_hoc3 <- emmeans(geo.met.mean.3,  ~ Species | Zone)
     summary(post_hoc3)
     pw3 <- pairs(post_hoc3)
-    (pair3 <- as.data.frame(rbind(pw3, adjust = "holm"))) #only zone 3 (p=0.010) and zone 4 (p<0.001) significant
+    (pair3 <- as.data.frame(rbind(pw3, adjust = "holm"))) #zone 3 (p=0.010) and zone 4 (p<0.001) sig
 
 ### Meristic Data
 geo.cnt.mean.1 <- glmmTMB(CatPC1 ~Species*Zone, dispformula = ~Species*Zone, data = catpca.df)
-(gcm1<- Anova(geo.cnt.mean.1, type = "III")) # species (p<0.001) and species:zone (p=0.002) significant, but not zones
+(gcm1<- Anova(geo.cnt.mean.1, type = "III")) # species (p<0.001) and species:zone (p=0.002) sig
 plot(simulateResiduals(geo.cnt.mean.1)) #all good
 
     post_hoc4 <- emmeans(geo.cnt.mean.1,  ~ Species | Zone)
     summary(post_hoc4)
     pw4 <- pairs(post_hoc4)
-    (pair4 <- as.data.frame(rbind(pw4, adjust = "holm"))) #all zones significant (p<0.001)
+    (pair4 <- as.data.frame(rbind(pw4, adjust = "holm"))) #all zones sig (p<0.001)
 
 #default gaussian family still failed residual tests; switching to Student-t distribution due to extreme tail ends
 geo.cnt.mean.2 <- glmmTMB(CatPC2 ~Species*Zone, dispformula = ~Species*Zone, family = t_family(), data = catpca.df)
-(gcm2<- Anova(geo.cnt.mean.2, type = "III")) #species significant (p=0.006) but not zone or species:zone
+(gcm2<- Anova(geo.cnt.mean.2, type = "III")) #species sig (p=0.006) 
 plot(simulateResiduals(geo.cnt.mean.2)) #fails KS test but qqplot shows good alignment
-
-
+    
+    post_hoc5 <- emmeans(geo.cnt.mean.2,  ~ Species | Zone)
+    summary(post_hoc5)
+    pw5 <- pairs(post_hoc5)
+    (pair5 <- as.data.frame(rbind(pw5, adjust = "holm"))) #all zones sig (p<0.001)
 # ───────────────────────────────────────────────────
 ## VARIANCE TESTS (Brown-Forsythe for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
-geo.met.var.1 <- leveneTest(Dim.1~Species*Zone, data= pca.df) #not significant
+geo.met.var.1 <- emmeans(geo.met.mean.1, ~ Species | Zone, component = "disp", type = "response")
+gmv1 <- pairs(geo.met.var.1) 
+(pair6 <- as.data.frame(rbind(gmv1, adjust = "holm"))) #none significant
 
-geo.met.var.2 <- leveneTest(Dim.2~Species*Zone, data= pca.df) #significant (p=0.03)
-    post_hoc5 <- emmeans(geo.met.mean.2,  ~ Species | Zone, component = "disp")
-    summary(post_hoc5)
-    pw5 <- pairs(post_hoc5)
-    (pair5 <- as.data.frame(rbind(pw5, adjust = "holm"))) #only zone 1 significant (p=0.03)
+geo.met.var.2 <- emmeans(geo.met.mean.2, ~ Species | Zone, component = "disp", type = "response")
+gmv2 <- pairs(geo.met.var.2) 
+(pair7 <- as.data.frame(rbind(gmv2, adjust = "holm"))) #zone 1 sig (p=0.029)
     
-geo.met.var.3 <- leveneTest(Dim.3~Species*Zone, data= pca.df) #significant (p=0.003)
-    post_hoc6 <- emmeans(geo.met.mean.3,  ~ Species | Zone, component = "disp")
-    summary(post_hoc6)
-    pw6 <- pairs(post_hoc6)
-    (pair6 <- as.data.frame(rbind(pw6, adjust = "holm"))) #only zone 1 significant (p<0.001)
+geo.met.var.3 <- emmeans(geo.met.mean.3, ~ Species | Zone, component = "disp", type = "response")
+gmv3 <- pairs(geo.met.var.3) 
+(pair8 <- as.data.frame(rbind(gmv3, adjust = "holm"))) #zone 1 sig (p<0.001)
     
 
 ### Meristic Data
-geo.cnt.var.1 <- leveneTest(CatPC1~Species*Zone, data= catpca.df) #not significant
+geo.cnt.var.1 <- emmeans(geo.cnt.mean.1, ~ Species | Zone, component = "disp", type = "response")
+gcv1 <- pairs(geo.cnt.var.1) 
+(pair9 <- as.data.frame(rbind(gcv1, adjust = "holm"))) #none significant
 
-geo.cnt.var.2 <- leveneTest(CatPC2~Species*Zone, data= catpca.df) #not significant
+geo.cnt.var.2 <- emmeans(geo.cnt.mean.2, ~ Species | Zone, component = "disp", type = "response")
+gcv2 <- pairs(geo.cnt.var.2) 
+(pair10 <- as.data.frame(rbind(gcv2, adjust = "holm"))) #none significant
 
 
 # ───────────────────────────────────────────────────
 ## TABLE
 # ───────────────────────────────────────────────────
 
-### Metric Data
+### Metric data 
 
-#get medians and median absolute deviations for each dimension per species per zone
-geo_met_summary <- pca.df %>%
-  group_by(Species, Zone) %>%
-  summarise(
-    PC1_median = median(Dim.1, na.rm = TRUE),
-    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
-    PC2_median = median(Dim.2, na.rm = TRUE),
-    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
-    PC3_median = median(Dim.3, na.rm = TRUE),
-    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
-
-#format summary stats
-geo_met_long <- geo_met_summary %>%
-  pivot_longer(
-    cols = starts_with("PC"),
-    names_to = c("Dimension", ".value"),
-    names_pattern = "(PC\\d)_(.*)") %>%
-  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
-  select(Species, Zone, Dimension, stat_string) %>%
-  pivot_wider(names_from = Species, values_from = stat_string)
+## ensure all results are as df
+post_hoc1 <- as.data.frame(post_hoc1)
+post_hoc2 <- as.data.frame(post_hoc2)
+post_hoc3 <- as.data.frame(post_hoc3)
+geo.met.var.1 <- as.data.frame(geo.met.var.1)
+geo.met.var.2 <- as.data.frame(geo.met.var.2)
+geo.met.var.3 <- as.data.frame(geo.met.var.3)
 
 
-#extract Anova(model) results and levene's results
-stats_results <- tibble(
-  Dimension = c("PC1", "PC2", "PC3"),
-  Chi_value = c(
-    gmm1["Species:Zone", "Chisq"], 
-    gmm2["Species:Zone", "Chisq"], 
-    gmm3["Species:Zone", "Chisq"]),
-  p_int     = c(
-    gmm1["Species:Zone", "Pr(>Chisq)"], 
-    gmm2["Species:Zone", "Pr(>Chisq)"], 
-    gmm3["Species:Zone", "Pr(>Chisq)"]),
-  F_value   = c(
-    geo.met.var.1$`F value`[1], 
-    geo.met.var.2$`F value`[1], 
-    geo.met.var.3$`F value`[1]),
-  p_lv      = c(
-    geo.met.var.1$`Pr(>F)`[1], 
-    geo.met.var.2$`Pr(>F)`[1], 
-    geo.met.var.3$`Pr(>F)`[1]))
+# Combine means and variances per dimension 
+m1_all <- left_join(post_hoc1, geo.met.var.1, by = c("Species", "Zone")) %>% 
+  mutate(Dimension = "PC1", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
+m2_all <- left_join(post_hoc2, geo.met.var.2, by = c("Species", "Zone")) %>% 
+  mutate(Dimension = "PC2", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
-#format results for final table
-postPCA_geo_result <- geo_met_long %>%
-  left_join(stats_results, by = "Dimension") %>%
+m3_all <- left_join(post_hoc3, geo.met.var.3, by = c("Species", "Zone")) %>% 
+  mutate(Dimension = "PC3", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
+
+# Bind all metric dimensions together and pivot wide to separate species columns
+metric_combined <- bind_rows(m1_all, m2_all, m3_all) %>%
+  select(Dimension, Zone, Species, Mean_Str, Var_Str) %>%
+  pivot_wider(
+    names_from = Species,
+    values_from = c(Mean_Str, Var_Str))
+
+# Extract Pairwise Post-hoc P-values from 'pair' data frames
+p_means_met <- bind_rows(
+  mutate(pair1, Dimension = "PC1"),
+  mutate(pair2, Dimension = "PC2"),
+  mutate(pair3, Dimension = "PC3")) %>% 
+  select(Dimension, Zone, p.value_mean = p.value)
+
+p_vars_met <- bind_rows(
+  mutate(pair6, Dimension = "PC1"),
+  mutate(pair7, Dimension = "PC2"),
+  mutate(pair8, Dimension = "PC3")) %>% 
+  select(Dimension, Zone, p.value_var = p.value)
+
+# build tibble
+postPCA_geo_result <- metric_combined %>%
+  left_join(p_means_met, by = c("Dimension", "Zone")) %>%
+  left_join(p_vars_met, by = c("Dimension", "Zone")) %>%
   mutate(
     Classifier = "Metric PCA",
-    Med_test = case_when(
-      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
-      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Mean_test = case_when(
+      p.value_mean < 0.001 ~ "*p* < 0.001*",
+      p.value_mean < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_mean), "*"),
+      TRUE                 ~ paste0("*p* = ", sprintf("%.3f", p.value_mean))),
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
-      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
-
-
-
+      p.value_var < 0.001 ~ "*p* < 0.001*",
+      p.value_var < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_var), "*"),
+      TRUE                ~ paste0("*p* = ", sprintf("%.3f", p.value_var)))) %>%
+  rename(Amazon_mean = `Mean_Str_Amazon molly`, Sailfin_mean = `Mean_Str_Sailfin molly`,
+         Amazon_var = `Var_Str_Amazon molly`, Sailfin_var = `Var_Str_Sailfin molly`)
 
 ### Meristic Data
 
+## ensure all results are as df
+post_hoc4 <- as.data.frame(post_hoc4)
+post_hoc5 <- as.data.frame(post_hoc5)
+geo.cnt.var.1 <- as.data.frame(geo.cnt.var.1)
+geo.cnt.var.2 <- as.data.frame(geo.cnt.var.2)
 
-#get medians and median absolute deviations for each dimension per species per zone
-geo_cnt_summary <- catpca.df %>%
-  group_by(Species, Zone) %>%
-  summarise(
-    CatPC1_median = median(CatPC1, na.rm = TRUE),
-    CatPC1_mad  = mad(CatPC1, na.rm = TRUE, constant = 1),
-    CatPC2_median = median(CatPC2, na.rm = TRUE),
-    CatPC2_mad  = mad(CatPC2, na.rm = TRUE, constant = 1))
+# Combine means and variances per dimension 
+c1_all <- left_join(post_hoc4, geo.cnt.var.1, by = c("Species", "Zone")) %>% 
+  mutate(Dimension = "CatPC1", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
-#format summary stats
-geo_cnt_long <- geo_cnt_summary %>%
-  pivot_longer(
-    cols = starts_with("CatPC"),
-    names_to = c("Dimension", ".value"),
-    names_pattern = "(CatPC\\d)_(.*)") %>%
-  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
-  select(Species, Zone, Dimension, stat_string) %>%
-  pivot_wider(names_from = Species, values_from = stat_string)
+c2_all <- left_join(post_hoc5, geo.cnt.var.2, by = c("Species", "Zone")) %>% 
+  mutate(Dimension = "CatPC2", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
 
-#extract Anova(model) results and levene's results
-stats_results2 <- tibble(
-  Dimension = c("CatPC1", "CatPC2"),
-  Chi_value = c(
-    gcm1["Species:Zone", "Chisq"], 
-    gcm2["Species:Zone", "Chisq"]),
-  p_int     = c(
-    gcm1["Species:Zone", "Pr(>Chisq)"], 
-    gcm2["Species:Zone", "Pr(>Chisq)"]),
-  F_value   = c(
-    geo.cnt.var.1$`F value`[1], 
-    geo.cnt.var.2$`F value`[1]),
-  p_lv      = c(
-    geo.cnt.var.1$`Pr(>F)`[1], 
-    geo.cnt.var.2$`Pr(>F)`[1]))
+# Bind all meristic dimensions together and pivot wide to separate species columns
+meristic_combined <- bind_rows(c1_all, c2_all) %>%
+  select(Dimension, Zone, Species, Mean_Str, Var_Str) %>%
+  pivot_wider(
+    names_from = Species,
+    values_from = c(Mean_Str, Var_Str))
 
+# Extract Pairwise Post-hoc P-values from 'pair' data frames
+p_means_met <- bind_rows(
+  mutate(pair4, Dimension = "CatPC1"),
+  mutate(pair5, Dimension = "CatPC2")) %>% 
+  select(Dimension, Zone, p.value_mean = p.value)
 
-#format results for final table
-postCPCA_geo_result <- geo_cnt_long %>%
-  left_join(stats_results2, by = "Dimension") %>%
+p_vars_met <- bind_rows(
+  mutate(pair9, Dimension = "CatPC1"),
+  mutate(pair10, Dimension = "CatPC2")) %>% 
+  select(Dimension, Zone, p.value_var = p.value)
+
+# build tibble
+postCPCA_geo_result <- meristic_combined %>%
+  left_join(p_means_met, by = c("Dimension", "Zone")) %>%
+  left_join(p_vars_met, by = c("Dimension", "Zone")) %>%
   mutate(
     Classifier = "Meristic CatPCA",
-    Med_test = case_when(
-      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
-      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Mean_test = case_when(
+      p.value_mean < 0.001 ~ "*p* < 0.001*",
+      p.value_mean < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_mean), "*"),
+      TRUE                 ~ paste0("*p* = ", sprintf("%.3f", p.value_mean))),
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
-      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
+      p.value_var < 0.001 ~ "*p* < 0.001*",
+      p.value_var < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_var), "*"),
+      TRUE                ~ paste0("*p* = ", sprintf("%.3f", p.value_var)))) %>%
+  rename(Amazon_mean = `Mean_Str_Amazon molly`, Sailfin_mean = `Mean_Str_Sailfin molly`,
+         Amazon_var = `Var_Str_Amazon molly`, Sailfin_var = `Var_Str_Sailfin molly`)
 
-
-### Add posthoc test results
-extract_pairs <- function(pair_obj, dim_name, type = "Med") {
-  if (is.null(pair_obj)) return(NULL)
   
-  pair_obj %>%
-    mutate(
-      Dimension = dim_name,
-      Zone = as.character(Zone),
-      p_fmt = case_when(
-        p.value < 0.001 ~ "*p* < 0.001*",
-        p.value < 0.05  ~ sprintf("*p* = %.3f*", p.value),
-        TRUE            ~ sprintf("*p* = %.3f", p.value)),
-      PostHoc_Sum = sprintf("<b>%s:</b> %.2f (&plusmn;%.2f); %s", type, estimate, SE, p_fmt)) %>%
-    select(Dimension, Zone, PostHoc_Sum)
-}
-
-# Bind all pairwise comparisons together
-posthoc_ref <- bind_rows(
-  extract_pairs(pair1, "PC1", "M"),
-  extract_pairs(pair2, "PC2", "M"),
-  extract_pairs(pair3, "PC3", "M"),
-  extract_pairs(pair4, "CatPC1", "M"),
-  extract_pairs(pair5, "PC2", "V"),
-  extract_pairs(pair6, "PC3", "V")) %>%
-  group_by(Dimension, Zone) %>%
-  summarise(
-    PostHoc_Summary = paste(PostHoc_Sum, collapse = "<br>"),
-    .groups = "drop")
-
-
 ### Combine & form table
 
 geo_results_combined <- bind_rows(postPCA_geo_result, postCPCA_geo_result) %>%
-  mutate(
-    Med_Part = paste0("Median: &chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), 
-                      " (*p* ", ifelse(p_int < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_int), ifelse(p_int < 0.05, "*", ""))), ")"),
-    Var_Part = paste0("Variance: F = ", sprintf("%.2f", F_value), 
-                      " (*p* ", ifelse(p_lv < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_lv), ifelse(p_lv < 0.05, "*", ""))), ")"),
-    Test_Summary = paste0(Med_Part, " &nbsp;&bull;&nbsp; ", Var_Part),
-    Group_Label = paste0("**", Classifier, "**<br>",
-                         "***", Dimension, "***<br>",
-                         "<span style='font-size: 85%'>", Test_Summary, "</span>"),
-    Zone = as.character(Zone)) %>%
-  left_join(posthoc_ref, by = c("Dimension", "Zone")) %>%
-  mutate(PostHoc_Summary = coalesce(PostHoc_Summary, "&mdash;"))
-  
+  arrange(Classifier, Dimension, Zone) %>%
+  group_by(Classifier, Dimension) %>%
+  mutate(Dimension_Display = ifelse(row_number() == 1, Dimension, "")) %>%
+  ungroup()
+
 
 
 postPCA_geo_table <- geo_results_combined %>%
   select(
-    Group_Label,
+    Classifier,
+    Dimension_Display,
     Zone,
-    `Amazon molly`,
-    `Sailfin molly`,
-    PostHoc_Summary) %>%
-  gt(groupname_col = "Group_Label", process_md = TRUE) %>%
-  fmt_markdown(columns = everything()) %>%
+    Amazon_mean,
+    Sailfin_mean,
+    Mean_test,
+    Amazon_var,
+    Sailfin_var,
+    Variance_test) %>%
+  gt(groupname_col = "Classifier") %>%
+  fmt_markdown(
+    columns = everything()) %>%
   cols_label(
+    Dimension_Display = " ",
     Zone = " ",
-    `Amazon molly` = md("**Amazon**<br>Median (MAD)"),
-    `Sailfin molly` = md("**Sailfin**<br>Median (MAD)"),
-    PostHoc_Summary = md("**Post-hoc Contrasts**<br>(M)edian / (V)ariance<br><span style='font-size:90%; font-weight:normal;'>est. (SE); adj. p</span>")) %>%
+    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
+    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
+    Amazon_var = md("**Amazon**<br>Est. Variance"),
+    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
+    Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+  tab_options(row_group.font.weight = "bold") %>%
+  tab_style(
+    style = cell_borders(sides = c("top", "bottom"), color = "transparent"),
+    locations = cells_body(
+      columns = Dimension_Display,
+      rows = Dimension_Display == "")) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(Zone, `Amazon molly`, `Sailfin molly`))) %>%
+    locations = cells_body(columns = c(Dimension_Display, Zone, Sailfin_mean, Mean_test, Sailfin_var))) %>%
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "lightgray", weight = px(2.5)),
+    locations = cells_body(
+      rows = Zone == "Zone 4")) %>%
   cols_align(align = "center", columns = everything()) %>%
-  opt_horizontal_padding(scale = 2)
+  opt_horizontal_padding(scale = 1.5)
 
-#final table
+### Final table
 postPCA_geo_table
-
-
 
 
 
@@ -2169,7 +2176,7 @@ postPCA_geo_table
 
 #### *Basins*
 
-**CONCLUSIONS:** Median comparisons were significant for all PCs and CatPCs; variation comparisons were significant for PC1 and PC3 (marginally). For PC1 species occupied different morphospace in: San Antonio-Nueces Coastal, Upper and Lower Southwest Texas Coastal, and Rio Tamesi; variation was significantly different in Upper SWTX coastal and Lower Rio Grande (marginally), where Amazons had higher variation. For PC2 species occupied different morphospace in all basins. For PC3 species occupied different morphospace in San Antonio-Guadalupe and Lower SWTX coastal; variation was significantly different in Lower SWTX coastal, where Amazons exhibited more variation. For CatPC1 species occupied different morphospace in all basins. For CatPC2, the medians were not equivalent across basins (leading to a significant result for median comparison) but posthoc analysis did not show any significant basin (indicating that they were not significantly different from a 0 estimate).
+**CONCLUSIONS:** Species:basin interaction effects significant for all PCs and CatPCs. No consistent pattern across basins (e.g. not a select few basins with higher mean differences than the rest) suggesting these are random local differences or sampling effects. Variance significant for PC1 and PC3; two basins in PC1 differ in variation with amazons having more variation than sailfin, and only one basin in PC3 differ in variation with amazons again having higher variation.
 
 ```{r}
 #filter for basins with >3 for each species
@@ -2184,22 +2191,22 @@ testmod <- lm(Dim.2~Species*Basin, data= pca.df2)
 plot(simulateResiduals(testmod)) #all good
 
 testmod <- lm(Dim.3~Species*Basin, data= pca.df2)
-plot(simulateResiduals(testmod)) #fails outlier test; will use glmm
+plot(simulateResiduals(testmod)) #fails outlier test
 
 testmod <- lm(CatPC1~Species*Basin, data= catpca.df2)
 plot(simulateResiduals(testmod)) #all good
 
 testmod <- lm(CatPC2~Species*Basin, data= catpca.df2)
-plot(simulateResiduals(testmod)) #fails KS test, outlier test, and combined adjusted quantile test; will use glmm
+plot(simulateResiduals(testmod)) #fails KS test, outlier test & combined adjusted quantile test
 
 
 # ───────────────────────────────────────────────────
-## MEDIAN TESTS (GLMM for all)
+## MEAN TESTS (GLMM for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
 geo2.met.mean.1 <- glmmTMB(Dim.1 ~Species*Basin, dispformula = ~Species * Basin, data = pca.df2)
-(g2mm1 <- Anova(geo2.met.mean.1, type = "III")) #basin and species:basin significant (p<0.001) but not species
+(g2mm1 <- Anova(geo2.met.mean.1, type = "III")) #basin and species:basin significant (p<0.001) 
 plot(simulateResiduals(geo2.met.mean.1)) #all good
 
     post_hoc2.1 <- emmeans(geo2.met.mean.1,  ~ Species | Basin)
@@ -2224,11 +2231,11 @@ plot(simulateResiduals(geo2.met.mean.3)) #all good
     post_hoc2.3 <- emmeans(geo2.met.mean.3,  ~ Species | Basin)
     summary(post_hoc2.3)
     pw2.3 <- pairs(post_hoc2.3)
-    (pair2.3 <- as.data.frame(rbind(pw2.3, adjust = "holm"))) #only San Antonio-Guadalupe (p<0.001) and Lower Southwest Texas coastal (p=0.003) significant
+    (pair2.3 <- as.data.frame(rbind(pw2.3, adjust = "holm"))) #only San Antonio-Guadalupe (p<0.001) and Lower SWTX coastal (p=0.003) significant
 
 ### Meristic Data
 geo2.cnt.mean.1 <- glmmTMB(CatPC1 ~Species*Basin, dispformula = ~Species*Basin, data = catpca.df2)
-(g2cm1<- Anova(geo2.cnt.mean.1, type = "III")) # species (p<0.001) and species:Basin (p=0.013) significant, but not Basins
+(g2cm1<- Anova(geo2.cnt.mean.1, type = "III")) # species (p<0.001) and species:Basin (p=0.013) sig
 plot(simulateResiduals(geo2.cnt.mean.1)) #all good
 
     post_hoc2.4 <- emmeans(geo2.cnt.mean.1,  ~ Species | Basin)
@@ -2239,235 +2246,221 @@ plot(simulateResiduals(geo2.cnt.mean.1)) #all good
     
 #default gaussian family still failed residual tests; switching to Student-t distribution due to extreme tail ends
 geo2.cnt.mean.2 <- glmmTMB(CatPC2 ~Species*Basin, dispformula = ~Species*Basin, family= t_family, data = catpca.df2)
-(g2cm2<- Anova(geo2.cnt.mean.2, type = "III")) #basin (p<0.001) and species:basin (p=0.037) significant, but not species
+(g2cm2<- Anova(geo2.cnt.mean.2, type = "III")) #basin (p<0.001) and species:basin (p<0.001) sig
 plot(simulateResiduals(geo2.cnt.mean.2)) #shows quantile deviations for 0.75 but a n.s. adjusted quantile test and aligned qqplot
 
     post_hoc2.5 <- emmeans(geo2.cnt.mean.2,  ~ Species | Basin)
     summary(post_hoc2.5)
     pw2.5 <- pairs(post_hoc2.5)
-    (pair2.5 <- as.data.frame(rbind(pw2.5, adjust = "holm"))) #no Basins significant
+    (pair2.5 <- as.data.frame(rbind(pw2.5, adjust = "holm"))) #San Antonio-Nueces Coastal (p=0.001), Upper SWTX Coastal (p<0.001), Rio Tamesi (p=0.004)
 
 # ───────────────────────────────────────────────────
 ## VARIANCE TESTS (Brown-Forsythe for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
-geo2.met.var.1 <- leveneTest(Dim.1~Species*Basin, data= pca.df2) #significant (p<0.001)
-    post_hoc2.6 <- emmeans(geo2.met.mean.1,  ~ Species | Basin, component = "disp")
-    summary(post_hoc2.6)
-    pw2.6 <- pairs(post_hoc2.6)
-    (pair2.6 <- as.data.frame(rbind(pw2.6, adjust = "holm"))) #only Upper SW Texas Coastal (p<0.001) and Lower Rio Grande (p=0.049) significant
+geo2.met.var.1 <- emmeans(geo2.met.mean.1, ~ Species | Basin, component = "disp", type = "response")
+gmv1 <- pairs(geo2.met.var.1) 
+(pair2.6 <- as.data.frame(rbind(gmv1, adjust = "holm"))) #only Upper SWTX Coastal (p<0.001) and Lower Rio Grande (p=0.049) significant
 
 
-geo2.met.var.2 <- leveneTest(Dim.2~Species*Basin, data= pca.df2) #not significant
+geo2.met.var.2 <- emmeans(geo2.met.mean.2, ~ Species | Basin, component = "disp", type = "response")
+gmv2 <- pairs(geo2.met.var.2) 
+(pair2.7 <- as.data.frame(rbind(gmv2, adjust = "holm"))) #none significant
    
     
-geo2.met.var.3 <- leveneTest(Dim.3~Species*Basin, data= pca.df2) #marginal (p=0.050)
-    post_hoc2.7 <- emmeans(geo2.met.mean.3,  ~ Species | Basin, component = "disp")
-    summary(post_hoc2.7)
-    pw2.7 <- pairs(post_hoc2.7)
-    (pair2.7 <- as.data.frame(rbind(pw2.7, adjust = "holm"))) #only Lower SW Texas Coastal significant (p<0.001)
+geo2.met.var.3 <- emmeans(geo2.met.mean.3, ~ Species | Basin, component = "disp", type = "response")
+gmv3 <- pairs(geo2.met.var.3) 
+(pair2.8 <- as.data.frame(rbind(gmv3, adjust = "holm"))) #Lower SWTX Coastal (p<0.001) significant
     
 
 ### Meristic Data
-geo2.cnt.var.1 <- leveneTest(CatPC1~Species*Basin, data= catpca.df2) #not significant
+geo2.cnt.var.1 <- emmeans(geo2.cnt.mean.1, ~ Species | Basin, component = "disp", type = "response")
+gcv1 <- pairs(geo2.cnt.var.1) 
+(pair2.9 <- as.data.frame(rbind(gcv1, adjust = "holm"))) #none significant
 
-geo2.cnt.var.2 <- leveneTest(CatPC2~Species*Basin, data= catpca.df2) #not significant
+geo2.cnt.var.2 <- emmeans(geo2.cnt.mean.2, ~ Species | Basin, component = "disp", type = "response")
+gcv2 <- pairs(geo2.cnt.var.2) 
+(pair2.10 <- as.data.frame(rbind(gcv2, adjust = "holm"))) #none significant
 
 
 # ───────────────────────────────────────────────────
 ## TABLE
 # ───────────────────────────────────────────────────
 
-### Metric Data
+### Metric data 
 
-#get medians and median absolute deviations for each dimension per species per Basin
-geo2_met_summary <- pca.df2 %>%
-  group_by(Species, Basin) %>%
-  summarise(
-    PC1_median = median(Dim.1, na.rm = TRUE),
-    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
-    PC2_median = median(Dim.2, na.rm = TRUE),
-    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
-    PC3_median = median(Dim.3, na.rm = TRUE),
-    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
-
-#format summary stats
-geo2_met_long <- geo2_met_summary %>%
-  pivot_longer(
-    cols = starts_with("PC"),
-    names_to = c("Dimension", ".value"),
-    names_pattern = "(PC\\d)_(.*)") %>%
-  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
-  select(Species, Basin, Dimension, stat_string) %>%
-  pivot_wider(names_from = Species, values_from = stat_string)
+## ensure all results are as df
+post_hoc2.1 <- as.data.frame(post_hoc2.1)
+post_hoc2.2 <- as.data.frame(post_hoc2.2)
+post_hoc2.3 <- as.data.frame(post_hoc2.3)
+geo2.met.var.1 <- as.data.frame(geo2.met.var.1)
+geo2.met.var.2 <- as.data.frame(geo2.met.var.2)
+geo2.met.var.3 <- as.data.frame(geo2.met.var.3)
 
 
-#extract Anova(model) results and levene's results
-stats_results2.1 <- tibble(
-  Dimension = c("PC1", "PC2", "PC3"),
-  Chi_value = c(
-    g2mm1["Species:Basin", "Chisq"], 
-    g2mm2["Species:Basin", "Chisq"], 
-    g2mm3["Species:Basin", "Chisq"]),
-  p_int     = c(
-    g2mm1["Species:Basin", "Pr(>Chisq)"], 
-    g2mm2["Species:Basin", "Pr(>Chisq)"], 
-    g2mm3["Species:Basin", "Pr(>Chisq)"]),
-  F_value   = c(
-    geo2.met.var.1$`F value`[1], 
-    geo2.met.var.2$`F value`[1], 
-    geo2.met.var.3$`F value`[1]),
-  p_lv      = c(
-    geo2.met.var.1$`Pr(>F)`[1], 
-    geo2.met.var.2$`Pr(>F)`[1], 
-    geo2.met.var.3$`Pr(>F)`[1]))
+# Combine means and variances per dimension 
+m1_all <- left_join(post_hoc2.1, geo2.met.var.1, by = c("Species", "Basin")) %>% 
+  mutate(Dimension = "PC1", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
+m2_all <- left_join(post_hoc2.2, geo2.met.var.2, by = c("Species", "Basin")) %>% 
+  mutate(Dimension = "PC2", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
-#format results for final table
-postPCA_geo2_result <- geo2_met_long %>%
-  left_join(stats_results2.1, by = "Dimension") %>%
+m3_all <- left_join(post_hoc2.3, geo2.met.var.3, by = c("Species", "Basin")) %>% 
+  mutate(Dimension = "PC3", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
+
+# Bind all metric dimensions together and pivot wide to separate species columns
+metric_combined <- bind_rows(m1_all, m2_all, m3_all) %>%
+  select(Dimension, Basin, Species, Mean_Str, Var_Str) %>%
+  pivot_wider(
+    names_from = Species,
+    values_from = c(Mean_Str, Var_Str))
+
+# Extract Pairwise Post-hoc P-values from 'pair' data frames
+p_means_met <- bind_rows(
+  mutate(pair2.1, Dimension = "PC1"),
+  mutate(pair2.2, Dimension = "PC2"),
+  mutate(pair2.3, Dimension = "PC3")) %>% 
+  select(Dimension, Basin, p.value_mean = p.value)
+
+p_vars_met <- bind_rows(
+  mutate(pair2.6, Dimension = "PC1"),
+  mutate(pair2.7, Dimension = "PC2"),
+  mutate(pair2.8, Dimension = "PC3")) %>% 
+  select(Dimension, Basin, p.value_var = p.value)
+
+# build tibble
+postPCA_geo2_result <- metric_combined %>%
+  left_join(p_means_met, by = c("Dimension", "Basin")) %>%
+  left_join(p_vars_met, by = c("Dimension", "Basin")) %>%
   mutate(
     Classifier = "Metric PCA",
-    Med_test = case_when(
-      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
-      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Mean_test = case_when(
+      p.value_mean < 0.001 ~ "*p* < 0.001*",
+      p.value_mean < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_mean), "*"),
+      TRUE                 ~ paste0("*p* = ", sprintf("%.3f", p.value_mean))),
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
-      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
-
-
-
+      p.value_var < 0.001 ~ "*p* < 0.001*",
+      p.value_var < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_var), "*"),
+      TRUE                ~ paste0("*p* = ", sprintf("%.3f", p.value_var)))) %>%
+  rename(Amazon_mean = `Mean_Str_Amazon molly`, Sailfin_mean = `Mean_Str_Sailfin molly`,
+         Amazon_var = `Var_Str_Amazon molly`, Sailfin_var = `Var_Str_Sailfin molly`)
 
 ### Meristic Data
 
+## ensure all results are as df
+post_hoc2.4 <- as.data.frame(post_hoc2.4)
+post_hoc2.5 <- as.data.frame(post_hoc2.5)
+geo2.cnt.var.1 <- as.data.frame(geo2.cnt.var.1)
+geo2.cnt.var.2 <- as.data.frame(geo2.cnt.var.2)
 
-#get medians and median absolute deviations for each dimension per species per Basin
-geo2_cnt_summary <- catpca.df2 %>%
-  group_by(Species, Basin) %>%
-  summarise(
-    CatPC1_median = median(CatPC1, na.rm = TRUE),
-    CatPC1_mad  = mad(CatPC1, na.rm = TRUE, constant = 1),
-    CatPC2_median = median(CatPC2, na.rm = TRUE),
-    CatPC2_mad  = mad(CatPC2, na.rm = TRUE, constant = 1))
+# Combine means and variances per dimension 
+c1_all <- left_join(post_hoc2.4, geo2.cnt.var.1, by = c("Species", "Basin")) %>% 
+  mutate(Dimension = "CatPC1", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
-#format summary stats
-geo2_cnt_long <- geo2_cnt_summary %>%
-  pivot_longer(
-    cols = starts_with("CatPC"),
-    names_to = c("Dimension", ".value"),
-    names_pattern = "(CatPC\\d)_(.*)") %>%
-  mutate(stat_string = sprintf("%.2f (%.2f)", median, mad)) %>%
-  select(Species, Basin, Dimension, stat_string) %>%
-  pivot_wider(names_from = Species, values_from = stat_string)
+c2_all <- left_join(post_hoc2.5, geo2.cnt.var.2, by = c("Species", "Basin")) %>% 
+  mutate(Dimension = "CatPC2", 
+         Mean_Str = sprintf("%.2f (%.2f)", emmean, SE.x), 
+         Var_Str = sprintf("%.2f", response))
 
 
-#extract Anova(model) results and levene's results
-stats_results2.2 <- tibble(
-  Dimension = c("CatPC1", "CatPC2"),
-  Chi_value = c(
-    g2cm1["Species:Basin", "Chisq"], 
-    g2cm2["Species:Basin", "Chisq"]),
-  p_int     = c(
-    g2cm1["Species:Basin", "Pr(>Chisq)"], 
-    g2cm2["Species:Basin", "Pr(>Chisq)"]),
-  F_value   = c(
-    geo2.cnt.var.1$`F value`[1], 
-    geo2.cnt.var.2$`F value`[1]),
-  p_lv      = c(
-    geo2.cnt.var.1$`Pr(>F)`[1], 
-    geo2.cnt.var.2$`Pr(>F)`[1]))
+# Bind all meristic dimensions together and pivot wide to separate species columns
+meristic_combined <- bind_rows(c1_all, c2_all) %>%
+  select(Dimension, Basin, Species, Mean_Str, Var_Str) %>%
+  pivot_wider(
+    names_from = Species,
+    values_from = c(Mean_Str, Var_Str))
 
+# Extract Pairwise Post-hoc P-values from 'pair' data frames
+p_means_met <- bind_rows(
+  mutate(pair2.4, Dimension = "CatPC1"),
+  mutate(pair2.5, Dimension = "CatPC2")) %>% 
+  select(Dimension, Basin, p.value_mean = p.value)
 
-#format results for final table
-postCPCA_geo2_result <- geo2_cnt_long %>%
-  left_join(stats_results2.2, by = "Dimension") %>%
+p_vars_met <- bind_rows(
+  mutate(pair2.9, Dimension = "CatPC1"),
+  mutate(pair2.10, Dimension = "CatPC2")) %>% 
+  select(Dimension, Basin, p.value_var = p.value)
+
+# build tibble
+postCPCA_geo2_result <- meristic_combined %>%
+  left_join(p_means_met, by = c("Dimension", "Basin")) %>%
+  left_join(p_vars_met, by = c("Dimension", "Basin")) %>%
   mutate(
     Classifier = "Meristic CatPCA",
-    Med_test = case_when(
-      p_int < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* < 0.001*"),
-      p_int < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), "<br>*p* = ", sprintf("%.3f", p_int))),
+    Mean_test = case_when(
+      p.value_mean < 0.001 ~ "*p* < 0.001*",
+      p.value_mean < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_mean), "*"),
+      TRUE                 ~ paste0("*p* = ", sprintf("%.3f", p.value_mean))),
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* < 0.001*"),
-      p_lv < 0.05  ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-      TRUE          ~ paste0("F = ", sprintf("%.2f", F_value), "<br>*p* = ", sprintf("%.3f", p_lv))))
+      p.value_var < 0.001 ~ "*p* < 0.001*",
+      p.value_var < 0.05  ~ paste0("*p* = ", sprintf("%.3f", p.value_var), "*"),
+      TRUE                ~ paste0("*p* = ", sprintf("%.3f", p.value_var)))) %>%
+  rename(Amazon_mean = `Mean_Str_Amazon molly`, Sailfin_mean = `Mean_Str_Sailfin molly`,
+         Amazon_var = `Var_Str_Amazon molly`, Sailfin_var = `Var_Str_Sailfin molly`)
 
-
-
-### Add posthoc test results
-extract_pairs2 <- function(pair_obj, dim_name, type = "Med") {
-  if (is.null(pair_obj)) return(NULL)
   
-  pair_obj %>%
-    mutate(
-      Dimension = dim_name,
-      Basin = as.character(Basin),
-      p_fmt = case_when(
-        p.value < 0.001 ~ "*p* < 0.001*",
-        p.value < 0.05  ~ sprintf("*p* = %.3f*", p.value),
-        TRUE            ~ sprintf("*p* = %.3f", p.value)),
-      PostHoc_Sum = sprintf("<b>%s:</b> %.2f (&plusmn;%.2f); %s", type, estimate, SE, p_fmt)) %>%
-    select(Dimension, Basin, PostHoc_Sum)
-}
-
-# Bind all pairwise comparisons together
-posthoc_ref2 <- bind_rows(
-  extract_pairs2(pair2.1, "PC1", "M"),
-  extract_pairs2(pair2.2, "PC2", "M"),
-  extract_pairs2(pair2.3, "PC3", "M"),
-  extract_pairs2(pair2.4, "CatPC1", "M"),
-  extract_pairs2(pair2.5, "CatPC2", "M"),
-  extract_pairs2(pair2.6, "PC1", "V"),
-  extract_pairs2(pair2.7, "PC3", "V")) %>%
-  group_by(Dimension, Basin) %>%
-  summarise(
-    PostHoc_Summary = paste(PostHoc_Sum, collapse = "<br>"),
-    .groups = "drop")
-
-
 ### Combine & form table
 
 geo2_results_combined <- bind_rows(postPCA_geo2_result, postCPCA_geo2_result) %>%
-  mutate(
-    Med_Part = paste0("Median: &chi;<sup>2</sup> = ", sprintf("%.2f", Chi_value), 
-                      " (*p* ", ifelse(p_int < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_int), ifelse(p_int < 0.05, "*", ""))), ")"),
-    Var_Part = paste0("Variance: F = ", sprintf("%.2f", F_value), 
-                      " (*p* ", ifelse(p_lv < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_lv), ifelse(p_lv < 0.05, "*", ""))), ")"),
-    Test_Summary = paste0(Med_Part, " &nbsp;&bull;&nbsp; ", Var_Part),
-    Group_Label = paste0("**", Classifier, "**<br>",
-                         "***", Dimension, "***<br>",
-                         "<span style='font-size: 85%'>", Test_Summary, "</span>"),
-    Basin = as.character(Basin)) %>%
-  left_join(posthoc_ref2, by = c("Dimension", "Basin")) %>%
-  mutate(PostHoc_Summary = coalesce(PostHoc_Summary, "&mdash;"))
-  
+  arrange(Classifier, Dimension, Basin) %>%
+  group_by(Classifier, Dimension) %>%
+  mutate(Dimension_Display = ifelse(row_number() == 1, Dimension, "")) %>%
+  ungroup()
+
 
 
 postPCA_geo2_table <- geo2_results_combined %>%
   select(
-    Group_Label,
+    Classifier,
+    Dimension_Display,
     Basin,
-    `Amazon molly`,
-    `Sailfin molly`,
-    PostHoc_Summary) %>%
-  gt(groupname_col = "Group_Label", process_md = TRUE) %>%
-  fmt_markdown(columns = everything()) %>%
+    Amazon_mean,
+    Sailfin_mean,
+    Mean_test,
+    Amazon_var,
+    Sailfin_var,
+    Variance_test) %>%
+  gt(groupname_col = "Classifier") %>%
+  fmt_markdown(
+    columns = everything()) %>%
   cols_label(
+    Dimension_Display = " ",
     Basin = " ",
-    `Amazon molly` = md("**Amazon**<br>Median (MAD)"),
-    `Sailfin molly` = md("**Sailfin**<br>Median (MAD)"),
-    PostHoc_Summary = md("**Post-hoc Contrasts**<br>(M)edian / (V)ariance<br><span style='font-size:90%; font-weight:normal;'>est. (SE); adj. p</span>")) %>%
+    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
+    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
+    Amazon_var = md("**Amazon**<br>Est. Variance"),
+    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
+    Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+  tab_options(row_group.font.weight = "bold") %>%
+  tab_style(
+    style = cell_borders(sides = c("top", "bottom"), color = "transparent"),
+    locations = cells_body(
+      columns = Dimension_Display,
+      rows = Dimension_Display == "")) %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(Basin, `Amazon molly`, `Sailfin molly`))) %>%
+    locations = cells_body(columns = c(Dimension_Display, Basin, Sailfin_mean, Mean_test, Sailfin_var))) %>%
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "lightgray", weight = px(2.5)),
+    locations = cells_body(
+      rows = Basin == "Upper Southwest Texas Coastal")) %>%
   cols_align(align = "center", columns = everything()) %>%
-  opt_horizontal_padding(scale = 2)
+  opt_horizontal_padding(scale = 1.5)
 
-#final table
+### Final table
 postPCA_geo2_table
+
+
 
 
 
@@ -2485,7 +2478,7 @@ After filtering for individuals where the county/state information was recorded 
 
 ### Individual trait models
 
-**CONCLUSIONS:** Body depth, predorsal length, and dorsal base length were best supported with an unequal variance model; in all cases, the sexual species (sailfin & atlantic) were more variable than the amazon. All remaining metric traits and all meristic traits were best supported with an equal variance model (aka no significant difference in variation among the species). 
+**CONCLUSIONS:** Body depth, predorsal length, and dorsal base length were best supported with an unequal variance model; in all cases, the sexual species (sailfin & atlantic) were more variable than the amazon. All remaining metric traits were best supported with an equal variance model (aka no significant difference in variation among the species). Most meristic traits failed model comparisons due to lack of variation; fallback Levene's tests show no significant variation differences for any traits. 
 
 
 ```{r}
@@ -2507,7 +2500,7 @@ count3 <- geo %>%
 metric3$Species <- as.factor(metric3$Species)
 metric3$Species <- relevel(metric3$Species, ref = "Amazon molly")
 
-tm_results_list <- lapply(met.vars, function(trait) {
+tam_results_list <- lapply(met.vars, function(trait) {
   
   # Build the formula string correctly
   form_str <- paste0("log(", trait, ") ~ log(SL) * Species")
@@ -2518,17 +2511,18 @@ tm_results_list <- lapply(met.vars, function(trait) {
     glmmTMB(form, data = metric3, family = gaussian)
   }, error = function(e) { NULL }, warning = function(w) { NULL })
   
-  # 2. Heterogeneous variance model (with strict optimization catching)
   mod2 <- tryCatch({
-    glmmTMB(form, data = metric3, family = gaussian, dispformula = ~Species)
-  }, 
-  error = function(e) { NULL }, 
-  warning = function(w) { 
-    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
-      return(NULL) 
-    }
-    invokeRestart("muffleWarning") 
-  })
+    withCallingHandlers({
+      glmmTMB(form, data = metric3, family = gaussian, dispformula = ~Species)
+    }, warning = function(w) {
+      # If it's a bad warning, escalate to an error to abort the model gracefully
+      if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+        stop(w$message) 
+      }
+      # Otherwise, safely muffle minor warnings while the stack is still active
+      invokeRestart("muffleWarning") 
+    })
+  }, error = function(e) { NULL })
   
   # Verify clean convergence of both models
   models_valid <- !is.null(mod1) && !is.null(mod2) && 
@@ -2668,19 +2662,18 @@ tam_results_list_count <- lapply(cnt.vars, function(trait) {
     glmmTMB(form, data = count3, family = compois)
   }, error = function(e) { NULL }, warning = function(w) { NULL }) # Rejects if optimizer warns
   
-  # 2. Fit Heterogeneous Model (with strict warning/error catching)
   mod2 <- tryCatch({
-    glmmTMB(form, data = count3, family = compois, dispformula = ~Species)
-  }, 
-  error = function(e) { NULL }, 
-  warning = function(w) { 
-    # Catch internal optimization/evaluation warnings and treat them as failures
-    if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
-      return(NULL) 
-    }
-    # Allow minor, harmless warnings to pass through
-    invokeRestart("muffleWarning") 
-  })
+    withCallingHandlers({
+      glmmTMB(form, data = count3, family = compois, dispformula = ~Species)
+    }, warning = function(w) {
+      # Check internal optimization/evaluation warnings and escalate to fail cleanly
+      if(grepl("NA/NaN|calc_loglambda|iteration|failure", w$message, ignore.case = TRUE)) {
+        stop(w$message) 
+      }
+      # Muffle minor, harmless warnings safely
+      invokeRestart("muffleWarning") 
+    })
+  }, error = function(e) { NULL })
 
   # Verify if both models successfully and cleanly converged
   models_valid <- !is.null(mod1) && !is.null(mod2) && 
@@ -3029,12 +3022,9 @@ tam.catpca
 
 #### *Post PCA tests*
 
-**CONCLUSIONS:** For our metric data, there is no significant difference in average shape distribution for PC1 or PC3, but there is a significant difference for PC2. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. PC1 is influenced by body size, so PC2 and PC3 are of more interest. The species occupy a different morphospace for PC2 which explains 27.1% of the shape variation, but occupy similar morphospace for PC3 which only explains 4.48%. 
+**CONCLUSIONS:** For our metric data, PC1 and PC2 but not PC3 have significant mean differences. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. 
 
-PC1 and PC2 both show a significant difference in variation, with pochoc tests revealing the sailfin-Atlantic comparisons to be driving this. Some of the traits that load heavily on PC1 and PC2 (e.g. body depth, dorsal base length) are also the traits that were best supported by unequal variances in our individual models, with the sexual species again having more variation than the asexual, so the PCA results seem to corroborate this. This indicates that for both individual traits and when traits are taken all together, the sexual species in Tampico, Mexico are more variable than the asexual species.
-
-
-For our meristic data, both CatPC1 and CatPC2 showed a significant difference in average meristic profiles, which again makes sense as many of the meristic traits are species specific. There is also a significant difference in variation for CatPC1, with the pairwise comparisons showing a significant difference for sailfin and atlantic only; there was no significant difference in CatPC2. This differs from our individual trait analysis, indicating species differences in covariation among multiple meristic features. 
+PC1, PC2 and CatPC1 show a significant difference in variation among the species. Sailfin differ from both species for PC1 but amazon and atlantic don't differ. Atlantic differ from both species for PC2 but sailfin and amazon don't differ. All species differ for CatPC1. This differs slightly from our individual trait results: in individual trait results, only a few metric traits showed support for a unequal-dispersion model, and none of our meristic traits showed support for unequal-disperson models. This indicates species differences in covariation among multiple metric and meristic features.
 
 ```{r}
 #quick test
@@ -3116,314 +3106,452 @@ tam.cnt.var.2 <- leveneTest(CatPC2~Species, data= catpca.df2) #not significant
 
 ```
 
-
-
 ```{r}
-
-#quick distribution checks to see what tests to use
-
 testmod <- lm(Dim.1 ~ Species, data = pca.df2)
-plot(simulateResiduals(testmod)) #fails levene's test; will use kruskal-wallis
+plot(simulateResiduals(testmod)) #levene's test sig
 
 testmod <- lm(Dim.2 ~ Species, data = pca.df2)
-plot(simulateResiduals(testmod)) #fails levene's test; will use kruskal-wallis
+plot(simulateResiduals(testmod)) #levene's test sig
 
 testmod <- lm(Dim.3 ~ Species, data = pca.df2)
 plot(simulateResiduals(testmod)) #all good
 
 testmod <- lm(CatPC1 ~ Species, data = catpca.df2)
-plot(simulateResiduals(testmod)) #fails outlier and levene's test; will use kruskal-wallis
+plot(simulateResiduals(testmod)) #fails outlier & levene's test sig
 
 testmod <- lm(CatPC2 ~ Species, data = catpca.df2)
-plot(simulateResiduals(testmod)) #fails KS test and outlier test; will use kruskal-wallis
+plot(simulateResiduals(testmod)) #fails KS test & outlier test
 
-
+#since some models fail residual checks, I will use a GLMM with a by-species dispersion factor and test mean and variance differences from that; default family=gaussian unless otherwise specified
 
 
 # ───────────────────────────────────────────────────
-## MEDIAN TESTS (Kruskal-Wallis test for all)
+## MEAN TESTS (GLMM w/ ~Species dispersion for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
 
-tam.met.mean.1 <- kruskal.test(Dim.1~Species, data = pca.df2) #not significant
+tam.met.mean.1 <- glmmTMB(Dim.1 ~ Species, dispformula = ~Species, data = pca.df2) 
+(tmm1<- Anova(tam.met.mean.1, type = "III")) #significant (p=0.023)
+plot(simulateResiduals(tam.met.mean.1)) #all good
+    tph1 <- emmeans(tam.met.mean.1, ~Species)
+    summary(tph1)
+    tpw1 <- pairs(tph1)
+    (tpair1 <- as.data.frame(rbind(tpw1, adjust = "holm"))) #only amazon and atlantic sig (p=02)
+    
+tam.met.mean.2 <- glmmTMB(Dim.2 ~ Species, dispformula = ~Species, data = pca.df2) 
+(tmm2<- Anova(tam.met.mean.2, type = "III")) #significant (p<0.001)
+plot(simulateResiduals(tam.met.mean.2)) #all good
+    tph2 <- emmeans(tam.met.mean.2,  ~ Species)
+    summary(tph2)
+    tpw2 <- pairs(tph2)
+    (tpair2 <- as.data.frame(rbind(tpw2, adjust = "holm"))) #all sig (p<0.001)
+    
 
-tam.met.mean.2 <- kruskal.test(Dim.2~Species, data = pca.df2) #significant (p<0.001)
-    tam_post_hoc1 <- dunnTest(Dim.2 ~ Species, data = pca.df2, method = "holm")
-    tam_post_hoc1 #all comparisons significant (p<0.001)
-
-
-tam.met.mean.3 <- kruskal.test(Dim.3~Species, data = pca.df2) #not significant
-
+tam.met.mean.3 <- glmmTMB(Dim.3 ~ Species, dispformula = ~Species, data = pca.df2) 
+(tmm3<- Anova(tam.met.mean.3, type = "III")) #not significant
+plot(simulateResiduals(tam.met.mean.3)) #all good
+    tph3 <- emmeans(tam.met.mean.3,  ~ Species)
+    summary(tph3)
+    tpw3 <- pairs(tph3)
+    (tpair3 <- as.data.frame(rbind(tpw3, adjust = "holm"))) #for table later
+    
 
 ### Meristic Data
 
 
-tam.cnt.mean.1 <- kruskal.test(CatPC1~Species, data = catpca.df2) #significant (p<0.001)
-    tam_post_hoc2 <- dunnTest(CatPC1 ~ Species, data = catpca.df2, method = "holm")
-    tam_post_hoc2 #all comparisons significant (p<0.001)
+tam.cnt.mean.1 <- glmmTMB(CatPC1 ~ Species, dispformula = ~Species, data = catpca.df2) 
+(tcm1<- Anova(tam.cnt.mean.1, type = "III")) #significant (p<0.001)
+plot(simulateResiduals(tam.cnt.mean.1)) #all good
+    tph4 <- emmeans(tam.cnt.mean.1,  ~ Species)
+    summary(tph4)
+    tpw4 <- pairs(tph4)
+    (tpair4 <- as.data.frame(rbind(tpw4, adjust = "holm"))) #all sig (p<0.001)
+    
 
-tam.cnt.mean.2 <- kruskal.test(CatPC2~Species, data = catpca.df2) #significant (p=0.009)
-    tam_post_hoc3 <- dunnTest(CatPC2 ~ Species, data = catpca.df2, method = "holm")
-    tam_post_hoc3 #amazon-atlantic (p=0.0.019) and sailfin-atlatnic (p=0.021) significant but not amazon-sailfin
+
+#default gaussian family failed residual checks; changing to Student t-distribution due to extreme tails
+tam.cnt.mean.2 <- glmmTMB(CatPC2 ~ Species, dispformula = ~Species, family = t_family, data = catpca.df2) 
+(tcm2<- Anova(tam.cnt.mean.2, type = "III")) #significant (p<0.001)
+plot(simulateResiduals(tam.cnt.mean.2)) #failed KS test but qqplot w/ good alignment
+    tph5 <- emmeans(tam.cnt.mean.2,  ~ Species)
+    summary(tph5)
+    tpw5 <- pairs(tph5)
+    (tpair5 <- as.data.frame(rbind(tpw5, adjust = "holm"))) #saifin/atlantic sig (p<0.001), amazon/atlantic sig (p=0.001)
+    
 
 # ───────────────────────────────────────────────────
-## VARIANCE TESTS (Brown-Forsythe for all)
+## VARIANCE TESTS (Extract dispersion info for all)
 # ───────────────────────────────────────────────────
 
 ### Metric Data
-tam.met.var.1 <- leveneTest(Dim.1~Species, data= pca.df2) #significant (p=0.016)
+tam.met.var.1 <- emmeans(tam.met.mean.1, ~ Species, component = "disp", type = "response")
+tmv1 <- pairs(tam.met.var.1)
+(tpair6 <- as.data.frame(rbind(tmv1, adjust = "holm"))) #sailfin/amazon sig (p=0.011), sailfin/atlantic sig (p=0.015)
 
-    tam_post_hoc4 <- with(pca.df2, {
-      medians <- tapply(Dim.1, Species, median, na.rm = TRUE)
-      abs_devs <- abs(Dim.1 - medians[Species])
-      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
-    tam_post_hoc4 #amazon-sailfin marginal (p=0.056), sailfin-atlantic significant (p=0.009) and amazon-atlatnic not significant
+tam.met.var.2 <- emmeans(tam.met.mean.2, ~ Species, component = "disp", type = "response")
+tmv2 <- pairs(tam.met.var.2) 
+(tpair7 <- as.data.frame(rbind(tmv2, adjust = "holm"))) #sailfin/atlantic sig (p=0.004), amazon/atlantic sig (p=0.015)
 
-
-tam.met.var.2 <- leveneTest(Dim.2~Species, data= pca.df2) #significant (p=0.005)
-    tam_post_hoc5 <- with(pca.df2, {
-      medians <- tapply(Dim.2, Species, median, na.rm = TRUE)
-      abs_devs <- abs(Dim.2 - medians[Species])
-      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
-    tam_post_hoc5 #amazon-atlantic marginal (p=0.049), sailfin-atlantic significant (p=0.012) and amazon-sailfin not significant
-
-tam.met.var.3 <- leveneTest(Dim.3~Species, data= pca.df2) #not significant
+tam.met.var.3 <- emmeans(tam.met.mean.3, ~ Species, component = "disp", type = "response")
+tmv3 <- pairs(tam.met.var.3) #not significant
+(tpair8 <- as.data.frame(rbind(tmv3, adjust = "holm"))) #for later table
 
 
 ### Meristic Data
-tam.cnt.var.1 <- leveneTest(CatPC1~Species, data= catpca.df2) #significant (p=0.002)
-    tam_post_hoc6 <- with(catpca.df2, {
-      medians <- tapply(CatPC1, Species, median, na.rm = TRUE)
-      abs_devs <- abs(CatPC1 - medians[Species])
-      pairwise.t.test(abs_devs, Species, p.adjust.method = "holm", pool.sd = FALSE)})
-    tam_post_hoc6 #sailfin-atlantic significant (p=0.004) and amazon-sailfin and amazon-atlantic not significant
+tam.cnt.var.1 <- emmeans(tam.cnt.mean.1, ~ Species, component = "disp", type = "response")
+tcv1 <- pairs(tam.cnt.var.1) 
+(tpair9 <- as.data.frame(rbind(tcv1, adjust = "holm"))) #all sig: sailfin/amazon (p=0.009), sailfin/atlantic (p<0.001), amazon/atlantic (p=0.003)
 
-tam.cnt.var.2 <- leveneTest(CatPC2~Species, data= catpca.df2) #not significant
+
+tam.cnt.var.2 <- emmeans(tam.cnt.mean.2, ~ Species, component = "disp", type = "response")
+tcv2 <- pairs(tam.cnt.var.2) #not significant
+(tpair10 <- as.data.frame(rbind(tcv2, adjust = "holm"))) #for later table
 
 
 # ───────────────────────────────────────────────────
 ## TABLE
 # ───────────────────────────────────────────────────
 
-### Metric Data
+### Metric data 
 
-#get mean and variance for each dimension per species
-met_summary2 <- pca.df2 %>%
-  group_by(Species) %>%
-  summarise(
-    PC1_median = median(Dim.1, na.rm = TRUE),
-    PC1_mad  = mad(Dim.1, na.rm = TRUE, constant = 1),
-    PC2_median = median(Dim.2, na.rm = TRUE),
-    PC2_mad  = mad(Dim.2, na.rm = TRUE, constant = 1),
-    PC3_median = median(Dim.3, na.rm = TRUE),
-    PC3_mad  = mad(Dim.3, na.rm = TRUE, constant = 1))
+## ensure all results are as df
+tph1 <- as.data.frame(tph1)
+tph2 <- as.data.frame(tph2)
+tph3 <- as.data.frame(tph3)
+tam.met.var.1 <- as.data.frame(met.var.1)
+tam.met.var.2 <- as.data.frame(met.var.2)
+tam.met.var.3 <- as.data.frame(met.var.3)
 
-#isolate results
-amazon_met  <- filter(met_summary2, Species == "Amazon molly")
-sailfin_met <- filter(met_summary2, Species == "Sailfin molly")
-atlantic_met <- filter(met_summary2, Species == "Atlantic molly")
 
-#extract wilcox test results, levene's results, and summary stats
+## pull species-specific model results
+# Means
+amazon_m1  <- sprintf("%.2f (%.2f)", tph1$emmean[1], tph1$SE[1])
+atlantic_m1 <- sprintf("%.2f (%.2f)", tph1$emmean[2], tph1$SE[2])
+sailfin_m1 <- sprintf("%.2f (%.2f)", tph1$emmean[3], tph1$SE[3])
+
+amazon_m2  <- sprintf("%.2f (%.2f)", tph2$emmean[1], tph2$SE[1])
+atlantic_m2 <- sprintf("%.2f (%.2f)", tph2$emmean[2], tph2$SE[2])
+sailfin_m2 <- sprintf("%.2f (%.2f)", tph2$emmean[3], tph2$SE[3])
+
+amazon_m3  <- sprintf("%.2f (%.2f)", ph3$emmean[1], ph3$SE[1])
+atlantic_m3 <- sprintf("%.2f (%.2f)", ph3$emmean[2], ph3$SE[2])
+sailfin_m3 <- sprintf("%.2f (%.2f)", ph3$emmean[3], ph3$SE[3])
+
+Amazon_mean <- c(amazon_m1, amazon_m2, amazon_m3)
+
+Atlantic_mean <- c(atlantic_m1, atlantic_m2, atlantic_m3)
+
+Sailfin_mean <- c(sailfin_m1, sailfin_m2, sailfin_m3)
+
+# variance
+Amazon_var <- sprintf("%.2f", c(tam.met.var.1$response[1], tam.met.var.2$response[1], tam.met.var.3$response[1]))
+
+Atlantic_var <- sprintf("%.2f", c(tam.met.var.1$response[2], tam.met.var.2$response[2], tam.met.var.3$response[2]))
+
+Sailfin_var <- sprintf("%.2f", c(tam.met.var.1$response[3], tam.met.var.2$response[3], tam.met.var.3$response[3]))
+
+
+## pull model stats
+Chisq_mean <- c(tmm1["Species", "Chisq"], tmm2["Species", "Chisq"], tmm3["Species", "Chisq"])
+
+p_mean <- c(tmm1["Species", "Pr(>Chisq)"], tmm2["Species", "Pr(>Chisq)"], tmm3["Species", "Pr(>Chisq)"])
+
+#need to run an anova on dispersion for 3 species
+Chisq_var <- c(Anova(tam.met.mean.1, component = "disp", type = "III")["Species", "Chisq"],
+               Anova(tam.met.mean.2, component = "disp", type = "III")["Species", "Chisq"],
+               Anova(tam.met.mean.3, component = "disp", type = "III")["Species", "Chisq"])
+
+p_var <- c(Anova(tam.met.mean.1, component = "disp", type = "III")["Species", "Pr(>Chisq)"],
+           Anova(tam.met.mean.2, component = "disp", type = "III")["Species", "Pr(>Chisq)"],
+           Anova(tam.met.mean.3, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
+  
+
+## create tibble
 tam_postPCA_result <- tibble(
-  Classifier = "Metric PCA",
-  Dimension = c("PC1", "PC2", "PC3"),
-  Amazon = c(
-    sprintf("%.2f (%.2f)", amazon_met$PC1_median, amazon_met$PC1_mad),
-    sprintf("%.2f (%.2f)", amazon_met$PC2_median, amazon_met$PC2_mad),
-    sprintf("%.2f (%.2f)", amazon_met$PC3_median, amazon_met$PC3_mad)),
-  Sailfin = c(
-    sprintf("%.2f (%.2f)", sailfin_met$PC1_median, sailfin_met$PC1_mad),
-    sprintf("%.2f (%.2f)", sailfin_met$PC2_median, sailfin_met$PC2_mad),
-    sprintf("%.2f (%.2f)", sailfin_met$PC3_median, sailfin_met$PC3_mad)),
-  Atlantic = c(
-    sprintf("%.2f (%.2f)", atlantic_met$PC1_median, atlantic_met$PC1_mad),
-    sprintf("%.2f (%.2f)", atlantic_met$PC2_median, atlantic_met$PC2_mad),
-    sprintf("%.2f (%.2f)", atlantic_met$PC3_median, atlantic_met$PC3_mad)),
-  H_value = c(tam.met.mean.1$statistic,
-              tam.met.mean.2$statistic,
-              tam.met.mean.3$statistic),
-  p_kw = c(tam.met.mean.1$p.value,
-           tam.met.mean.2$p.value,
-           tam.met.mean.3$p.value),
-  F_value = c(tam.met.var.1$`F value`[1],
-              tam.met.var.2$`F value`[1],
-              tam.met.var.3$`F value`[1]),
-  p_lv = c(tam.met.var.1$`Pr(>F)`[1],
-           tam.met.var.2$`Pr(>F)`[1],
-           tam.met.var.3$`Pr(>F)`[1])) %>%
+  Classifier   = "Metric PCA",
+  Dimension    = c("PC1", "PC2", "PC3"),
+  Amazon_mean  = Amazon_mean,
+  Atlantic_mean  = Atlantic_mean,
+  Sailfin_mean = Sailfin_mean,
+  Chisq_mean   = Chisq_mean,
+  p_mean       = p_mean,
+  Amazon_var   = Amazon_var,
+  Atlantic_var   = Atlantic_var,
+  Sailfin_var  = Sailfin_var,
+  Chisq_var    = Chisq_var,
+  p_var        = p_var) %>%
   mutate(
-    Med_test = case_when(
-      p_kw < 0.001 ~ paste0("H = ", sprintf("%.2f", H_value), 
-                            "<br>*p* < 0.001*"),
-      p_kw <0.05   ~ paste0("H = ", sprintf("%.2f", H_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_kw), "*"),
-       TRUE        ~ paste0("H = ", sprintf("%.2f", H_value),
-                            "<br>*p* = ", sprintf("%.3f", p_kw))),
-
+    Mean_test = case_when(
+      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
+      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
+      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
+    
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* < 0.001*"),
-      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
-                            "<br>*p* = ", sprintf("%.3f", p_lv))))
-
-
-
+      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
+  
 
 ### Meristic Data
 
-#get mean and variance for each dimension per species
-cnt_summary2 <- catpca.df2 %>%
-  group_by(Species) %>%
-  summarise(
-    CPC1_median = median(CatPC1, na.rm = TRUE),
-    CPC1_mad  = mad(CatPC1, na.rm = TRUE),
-    CPC2_median = median(CatPC2, na.rm = TRUE),
-    CPC2_mad  = mad(CatPC2, na.rm = TRUE))
-
-#isolate results
-amazon_cnt  <- filter(cnt_summary2, Species == "Amazon molly")
-sailfin_cnt <- filter(cnt_summary2, Species == "Sailfin molly")
-atlantic_cnt <- filter(cnt_summary2, Species == "Atlantic molly")
+## ensure all results are as df
+tph4 <- as.data.frame(tph4)
+tph5 <- as.data.frame(tph5)
+tam.cnt.var.1 <- as.data.frame(cnt.var.1)
+tam.cnt.var.2 <- as.data.frame(cnt.var.2)
 
 
-#extract wilcox test results, levene's results, and summary stats
+## pull species-specific model results
+# Means
+amazon_c1  <- sprintf("%.2f (%.2f)", tph4$emmean[1], tph4$SE[1])
+atlantic_c1 <- sprintf("%.2f (%.2f)", tph4$emmean[2], tph4$SE[2])
+sailfin_c1 <- sprintf("%.2f (%.2f)", tph4$emmean[3], tph4$SE[3])
+
+amazon_c2  <- sprintf("%.2f (%.2f)", tph5$emmean[1], tph5$SE[1])
+atlantic_c2 <- sprintf("%.2f (%.2f)", tph5$emmean[2], tph5$SE[2])
+sailfin_c2 <- sprintf("%.2f (%.2f)", tph5$emmean[3], tph5$SE[3])
+
+
+Amazon_mean <- c(amazon_c1, amazon_c2)
+
+Atlantic_mean <- c(atlantic_c1, atlantic_c2)
+
+Sailfin_mean <- c(sailfin_c1, sailfin_c2)
+
+# variance
+Amazon_var <- sprintf("%.2f", c(tam.cnt.var.1$response[1], tam.cnt.var.2$response[1]))
+
+Atlantic_var <- sprintf("%.2f", c(tam.cnt.var.1$response[2], tam.cnt.var.2$response[2]))
+
+Sailfin_var <- sprintf("%.2f", c(tam.cnt.var.1$response[3], tam.cnt.var.2$response[3]))
+
+
+## pull model stats
+Chisq_mean <- c(tcm1["Species", "Chisq"], tcm2["Species", "Chisq"])
+
+p_mean <- c(tcm1["Species", "Pr(>Chisq)"], tcm2["Species", "Pr(>Chisq)"])
+
+#need to run an anova on dispersion for 3 species
+Chisq_var <- c(Anova(tam.cnt.mean.1, component = "disp", type = "III")["Species", "Chisq"],
+               Anova(tam.cnt.mean.2, component = "disp", type = "III")["Species", "Chisq"])
+
+p_var <- c(Anova(tam.cnt.mean.1, component = "disp", type = "III")["Species", "Pr(>Chisq)"],
+           Anova(tam.cnt.mean.2, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
+  
+
+## create tibble
 tam_postCPCA_result <- tibble(
-  Classifier = "Meristic CATPCA",
-  Dimension = c("CatPC1", "CatPC2"),
-  Amazon = c(
-    sprintf("%.2f (%.2f)", amazon_cnt$CPC1_median, amazon_cnt$CPC1_mad),
-    sprintf("%.2f (%.2f)", amazon_cnt$CPC2_median, amazon_cnt$CPC2_mad)),
-  Sailfin = c(
-    sprintf("%.2f (%.2f)", sailfin_cnt$CPC1_median, sailfin_cnt$CPC1_mad),
-    sprintf("%.2f (%.2f)", sailfin_cnt$CPC2_median, sailfin_cnt$CPC2_mad)),
-  Atlantic = c(
-    sprintf("%.2f (%.2f)", atlantic_cnt$CPC1_median, atlantic_cnt$CPC1_mad),
-    sprintf("%.2f (%.2f)", atlantic_cnt$CPC2_median, atlantic_cnt$CPC2_mad)),
-  H_value = c(tam.cnt.mean.1$statistic,
-              tam.cnt.mean.2$statistic),
-  p_kw = c(tam.cnt.mean.1$p.value,
-           tam.cnt.mean.2$p.value),
-  F_value = c(tam.cnt.var.1$`F value`[1],
-              tam.cnt.var.2$`F value`[1]),
-  p_lv = c(tam.cnt.var.1$`Pr(>F)`[1],
-           tam.cnt.var.2$`Pr(>F)`[1])) %>%
+  Classifier   = "Meristic CatPCA",
+  Dimension    = c("CatPC1", "CatPC2"),
+  Amazon_mean  = Amazon_mean,
+  Atlantic_mean  = Atlantic_mean,
+  Sailfin_mean = Sailfin_mean,
+  Chisq_mean   = Chisq_mean,
+  p_mean       = p_mean,
+  Amazon_var   = Amazon_var,
+  Atlantic_var   = Atlantic_var,
+  Sailfin_var  = Sailfin_var,
+  Chisq_var    = Chisq_var,
+  p_var        = p_var) %>%
   mutate(
-    Med_test = case_when(
-      p_kw < 0.001 ~ paste0("H = ", sprintf("%.2f", H_value), 
-                            "<br>*p* < 0.001*"),
-      p_kw <0.05   ~ paste0("H = ", sprintf("%.2f", H_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_kw), "*"),
-       TRUE        ~ paste0("H = ", sprintf("%.2f", H_value),
-                            "<br>*p* = ", sprintf("%.3f", p_kw))),
-
+    Mean_test = case_when(
+      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
+      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
+      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
+    
     Variance_test = case_when(
-      p_lv < 0.001 ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* < 0.001*"),
-      p_lv <0.05   ~ paste0("F = ", sprintf("%.2f", F_value), 
-                            "<br>*p* = ", sprintf("%.3f", p_lv), "*"),
-       TRUE        ~ paste0("F = ", sprintf("%.2f", F_value),
-                            "<br>*p* = ", sprintf("%.3f", p_lv))))
-
-
-
-
-### Add posthoc test results
-tam_extract_pairs <- function(pair_obj, dim_name, test.type = "M") {
-  if (is.null(pair_obj)) return(NULL)
+      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
   
-  # CASE A: If it's a Dunn Test object (FSA package for Medians)
-  if (inherits(pair_obj, "dunnTest") || "res" %in% names(pair_obj)) {
-    df <- pair_obj$res %>%
-      rename(Contrast = Comparison, p.value = P.adj)
-  } 
-  # CASE B: If it's a pairwise.t.test object (Base R matrix for Variances)
-  else if (inherits(pair_obj, "pairwise.htest")) {
-    p_mat <- pair_obj$p.value
-    df <- as.data.frame(as.table(p_mat)) %>%
-      filter(!is.na(Freq)) %>%
-      mutate(Contrast = paste0(Var2, " - ", Var1)) %>%
-      rename(p.value = Freq)
-  } else {
-    return(NULL)
-  }
+
+
   
-  df %>%
-    mutate(
-      Dimension = dim_name,
-      type = test.type,
-      p_fmt = case_when(
-        p.value < 0.001 ~ "*p* < 0.001*",
-        p.value < 0.05  ~ sprintf("*p* = %.3f*", p.value),
-        TRUE            ~ sprintf("*p* = %.3f", p.value)),
-      Contrast = gsub(" molly", "", Contrast), 
-      PostHoc_Sum = sprintf("%s: %s", Contrast, p_fmt)) %>%
-    select(Dimension, type, PostHoc_Sum)
-}
-
-
-posthoc_ref2 <- bind_rows(
-  tam_extract_pairs(tam_post_hoc1, "PC2", "M"),
-  tam_extract_pairs(tam_post_hoc2, "CatPC1", "M"),
-  tam_extract_pairs(tam_post_hoc3, "CatPC2", "M"),
-  tam_extract_pairs(tam_post_hoc4, "PC1", "V"),
-  tam_extract_pairs(tam_post_hoc5, "PC2", "V"),
-  tam_extract_pairs(tam_post_hoc6, "CatPC1", "V")) %>%
-  group_by(Dimension, type) %>%
-  summarise(
-    Combined_Pairs = paste(PostHoc_Sum, collapse = "<br>"), .groups = "drop") %>%
-  pivot_wider(
-    names_from = type,
-    values_from = Combined_Pairs,
-    names_prefix = "PostHoc_")
-
 ### Combine & form table
 
-tam_results_combined <- bind_rows(tam_postPCA_result, tam_postCPCA_result) %>%
-  mutate(
-    Med_Part = paste0("Median: H = ", sprintf("%.2f", H_value), 
-                      " (*p* ", ifelse(p_kw < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_kw), ifelse(p_kw < 0.05, "*", ""))), ")"),
-    Var_Part = paste0("Variance: F = ", sprintf("%.2f", F_value), 
-                      " (*p* ", ifelse(p_lv < 0.001, "< 0.001*", paste0("= ", sprintf("%.3f", p_lv), ifelse(p_lv < 0.05, "*", ""))), ")"),
-    Test_Summary = paste0(Med_Part, "<br> ", Var_Part),
-    Group_Label = paste0("**", Classifier, "**<br>",
-                         "***", Dimension, "***<br>",
-                         "<span style='font-size: 85%'>", Test_Summary, "</span>")) %>%
-  left_join(posthoc_ref2, by = "Dimension") %>%
-  mutate(PostHoc_M = coalesce(PostHoc_M, "&mdash;"),
-         PostHoc_V = coalesce(PostHoc_V, "&mdash;"))
-  
+tam_results_combined <- bind_rows(tam_postPCA_result, tam_postCPCA_result) 
 
 
 
 tam_postPCA_table <- tam_results_combined %>%
   select(
-    Group_Label,
-    Amazon,
-    Sailfin,
-    Atlantic,
-    PostHoc_M,
-    PostHoc_V) %>%
-  gt() %>%
-  fmt_markdown(columns = everything()) %>%
+    Classifier,
+    Dimension,
+    Amazon_mean,
+    Atlantic_mean,
+    Sailfin_mean,
+    Mean_test,
+    Amazon_var,
+    Atlantic_var,
+    Sailfin_var,
+    Variance_test) %>%
+  gt(groupname_col = "Classifier") %>%
+  fmt_markdown(
+    columns = everything()) %>%
   cols_label(
-    Group_Label ="",
-    Amazon = md("**Amazon**<br>Median (MAD)"),
-    Sailfin = md("**Sailfin**<br>Median (MAD)"),
-    Atlantic = md("**Atlantic**<br>Median (MAD)"),
-    PostHoc_M = md("**Pairwise Medians**<br><span style='font-size:85%; font-weight:normal;'>Holm-adj. p</span>"),
-    PostHoc_V = md("**Pairwise Variances**<br><span style='font-size:85%; font-weight:normal;'>Holm-adj. p</span>")) %>%
+    Dimension = " ",
+    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
+    Atlantic_mean = md("**Atlantic**<br>EM Mean (&plusmn;SE)"),
+    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
+    Amazon_var = md("**Amazon**<br>Est. Variance"),
+    Atlantic_var = md("**Atlantic**<br>Est. Variance"),
+    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
+    Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+  tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
-    locations = cells_body(columns = c(Group_Label, Amazon, Sailfin, Atlantic, PostHoc_M))) %>%
+    locations = cells_body(columns = c(Dimension, Sailfin_mean, Mean_test, Sailfin_var))) %>%
   cols_align(align = "center", columns = everything()) %>%
-  opt_horizontal_padding(scale = 2)
+  opt_horizontal_padding(scale = 1.5)
 
-#final table
+### Final table
 tam_postPCA_table
 
+```
+
+```{r}
+
+#additional table of just the variances
+
+### Metric data
+
+#grab the anova variance test again
+Chisq_var <- c(Anova(tam.met.mean.1, component = "disp", type = "III")["Species", "Chisq"],
+               Anova(tam.met.mean.2, component = "disp", type = "III")["Species", "Chisq"],
+               Anova(tam.met.mean.3, component = "disp", type = "III")["Species", "Chisq"])
+
+p_var <- c(Anova(tam.met.mean.1, component = "disp", type = "III")["Species", "Pr(>Chisq)"],
+           Anova(tam.met.mean.2, component = "disp", type = "III")["Species", "Pr(>Chisq)"],
+           Anova(tam.met.mean.3, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
+
+#extract the ratios and p-values after adjusting
+SAm_ratio <- sprintf("%.2f", c(tpair6$ratio[1], tpair7$ratio[1], tpair8$ratio[1]))
+SAt_ratio <- sprintf("%.2f", c(tpair6$ratio[2], tpair7$ratio[2], tpair8$ratio[2]))
+AA_ratio <- sprintf("%.2f", c(tpair6$ratio[3], tpair7$ratio[3], tpair8$ratio[3]))
+
+SAm_p_raw <- c(tpair6$p.value[1], tpair7$p.value[1], tpair8$p.value[1])
+SAt_p_raw <- c(tpair6$p.value[2], tpair7$p.value[2], tpair8$p.value[2])
+AA_p_raw <- c(tpair6$p.value[3], tpair7$p.value[3], tpair8$p.value[3])
+
+tam.pca.var.table <- tibble(
+  Classifier   = "Metric PCA",
+  Dimension    = c("PC1", "PC2", "PC3"),
+  Chisq_var    = Chisq_var,
+  p_var        = p_var,
+  SAm_ratio    = SAm_ratio,
+  SAt_ratio    = SAt_ratio,
+  AA_ratio     = AA_ratio,
+  SAm_p        = SAm_p_raw,
+  SAt_p        = SAt_p_raw,
+  AA_p         = AA_p_raw) %>%
+  mutate(
+    Variance_test = case_when(
+      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))),
+    
+    Pairwise_tests = paste0(
+      "Sailfin/Amazon: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
+      "<br>",
+      "Sailfin/Atlantic: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
+      "<br>",
+      "Amazon/Atlantic: ", case_when(AA_p < 0.001  ~ "*p* < 0.001*", AA_p < 0.05  ~ paste0("*p* = ", sprintf("%.3f", AA_p), "*"),  TRUE ~ paste0("*p* = ", sprintf("%.3f", AA_p)))))
+
+
+
+### Meristic data
+
+#grab the anova variance test again
+Chisq_var <- c(Anova(tam.cnt.mean.1, component = "disp", type = "III")["Species", "Chisq"],
+               Anova(tam.cnt.mean.2, component = "disp", type = "III")["Species", "Chisq"])
+
+p_var <- c(Anova(tam.cnt.mean.1, component = "disp", type = "III")["Species", "Pr(>Chisq)"],
+           Anova(tam.cnt.mean.2, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
+
+#extract the ratios and p-values after adjusting
+SAm_ratio <- sprintf("%.2f", c(tpair9$ratio[1], tpair10$ratio[1]))
+SAt_ratio <- sprintf("%.2f", c(tpair9$ratio[2], tpair10$ratio[2]))
+AA_ratio <- sprintf("%.2f", c(tpair9$ratio[3], tpair10$ratio[3]))
+
+SAm_p_raw <- c(tpair9$p.value[1], tpair10$p.value[1])
+SAt_p_raw <- c(tpair9$p.value[2], tpair10$p.value[2])
+AA_p_raw <- c(tpair9$p.value[3], tpair10$p.value[3])
+
+tam.cpca.var.table <- tibble(
+  Classifier   = "Meristic CatPCA",
+  Dimension    = c("CatPC1", "CatPC2"),
+  Chisq_var    = Chisq_var,
+  p_var        = p_var,
+  SAm_ratio    = SAm_ratio,
+  SAt_ratio    = SAt_ratio,
+  AA_ratio     = AA_ratio,
+  SAm_p        = SAm_p_raw,
+  SAt_p        = SAt_p_raw,
+  AA_p         = AA_p_raw) %>%
+  mutate(
+    Variance_test = case_when(
+      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))),
+    
+    Pairwise_tests = paste0(
+      "Sailfin/Amazon: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
+      "<br>",
+      "Sailfin/Atlantic: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
+      "<br>",
+      "Amazon/Atlantic: ", case_when(AA_p < 0.001  ~ "*p* < 0.001*", AA_p < 0.05  ~ paste0("*p* = ", sprintf("%.3f", AA_p), "*"),  TRUE ~ paste0("*p* = ", sprintf("%.3f", AA_p)))))
+
+
+
+### Combine & form table
+
+var_results_combined_tam <- bind_rows(tam.pca.var.table, tam.cpca.var.table) 
+
+
+
+var_postPCA_table_tam <- var_results_combined_tam %>%
+  select(
+    Classifier,
+    Dimension,
+    SAm_ratio,
+    SAt_ratio,
+    AA_ratio,
+    SAm_p, 
+    SAt_p,
+    AA_p,
+    Variance_test,
+    Pairwise_tests) %>%
+  gt(groupname_col = "Classifier") %>%
+  cols_hide(c(SAm_p, SAt_p, AA_p)) %>%
+  fmt_markdown(
+    columns = c(SAm_ratio, SAt_ratio, AA_ratio, Variance_test, Pairwise_tests)) %>%
+  cols_label(
+    Dimension = " ",
+    SAm_ratio = "Sailfin/Amazon",
+    SAt_ratio = "Sailfin/Atlantic",
+    AA_ratio  = "Amazon/Atlantic",
+    Pairwise_tests = md("Pairwise tests (adj. *p*)"),
+    Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+  tab_spanner(
+    label = "Variance Ratio",
+    columns = c(SAm_ratio, SAt_ratio, AA_ratio)) %>%
+  cols_move(
+    columns = Variance_test,
+    after = Dimension) %>%
+  tab_options(row_group.font.weight = "bold") %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
+    locations = cells_body(columns = c(Dimension, Variance_test, AA_ratio))) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "lightgray", weight = px(1), style = "dashed"), 
+    locations = cells_body(columns = c(SAm_ratio, SAt_ratio))) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  opt_horizontal_padding(scale = 1.5)
+
+### Final table
+var_postPCA_table_tam
 
 
 
