@@ -780,7 +780,7 @@ As meristic traits are count data, a normal PCA cannot be applied. Instead, we w
 # ───────────────────────────────────────────────────
 
 
-PCA.test <- prcomp(df_trans[, 13:23], center = TRUE, scale. = FALSE) 
+PCA.test <- prcomp(df_trans[, 13:23], center = TRUE, scale. = TRUE) 
 
 summary(PCA.test)
 (eig.val.test <- get_eigenvalue(PCA.test))
@@ -926,7 +926,7 @@ catpca
 
 #### *Post PCA tests*
 
-**CONCLUSIONS:** For our metric data, there is no significant difference in average shape distribution for PC1, but there is a significant difference for PC2 and PC3. This is expected, as amazons and sailfins have different body shapes and therefore occupy distinct morphospace. There was no significant difference in shape variation for any PC, indicating not overall difference in morphological variation among the two species when all traits are taken into account. This corroborates our individual results.
+**CONCLUSIONS:** For our metric data, there is no significant difference in average shape distribution for PC1, but there is a significant difference for PC2 and PC3. This is expected, as amazons and sailfins have different body shapes and therefore occupy distinct morphospace. There is a significant difference in shape variation for PC2 but not for PC1 or PC3. Since PC1 is driven by body size, a significant PC2 indicates overall difference in morphological variation among the two species when all traits are taken into account. Sailfin exhibited more variation than amazons. This is different from the individual results, where variation was not significantly different.
 
 For our meristic data, both CatPC1 and CatPC2 showed a significant difference in average meristic profiles, which makes sense as the majority of the meristic traits are species diagnostics (e.g., scales before dorsal fin, lateral line scale count, dorsal fin rays). Neither CatPC differed in variation, which corroborates our individual trait findings.
 
@@ -1194,7 +1194,7 @@ postPCA_table
 
 A quick summary, mostly of number of fish in each zone and basin.
 
-We find that there are at least 3 fish of each species in all zones, 7 of 11 basins, and 8 of 17 basins. Classifiers marked with an asterisk only have >3 of one species.
+We find that there are at least 3 fish of each species in all zones and 7 of 11 basins. Classifiers marked with an asterisk only have >3 of *one* species.
 
 ```{r, echo=FALSE, warning=FALSE}
 
@@ -1575,7 +1575,7 @@ count2 <- count %>% filter(Basin %in% valid_basins) %>% droplevels()
 ```
 
 
-**CONCLUSIONS:** All metric traits showed greater support for a model with unequal dispersion across species and basins. There is no consistent pattern across traits or across basins, indicating that local deviations are likely reflecting stochastic, demographic, or sampling-related effects rather than any differences from reproductive mode. Again, four meristic traits show greater support for the unequal-dispersion model. In general, most basins show higher variation in sailfins, but some basins do have low variance ratios (aka amazons vary more), such as a ratio of 0.38 for left pectoral rays in Lower Rio Grande. Anal rays again failed model comparisons, and the fallback residual ANOVA showed a significant difference in variation among species and basins, with amazons containing more variation. However, it is important to note that while we filtered for basins with >=3 of each species, some sample sizes were still very small or variation very sparce that several Inf/NA variance ratios pop up and may be affecting overal results.
+**CONCLUSIONS:** All metric traits showed greater support for a model with unequal dispersion across species and basins. There is no consistent pattern across traits or across basins, indicating that local deviations are likely reflecting stochastic, demographic, or sampling-related effects rather than any differences from reproductive mode. Again, four meristic traits show greater support for the unequal-dispersion model. In general, most basins show higher variation in sailfins, but some basins do have low variance ratios (aka amazons vary more), such as a ratio of 0.38 for left pectoral rays in Lower Rio Grande. Anal rays again failed model comparisons, and the fallback residual ANOVA showed a significant difference in variation among species and basins, with amazons containing more variation. However, it is important to note that while we filtered for basins with >=3 of each species, some sample sizes were still very small or variation very sparse that several Inf/NA variance ratios pop up and may be affecting overall results.
 
 ```{r}
 # ───────────────────────────────────────────────────
@@ -1887,7 +1887,7 @@ This will still use the same PCA as above, but now the post-PCA tests will inclu
 
 #### *Zones*
 
-**CONCLUSIONS:** Species:zone interactions for PC1, PC2, PC3 and CatPC1 were significant, but not CatPC2; variance was significant for PC1, PC2 and PC3 but only PC2 and PC3 showed any pairwise significant differences, with zone 1 being the only significant zone in each. PC1: only zone 1 showed a difference in means; PC2: all zones showed differences in means; PC3: zone 3 and 4 showed differences in means; CatPC1: all zones showed a difference in means.
+**CONCLUSIONS:** Species:zone interactions for PC1, PC2, PC3 and CatPC1 were significant, but not CatPC2; variance was significant for PC1, PC2 and PC3 but only PC2 and PC3 showed any pairwise significant differences. PC2 has zone 1 being the only significant zone, with amazons exhibiting more variation. PC3 has zone 1 and zone 3, with amazons being more variable than sailfins in zone 1 but less variable than sailfins in zone 4. PC1: zone 1  and zone 4 showed a difference in means; PC2: all zones showed differences in means; PC3: zone 2, 3 and 4 showed differences in means; CatPC1: all zones showed a difference in means.
 
 NOTE: CatPC2 shows a significant difference in zone 1, but this is an artifact from how emmeans splits data. The global test for this pc showed no species:zone interaction.
 
@@ -2215,7 +2215,7 @@ postPCA_geo_table
 
 #### *Basins*
 
-**CONCLUSIONS:** Species:basin interaction effects significant for all PCs and CatPCs. No consistent pattern across basins (e.g. not a select few basins with higher mean differences than the rest) suggesting these are random local differences or sampling effects. Global variance is not significant for any PC. However, pairwise variance shows significant for PC1 and PC3; two basins in PC1 differ in variation with amazons having more variation than sailfin, and only one basin in PC3 differ in variation with amazons again having higher variation.
+**CONCLUSIONS:** Species:basin interaction effects significant for all PCs and CatPCs. No consistent pattern across basins (e.g. not a select few basins with higher mean differences than the rest) suggesting these are random local differences or sampling effects. Global variance is not significant for any PC or CatPC. However, pairwise variance shows significant for PC1 and PC3.
 
 ```{r}
 #filter for basins with >3 for each species
@@ -2958,7 +2958,7 @@ df_trans2[, c(13:23)] <- log(df_trans2[, c(13:23)])
 # ───────────────────────────────────────────────────
 
 
-PCA.test2 <- prcomp(df_trans2[, 13:23], center = TRUE, scale. = FALSE) 
+PCA.test2 <- prcomp(df_trans2[, 13:23], center = TRUE, scale. = TRUE) 
 
 summary(PCA.test2)
 (eig.val.test <- get_eigenvalue(PCA.test2))
@@ -3102,9 +3102,11 @@ tam.catpca
 
 #### *Post PCA tests*
 
-**CONCLUSIONS:** PC1 and PC2 but not PC3 have significant mean differences; both CatPCs have significant mean differences. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. 
+**CONCLUSIONS:** PC2 but not PC1 or PC3 have significant mean differences; both CatPCs have significant mean differences. This is expected, as all three species have different body shapes and therefore occupy distinct morphospace. 
 
-PC1, PC2 and CatPC1 show a significant difference in variation among the species. Atlantic have highest estimated variance for PC1, whereas sailfin have highest estimated variance for PC2 and CatPC1; Amazons contain the lowest amount of variation in all PCs. Sailfin differ from both species for PC1 but amazon and atlantic don't differ. Atlantic differ from both species for PC2 but sailfin and amazon don't differ. All species differ for CatPC1. This differs slightly from our individual trait results: in individual trait results, only a few metric traits showed support for a unequal-dispersion model, and none of our meristic traits showed support for unequal-disperson models. This indicates species differences in covariation among multiple metric and meristic features.
+PC1, PC2 and CatPC1 show a significant difference in variation among the species. Atlantic have highest estimated variance for PC1, whereas sailfin have highest estimated variance for PC2 and CatPC1; Amazons contain the lowest amount of variation in all PCs. 
+
+Sailfin differ from both species for PC1 but amazon and atlantic don't differ. Atlantic differ from just sailfin for PC2 but sailfin/amazon and atlantic/amazon don't differ. All species differ for CatPC1. This differs slightly from our individual trait results: in individual trait results, only a few metric traits showed support for a unequal-dispersion model, and none of our meristic traits showed support for unequal-disperson models. This indicates species differences in covariation among multiple metric and meristic features.
 
 ```{r}
 testmod <- lm(Dim.1 ~ Species, data = pca.df2)
