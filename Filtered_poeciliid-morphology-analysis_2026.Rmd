@@ -920,9 +920,9 @@ Chisq_mean <- c(mm1["Species", "Chisq"], mm2["Species", "Chisq"])
 
 p_mean <- c(mm1["Species", "Pr(>Chisq)"], mm2["Species", "Pr(>Chisq)"])
 
-Chisq_var <- c((summary(met.mean.1)$coefficients$disp[2,3])^2, (summary(met.mean.2)$coefficients$disp[2,3])^2)
+Chisq_var <- c(Anova(met.mean.1, component = "disp", type = "III")["Species", "Chisq"], Anova(met.mean.2, component = "disp", type = "III")["Species", "Chisq"])
 
-p_var <- c(summary(met.mean.1)$coefficients$disp[2,4], summary(met.mean.2)$coefficients$disp[2,4])
+p_var <- c(Anova(met.mean.1, component = "disp", type = "III")["Species", "Pr(>Chisq)"], Anova(met.mean.2, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
   
 
 ## create tibble
@@ -978,10 +978,9 @@ Chisq_mean <- c(cm1["Species", "Chisq"], cm2["Species", "Chisq"])
 
 p_mean <- c(cm1["Species", "Pr(>Chisq)"], cm2["Species", "Pr(>Chisq)"])
 
-Chisq_var <- c((summary(cnt.mean.1)$coefficients$disp[2,3])^2, (summary(cnt.mean.2)$coefficients$disp[2,3])^2)
+Chisq_var <- c(Anova(cnt.mean.1, component = "disp", type = "III")["Species", "Chisq"], Anova(cnt.mean.2, component = "disp", type = "III")["Species", "Chisq"])
 
-p_var <- c(summary(cnt.mean.1)$coefficients$disp[2,4], summary(cnt.mean.2)$coefficients$disp[2,4])
-  
+p_var <- c(Anova(cnt.mean.1, component = "disp", type = "III")["Species", "Pr(>Chisq)"], Anova(cnt.mean.2, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
 
 ## create tibble
 postCPCA_result <- tibble(
@@ -1962,17 +1961,18 @@ global_mean_chisq_met <- c(gmm1["Species:Zone", "Chisq"], gmm2["Species:Zone", "
 
 global_mean_p_met     <- c(gmm1["Species:Zone", "Pr(>Chisq)"], gmm2["Species:Zone", "Pr(>Chisq)"])
 
-global_var_chisq_met  <- c((summary(geo.met.mean.1)$coefficients$disp[2,3])^2, (summary(geo.met.mean.2)$coefficients$disp[2,3])^2)
+global_var_chisq_met <- c(Anova(geo.met.mean.1, component = "disp", type = "III")["Species:Zone", "Chisq"], Anova(geo.met.mean.2, component = "disp", type = "III")["Species:Zone", "Chisq"])
 
-global_var_p_met      <- c(summary(geo.met.mean.1)$coefficients$disp[2,4], summary(geo.met.mean.2)$coefficients$disp[2,4])
+global_var_p_met <- c(Anova(geo.met.mean.1, component = "disp", type = "III")["Species:Zone", "Pr(>Chisq)"], Anova(geo.met.mean.2, component = "disp", type = "III")["Species:Zone", "Pr(>Chisq)"])
+
 
 global_mean_chisq_cnt <- c(gcm1["Species:Zone", "Chisq"], gcm2["Species:Zone", "Chisq"])
 
 global_mean_p_cnt     <- c(gcm1["Species:Zone", "Pr(>Chisq)"], gcm2["Species:Zone", "Pr(>Chisq)"])
 
-global_var_chisq_cnt  <- c((summary(geo.cnt.mean.1)$coefficients$disp[2,3])^2, (summary(geo.cnt.mean.2)$coefficients$disp[2,3])^2)
+global_var_chisq_cnt <- c(Anova(geo.cnt.mean.1, component = "disp", type = "III")["Species:Zone", "Chisq"], Anova(geo.cnt.mean.2, component = "disp", type = "III")["Species:Zone", "Chisq"])
 
-global_var_p_cnt      <- c(summary(geo.cnt.mean.1)$coefficients$disp[2,4], summary(geo.cnt.mean.2)$coefficients$disp[2,4])
+global_var_p_cnt <- c(Anova(geo.cnt.mean.1, component = "disp", type = "III")["Species:Zone", "Pr(>Chisq)"], Anova(geo.cnt.mean.2, component = "disp", type = "III")["Species:Zone", "Pr(>Chisq)"])
 
 # Combine global stats and map to dimensions
 global_lookup <- tibble(
@@ -2273,17 +2273,17 @@ global_mean_chisq_met <- c(g2mm1["Species:Basin", "Chisq"], g2mm2["Species:Basin
 
 global_mean_p_met     <- c(g2mm1["Species:Basin", "Pr(>Chisq)"], g2mm2["Species:Basin", "Pr(>Chisq)"])
 
-global_var_chisq_met  <- c((summary(geo2.met.mean.1)$coefficients$disp[2,3])^2, (summary(geo2.met.mean.2)$coefficients$disp[2,3])^2)
+global_var_chisq_met <- c(Anova(geo2.met.mean.1, component = "disp", type = "III")["Species:Basin", "Chisq"], Anova(geo2.met.mean.2, component = "disp", type = "III")["Species:Basin", "Chisq"])
 
-global_var_p_met      <- c(summary(geo2.met.mean.1)$coefficients$disp[2,4], summary(geo2.met.mean.2)$coefficients$disp[2,4])
+global_var_p_met <- c(Anova(geo2.met.mean.1, component = "disp", type = "III")["Species:Basin", "Pr(>Chisq)"], Anova(geo2.met.mean.2, component = "disp", type = "III")["Species:Basin", "Pr(>Chisq)"])
 
 global_mean_chisq_cnt <- c(g2cm1["Species:Basin", "Chisq"], g2cm2["Species:Basin", "Chisq"])
 
 global_mean_p_cnt     <- c(g2cm1["Species:Basin", "Pr(>Chisq)"], g2cm2["Species:Basin", "Pr(>Chisq)"])
 
-global_var_chisq_cnt  <- c((summary(geo2.cnt.mean.1)$coefficients$disp[2,3])^2, (summary(geo2.cnt.mean.2)$coefficients$disp[2,3])^2)
+global_var_chisq_cnt <- c(Anova(geo2.cnt.mean.1, component = "disp", type = "III")["Species:Basin", "Chisq"], Anova(geo2.cnt.mean.2, component = "disp", type = "III")["Species:Basin", "Chisq"])
 
-global_var_p_cnt      <- c(summary(geo2.cnt.mean.1)$coefficients$disp[2,4], summary(geo2.cnt.mean.2)$coefficients$disp[2,4])
+global_var_p_cnt <- c(Anova(geo2.cnt.mean.1, component = "disp", type = "III")["Species:Basin", "Pr(>Chisq)"], Anova(geo2.cnt.mean.2, component = "disp", type = "III")["Species:Basin", "Pr(>Chisq)"])
 
 # Combine global stats and map to dimensions
 global_lookup <- tibble(
