@@ -174,13 +174,20 @@ trait.names <- c(
 # Final data frames
 
 ## main analysis
-raw2 <- raw1[raw1$Species !="Atlantic molly", ]  
+raw2 <- raw1 %>% 
+  filter(Species != "Atlantic molly") %>% 
+  droplevels()
+
+raw2$Species <- factor(raw2$Species, levels = sort(unique(as.character(raw2$Species))))
 
 
 
 ## Tampico MX analysis
-geo <- raw1[raw1$COUNTY.ST == "Tamaulipas/MX", ]
+geo <- raw1 %>%
+  filter(COUNTY.ST == "Tamaulipas/MX") %>%
+  droplevels()
 
+geo$Species <- factor(geo$Species, levels = sort(unique(as.character(geo$Species))))
 ```
 
 
@@ -2905,6 +2912,7 @@ tam.catpca <- ggplot(catpca.df2, aes(x = CatPC1, y = CatPC2, color = Species, fi
   )
 
 tam.catpca
+
 
 ```
 

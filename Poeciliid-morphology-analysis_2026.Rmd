@@ -174,10 +174,15 @@ raw2 <- raw1 %>%
   filter(Species != "Atlantic molly") %>% 
   droplevels()
 
+raw2$Species <- factor(raw2$Species, levels = sort(unique(as.character(raw2$Species))))
+
 ## Tampico MX analysis
 geo <- raw1 %>%
   filter(COUNTY.ST == "Tamaulipas/MX") %>%
   droplevels()
+
+geo$Species <- factor(geo$Species, levels = sort(unique(as.character(geo$Species))))
+
 
 ```
 
@@ -778,10 +783,19 @@ As meristic traits are count data, a normal PCA cannot be applied. Instead, we w
 # ───────────────────────────────────────────────────
 ## METRIC ANALYSIS 
 # ───────────────────────────────────────────────────
+## Get residuals of traits ~ standard length
+shape_residuals <- lapply(met.vars, function(trait) {
+  mod <- lm(log(metric[[trait]]) ~ log(metric$SL))
+  return(residuals(mod))
+})
 
+residual_df <- as.data.frame(shape_residuals)
+colnames(residual_df) <- met.vars
 
-PCA.test <- prcomp(df_trans[, 13:23], center = TRUE, scale. = TRUE) 
+## run PCA
+PCA.test <- prcomp(residual_df, center = TRUE, scale. = TRUE)
 
+ 
 summary(PCA.test)
 (eig.val.test <- get_eigenvalue(PCA.test))
 
@@ -792,7 +806,7 @@ ind.test <- get_pca_ind(PCA.test)
 head(ind.test$coord[,1:3])
 
 
-pca.df <- cbind(df_trans, ind.test$coord[,1:3])
+pca.df <- cbind(metric, ind.test$coord[,1:3])
 
 
 # Will investigate the influence of each trait on the first 3 dimensions
@@ -871,7 +885,7 @@ catpca.df <- cbind(count, cat_pc_scores)
 
 #### METRIC
 
-pca.1<- autoplot(PCA.test, data = df_trans, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
+pca.plot <- autoplot(PCA.test, data = pca.df, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
   scale_color_manual(name="Species",
                     values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00")) +
   scale_fill_manual(name="Species",
@@ -880,19 +894,7 @@ pca.1<- autoplot(PCA.test, data = df_trans, colour="Species", shape= 'Species', 
                      values = c("Sailfin molly" = 17, "Amazon molly"=16)) +
    guides(fill = guide_legend(override.aes = list(fill = NA)))+
   ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-pca.1
-
-
-pca.2<- autoplot(PCA.test, x=2, y=3, data = df_trans, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
-  scale_color_manual(name="Species",
-                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00")) +
-  scale_fill_manual(name="Species",
-                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00")) +
-  scale_shape_manual(name= 'Species', 
-                     values = c("Sailfin molly" = 17, "Amazon molly"=16)) +
-   guides(fill = guide_legend(override.aes = list(fill = NA)))+
-  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-pca.2
+pca.plot
 
 
 #### MERISTIC
@@ -2948,16 +2950,24 @@ As meristic traits are count data, a normal PCA cannot be applied. Instead, we w
 #### *Loadings*
 
 ```{r}
-#log transform metric traits
-df_trans2 <- geo
-df_trans2[, c(13:23)] <- log(df_trans2[, c(13:23)])
 
 # ───────────────────────────────────────────────────
 ## METRIC ANALYSIS 
 # ───────────────────────────────────────────────────
 
+##get size-corrected residuals
+shape_residuals <- lapply(met.vars, function(trait) {
+  # Fit a simple linear model of the raw trait against SL
+  mod <- lm(log(metric3[[trait]]) ~ log(metric3$SL))
+  return(residuals(mod))
+})
 
-PCA.test2 <- prcomp(df_trans2[, 13:23], center = TRUE, scale. = TRUE) 
+residual_df2 <- as.data.frame(shape_residuals)
+colnames(residual_df2) <- met.vars
+
+# run PCA
+PCA.test2 <- prcomp(residual_df2, center = TRUE, scale. = TRUE)
+
 
 summary(PCA.test2)
 (eig.val.test <- get_eigenvalue(PCA.test2))
@@ -2969,7 +2979,7 @@ ind.test <- get_pca_ind(PCA.test2)
 head(ind.test$coord[,1:3])
 
 
-pca.df2 <- cbind(df_trans2, ind.test$coord[,1:3])
+pca.df2 <- cbind(metric3, ind.test$coord[,1:3])
 
 
 # Will investigate the influence of each trait on the first 3 dimensions
@@ -3048,7 +3058,7 @@ catpca.df2 <- cbind(count4, cat_pc_scores)
 
 #### METRIC
 
-tam.pca.1<- autoplot(PCA.test2, data = df_trans2, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
+tam.pca <- autoplot(PCA.test2, data = pca.df2, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
   scale_color_manual(name="Species",
                     values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00", "Atlantic molly"="#9986A5")) +
   scale_fill_manual(name="Species",
@@ -3057,19 +3067,7 @@ tam.pca.1<- autoplot(PCA.test2, data = df_trans2, colour="Species", shape= 'Spec
                      values = c("Sailfin molly" = 17, "Amazon molly"=16, "Atlantic molly"= 3)) +
    guides(fill = guide_legend(override.aes = list(fill = NA)))+
   ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-tam.pca.1
-
-
-tam.pca.2<- autoplot(PCA.test2, x=2, y=3, data = df_trans2, colour="Species", shape= 'Species', loadings=FALSE, loadings.label=FALSE, frame=TRUE, frame.type='norm', label= FALSE)+
-  scale_color_manual(name="Species",
-                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00", "Atlantic molly"="#9986A5")) +
-  scale_fill_manual(name="Species",
-                    values = c("Sailfin molly"="#78B7C5", "Amazon molly"="#E1AF00", "Atlantic molly"="#9986A5")) +
-  scale_shape_manual(name= 'Species', 
-                     values = c("Sailfin molly" = 17, "Amazon molly"=16, "Atlantic molly"= 3)) +
-   guides(fill = guide_legend(override.aes = list(fill = NA)))+
-  ggtitle("PCA Plot of Morphology traits") + theme_classic() 
-tam.pca.2
+tam.pca
 
 
 #### MERISTIC
