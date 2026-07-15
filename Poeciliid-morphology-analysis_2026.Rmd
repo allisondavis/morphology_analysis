@@ -3426,13 +3426,13 @@ p_var <- c(Anova(tam.met.mean.1, component = "disp", type = "III")["Species", "P
            Anova(tam.met.mean.3, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
 
 #extract the ratios and p-values after adjusting
-SAm_ratio <- sprintf("%.2f", c(tpair6$ratio[1], tpair7$ratio[1], tpair8$ratio[1]))
-SAt_ratio <- sprintf("%.2f", c(tpair6$ratio[2], tpair7$ratio[2], tpair8$ratio[2]))
-AA_ratio <- sprintf("%.2f", c(tpair6$ratio[3], tpair7$ratio[3], tpair8$ratio[3]))
+AA_ratio <- sprintf("%.2f", c(tpair6$ratio[1], tpair7$ratio[1], tpair8$ratio[1]))
+SAm_ratio <- sprintf("%.2f", c(tpair6$ratio[2], tpair7$ratio[2], tpair8$ratio[2]))
+SAt_ratio <- sprintf("%.2f", c(tpair6$ratio[3], tpair7$ratio[3], tpair8$ratio[3]))
 
-SAm_p_raw <- c(tpair6$p.value[1], tpair7$p.value[1], tpair8$p.value[1])
-SAt_p_raw <- c(tpair6$p.value[2], tpair7$p.value[2], tpair8$p.value[2])
-AA_p_raw <- c(tpair6$p.value[3], tpair7$p.value[3], tpair8$p.value[3])
+AA_p_raw <- c(tpair6$p.value[1], tpair7$p.value[1], tpair8$p.value[1])
+SAm_p_raw <- c(tpair6$p.value[2], tpair7$p.value[2], tpair8$p.value[2])
+SAt_p_raw <- c(tpair6$p.value[3], tpair7$p.value[3], tpair8$p.value[3])
 
 tam.pca.var.table <- tibble(
   Classifier   = "Metric PCA",
@@ -3452,9 +3452,9 @@ tam.pca.var.table <- tibble(
       TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))),
     
     Pairwise_tests = paste0(
-      "Sailfin/Amazon: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
+      "Amazon/Sailfin: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
       "<br>",
-      "Sailfin/Atlantic: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
+      "Atlantic/Sailfin: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
       "<br>",
       "Amazon/Atlantic: ", case_when(AA_p < 0.001  ~ "*p* < 0.001*", AA_p < 0.05  ~ paste0("*p* = ", sprintf("%.3f", AA_p), "*"),  TRUE ~ paste0("*p* = ", sprintf("%.3f", AA_p)))))
 
@@ -3470,13 +3470,13 @@ p_var <- c(Anova(tam.cnt.mean.1, component = "disp", type = "III")["Species", "P
            Anova(tam.cnt.mean.2, component = "disp", type = "III")["Species", "Pr(>Chisq)"])
 
 #extract the ratios and p-values after adjusting
-SAm_ratio <- sprintf("%.2f", c(tpair9$ratio[1], tpair10$ratio[1]))
-SAt_ratio <- sprintf("%.2f", c(tpair9$ratio[2], tpair10$ratio[2]))
-AA_ratio <- sprintf("%.2f", c(tpair9$ratio[3], tpair10$ratio[3]))
+AA_ratio <- sprintf("%.2f", c(tpair9$ratio[1], tpair10$ratio[1]))
+SAm_ratio <- sprintf("%.2f", c(tpair9$ratio[2], tpair10$ratio[2]))
+SAt_ratio <- sprintf("%.2f", c(tpair9$ratio[3], tpair10$ratio[3]))
 
-SAm_p_raw <- c(tpair9$p.value[1], tpair10$p.value[1])
-SAt_p_raw <- c(tpair9$p.value[2], tpair10$p.value[2])
-AA_p_raw <- c(tpair9$p.value[3], tpair10$p.value[3])
+AA_p_raw <- c(tpair9$p.value[1], tpair10$p.value[1])
+SAm_p_raw <- c(tpair9$p.value[2], tpair10$p.value[2])
+SAt_p_raw <- c(tpair9$p.value[3], tpair10$p.value[3])
 
 tam.cpca.var.table <- tibble(
   Classifier   = "Meristic CatPCA",
@@ -3496,9 +3496,9 @@ tam.cpca.var.table <- tibble(
       TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))),
     
     Pairwise_tests = paste0(
-      "Sailfin/Amazon: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
+      "Amazon/Sailfin: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
       "<br>",
-      "Sailfin/Atlantic: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
+      "Atlantic/Sailfin: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
       "<br>",
       "Amazon/Atlantic: ", case_when(AA_p < 0.001  ~ "*p* < 0.001*", AA_p < 0.05  ~ paste0("*p* = ", sprintf("%.3f", AA_p), "*"),  TRUE ~ paste0("*p* = ", sprintf("%.3f", AA_p)))))
 
@@ -3528,8 +3528,8 @@ var_postPCA_table_tam <- var_results_combined_tam %>%
     columns = c(SAm_ratio, SAt_ratio, AA_ratio, Variance_test, Pairwise_tests)) %>%
   cols_label(
     Dimension = " ",
-    SAm_ratio = "Sailfin/Amazon",
-    SAt_ratio = "Sailfin/Atlantic",
+    SAm_ratio = "Amazon/Sailfin",
+    SAt_ratio = "Atlantic/Sailfin",
     AA_ratio  = "Amazon/Atlantic",
     Pairwise_tests = md("Pairwise tests (adj. *p*)"),
     Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
