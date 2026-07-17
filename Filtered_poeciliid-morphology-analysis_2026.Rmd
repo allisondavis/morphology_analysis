@@ -425,7 +425,10 @@ met.tbl <- met.results %>%
     Trait_Name = "Trait",
     Var_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value")) %>%
+    p.display = md("adj. *p*-value")) %>%
+  cols_move(
+    columns = c(Delta_AIC, p.display),
+    after = Trait_Name) %>%
   fmt_number(
     columns = c(Var_Ratio, Delta_AIC),
     decimals = 2) %>%
@@ -589,7 +592,10 @@ cnt.tbl <- cnt.results %>%
     Trait_Name = "Trait",
     Var_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value")) %>%
+    p.display = md("adj. *p*-value")) %>%
+  cols_move(
+    columns = c(Delta_AIC, p.display),
+    after = Trait_Name) %>%
   fmt_number(
     columns = c(Var_Ratio, Delta_AIC),
     decimals = 2) %>%
@@ -943,18 +949,8 @@ postPCA_result <- tibble(
   Amazon_var   = Amazon_var,
   Sailfin_var  = Sailfin_var,
   Chisq_var    = Chisq_var,
-  p_var        = p_var) %>%
-  mutate(
-    Mean_test = case_when(
-      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
-      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
-      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
-    
-    Variance_test = case_when(
-      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
-      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
-  
+  p_var        = p_var) 
+
 
 ### Meristic Data
 
@@ -1000,24 +996,29 @@ postCPCA_result <- tibble(
   Amazon_var   = Amazon_var,
   Sailfin_var  = Sailfin_var,
   Chisq_var    = Chisq_var,
-  p_var        = p_var) %>%
-  mutate(
-    Mean_test = case_when(
-      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
-      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
-      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
-    
-    Variance_test = case_when(
-      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
-      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
-
+  p_var        = p_var) 
 
 
   
 ### Combine & form table
 
-results_combined <- bind_rows(postPCA_result, postCPCA_result) 
+results_combined <- bind_rows(postPCA_result, postCPCA_result) %>%
+  group_by(Classifier) %>%
+  mutate(
+  p_mean_adj = p.adjust(p_mean, method = "holm"),
+  p_var_adj = p.adjust(p_var, method = "holm")) %>%
+  mutate(
+    Mean_test = case_when(
+      p_mean_adj < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
+      p_mean_adj < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean_adj), "*"),
+      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean_adj))),
+    
+    Variance_test = case_when(
+      p_var_adj < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var_adj < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var_adj), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var_adj)))) %>%
+  ungroup()
+
 
 
 
@@ -1036,12 +1037,18 @@ postPCA_table <- results_combined %>%
     columns = everything()) %>%
   cols_label(
     Dimension = " ",
-    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
-    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Amazon_mean = md("**Amazon**"),
+    Sailfin_mean = md("**Sailfin**"),
     Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
-    Amazon_var = md("**Amazon**<br>Est. Variance"),
-    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
+    Amazon_var = md("**Amazon**"),
+    Sailfin_var = md("**Sailfin**"),
     Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+  tab_spanner(
+    label = html("Est. Marginal Mean (&plusmn;SE)"),
+    columns = c(Amazon_mean, Sailfin_mean)) %>%
+  tab_spanner(
+    label = "Est. Variance",
+    columns = c(Amazon_var, Sailfin_var)) %>%
   tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
@@ -1259,7 +1266,7 @@ geo.met.tbl <- geo_wide_results %>%
   cols_label(
     Trait_Name = "Trait",
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value"),
+    p.display = md("adj. *p*-value"),
     `Ratio_Zone 1` = "Zone 1",  
     `Ratio_Zone 2` = "Zone 2",  
     `Ratio_Zone 3` = "Zone 3",
@@ -1375,7 +1382,7 @@ geo_cnt_df <- do.call(rbind, results_geo_cnt)
 
 
 p_adj_cnt_df <- geo_cnt_df %>%
-  select(Trait, LRT_p, Delta_AIC, Best_Model) %>%
+  select(Trait, LRT_p, Delta_AIC) %>%
   distinct() %>%
   mutate(p_adj = p.adjust(LRT_p, method = "holm")) %>%
   mutate(
@@ -1403,7 +1410,7 @@ geo.cnt.tbl <- geo_wide_cnt %>%
   cols_label(
     Trait_Name = "Trait",
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value"),
+    p.display = md("adj. *p*-value"),
     `Ratio_Zone 1` = "Zone 1",  
     `Ratio_Zone 2` = "Zone 2",  
     `Ratio_Zone 3` = "Zone 3",
@@ -1579,7 +1586,7 @@ geo.met.tbl2 <- geo_wide_results2 %>%
   cols_label(
     Trait_Name = "Trait",
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value"),
+    p.display = md("adj. *p*-value"),
     `Ratio_San Antonio-Guadalupe`             = "San Antonio-Guadalupe",  
     `Ratio_Upper Southwest Texas Coastal`     = "Upper Southwest Texas Coastal",
     `Ratio_Lower Southwest Texas Coastal`     = "Lower Southwest Texas Coastal",
@@ -1724,7 +1731,7 @@ geo.cnt.tbl2 <- geo_wide_cnt2 %>%
   cols_label(
     Trait_Name = "Trait",
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value"),
+    p.display = md("adj. *p*-value"),
     `Ratio_San Antonio-Guadalupe`             = "San Antonio-Guadalupe",  
     `Ratio_Upper Southwest Texas Coastal`     = "Upper Southwest Texas Coastal",
     `Ratio_Lower Southwest Texas Coastal`     = "Lower Southwest Texas Coastal",
@@ -1994,15 +2001,21 @@ geo_results_combined <- bind_rows(postPCA_geo_result, postCPCA_geo_result) %>%
   left_join(global_lookup, by = "Dimension") %>%
   group_by(Classifier, Dimension) %>%
   mutate(
+  gmp_adj = p.adjust(g_m_p, method = "holm"),
+  gvp_adj = p.adjust(g_v_p, method = "holm")) %>%
+  mutate(
+    Mean_test = if_else(gmp_adj >= 0.05, "&mdash;", Mean_test),
+    Variance_test = if_else(gvp_adj >= 0.05, "&mdash;", Variance_test),
+    
     mean_str = case_when(
-      g_m_p < 0.001 ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*<0.001*"),
-      g_m_p < 0.05  ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p), "*"),
-      TRUE          ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p))),
+      gmp_adj < 0.001 ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*<0.001*"),
+      gmp_adj < 0.05  ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", gmp_adj), "*"),
+      TRUE          ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", gmp_adj))),
     
     var_str = case_when(
-      g_v_p < 0.001 ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*<0.001*"),
-      g_v_p < 0.05  ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p), "*"),
-      TRUE          ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p))),
+      gvp_adj < 0.001 ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*<0.001*"),
+      gvp_adj < 0.05  ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", gvp_adj), "*"),
+      TRUE          ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", gvp_adj))),
     
     Dimension_Display = case_when(
       row_number() == 1 ~ paste0("**", Dimension, "**"),
@@ -2029,12 +2042,18 @@ postPCA_geo_table <- geo_results_combined %>%
   cols_label(
     Dimension_Display = " ",
     Zone             = " ",
-    Amazon_mean       = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
-    Sailfin_mean      = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
-    Mean_test         = html("Pairwise Mean Contrast<br>(adj. *p*)"), 
-    Amazon_var        = md("**Amazon**<br>Est. Variance"),
-    Sailfin_var       = md("**Sailfin**<br>Est. Variance"),
-    Variance_test     = html("Pairwise Var Contrast<br>(adj. *p*)")) %>%
+    Amazon_mean       = md("**Amazon**"),
+    Sailfin_mean      = md("**Sailfin**"),
+    Mean_test         = md("Pairwise Mean Contrast<br>(adj. *p*)"), 
+    Amazon_var        = md("**Amazon**"),
+    Sailfin_var       = md("**Sailfin**"),
+    Variance_test     = md("Pairwise Var Contrast<br>(adj. *p*)")) %>%
+  tab_spanner(
+    label = html("Est. Marginal Mean (&plusmn;SE)"),
+    columns = c(Amazon_mean, Sailfin_mean)) %>%
+  tab_spanner(
+    label = "Est. Variance",
+    columns = c(Amazon_var, Sailfin_var)) %>%
   tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = c("top", "bottom"), color = "transparent"),
@@ -2305,16 +2324,22 @@ global_lookup <- tibble(
 geo2_results_combined <- bind_rows(postPCA_geo2_result, postCPCA_geo2_result) %>%
   left_join(global_lookup, by = "Dimension") %>%
   group_by(Classifier, Dimension) %>%
+   mutate(
+  gmp_adj = p.adjust(g_m_p, method = "holm"),
+  gvp_adj = p.adjust(g_v_p, method = "holm")) %>%
   mutate(
+    Mean_test = if_else(gmp_adj >= 0.05, "&mdash;", Mean_test),
+    Variance_test = if_else(gvp_adj >= 0.05, "&mdash;", Variance_test),
+    
     mean_str = case_when(
-      g_m_p < 0.001 ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*<0.001*"),
-      g_m_p < 0.05  ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p), "*"),
-      TRUE          ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", g_m_p))),
+      gmp_adj < 0.001 ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*<0.001*"),
+      gmp_adj < 0.05  ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", gmp_adj), "*"),
+      TRUE          ~ paste0("Mean: &chi;<sup>2</sup>=", sprintf("%.2f", g_m_chi), ", *p*=", sprintf("%.3f", gmp_adj))),
     
     var_str = case_when(
-      g_v_p < 0.001 ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*<0.001*"),
-      g_v_p < 0.05  ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p), "*"),
-      TRUE          ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", g_v_p))),
+      gvp_adj < 0.001 ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*<0.001*"),
+      gvp_adj < 0.05  ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", gvp_adj), "*"),
+      TRUE          ~ paste0("Var: &chi;<sup>2</sup>=", sprintf("%.2f", g_v_chi), ", *p*=", sprintf("%.3f", gvp_adj))),
     
     Dimension_Display = case_when(
       row_number() == 1 ~ paste0("**", Dimension, "**"),
@@ -2322,7 +2347,6 @@ geo2_results_combined <- bind_rows(postPCA_geo2_result, postCPCA_geo2_result) %>
       row_number() == 3 ~ var_str,
       TRUE              ~ "")) %>%
   ungroup()
-
 
 #build table 
 postPCA_geo2_table <- geo2_results_combined %>%
@@ -2341,12 +2365,18 @@ postPCA_geo2_table <- geo2_results_combined %>%
   cols_label(
     Dimension_Display = " ",
     Basin             = " ",
-    Amazon_mean       = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
-    Sailfin_mean      = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
-    Mean_test         = html("Pairwise Mean Contrast<br>(adj. *p*)"), 
-    Amazon_var        = md("**Amazon**<br>Est. Variance"),
-    Sailfin_var       = md("**Sailfin**<br>Est. Variance"),
-    Variance_test     = html("Pairwise Var Contrast<br>(adj. *p*)")) %>%
+    Amazon_mean       = md("**Amazon**"),
+    Sailfin_mean      = md("**Sailfin**"),
+    Mean_test         = md("Pairwise Mean Contrast<br>(adj. *p*)"), 
+    Amazon_var        = md("**Amazon**"),
+    Sailfin_var       = md("**Sailfin**"),
+    Variance_test     = md("Pairwise Var Contrast<br>(adj. *p*)")) %>%
+  tab_spanner(
+    label = html("Est. Marginal Mean (&plusmn;SE)"),
+    columns = c(Amazon_mean, Sailfin_mean)) %>%
+  tab_spanner(
+    label = "Est. Variance",
+    columns = c(Amazon_var, Sailfin_var)) %>%
   tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = c("top", "bottom"), color = "transparent"),
@@ -2528,13 +2558,19 @@ tam.met.results <- tam_results_df %>%
 
 tam.met.tbl <- tam.met.results %>%
   gt() %>%
-  cols_hide(c(Trait, LRT_p, p_adj, "Sailfin molly", "Amazon molly", "Atlantic molly")) %>%
+  cols_hide(c(Trait, LRT_p, p_adj, "Sailfin molly", "Amazon molly", "Atlantic molly", Best_Model)) %>%
   cols_label(
     Trait_Name = "Trait",
-    SA_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
-    AA_Ratio = md("Variance ratio <br>(Atlantic / Amazon)"),
+    SA_Ratio = md("Sailfin / Amazon"),
+    AA_Ratio = md("Atlantic / Amazon"),
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value")) %>%
+    p.display = md("adj. *p*-value")) %>%
+  tab_spanner(
+    label = "Variance Ratio",
+    columns = c(SA_Ratio, AA_Ratio))%>%
+  cols_move(
+    columns = c(Delta_AIC, p.display),
+    after = Trait_Name) %>%
   fmt_number(
     columns = c(SA_Ratio, AA_Ratio, Delta_AIC),
     decimals = 2) %>%
@@ -2681,13 +2717,19 @@ tam.cnt.results <- tam_cnt_df %>%
 
 tam.cnt.tbl <- tam.cnt.results %>%
   gt() %>%
-  cols_hide(c(Trait, LRT_p, p_adj, "Sailfin molly", "Amazon molly", "Atlantic molly")) %>%
+  cols_hide(c(Trait, LRT_p, p_adj, "Sailfin molly", "Amazon molly", "Atlantic molly", Best_Model)) %>%
   cols_label(
     Trait_Name = "Trait",
-    SA_Ratio = md("Variance ratio <br>(Sailfin / Amazon)"),
-    AA_Ratio = md("Variance ratio <br>(Atlantic / Amazon)"),
+    SA_Ratio = md("Sailfin / Amazon"),
+    AA_Ratio = md("Atlantic / Amazon"),
     Delta_AIC = md("&Delta;AIC"),
-    p.display = md("*p*-value")) %>%
+    p.display = md("adj. *p*-value")) %>%
+  tab_spanner(
+    label = "Variance Ratio",
+    columns = c(SA_Ratio, AA_Ratio)) %>%
+  cols_move(
+    columns = c(Delta_AIC, p.display),
+    after = Trait_Name) %>%
   fmt_number(
     columns = c(SA_Ratio, AA_Ratio, Delta_AIC),
     decimals = 2) %>%
@@ -3078,17 +3120,7 @@ tam_postPCA_result <- tibble(
   Atlantic_var   = Atlantic_var,
   Sailfin_var  = Sailfin_var,
   Chisq_var    = Chisq_var,
-  p_var        = p_var) %>%
-  mutate(
-    Mean_test = case_when(
-      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
-      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
-      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
-    
-    Variance_test = case_when(
-      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
-      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
+  p_var        = p_var) 
   
 
 ### Meristic Data
@@ -3151,24 +3183,30 @@ tam_postCPCA_result <- tibble(
   Atlantic_var   = Atlantic_var,
   Sailfin_var  = Sailfin_var,
   Chisq_var    = Chisq_var,
-  p_var        = p_var) %>%
-  mutate(
-    Mean_test = case_when(
-      p_mean < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
-      p_mean < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean), "*"),
-      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean))),
-    
-    Variance_test = case_when(
-      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
-      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))))
+  p_var        = p_var) 
   
 
 
   
 ### Combine & form table
 
-tam_results_combined <- bind_rows(tam_postPCA_result, tam_postCPCA_result) 
+tam_results_combined <- bind_rows(tam_postPCA_result, tam_postCPCA_result) %>%
+  group_by(Classifier) %>%
+  mutate(
+  p_mean_adj = p.adjust(p_mean, method = "holm"),
+  p_var_adj = p.adjust(p_var, method = "holm")) %>%
+  mutate(
+    Mean_test = case_when(
+      p_mean_adj < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* < 0.001*"),
+      p_mean_adj < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean_adj), "*"),
+      TRUE           ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_mean), "<br>*p* = ", sprintf("%.3f", p_mean_adj))),
+    
+    Variance_test = case_when(
+      p_var_adj < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var_adj < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var_adj), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var_adj)))) %>%
+  ungroup()
+
 
 
 
@@ -3189,14 +3227,20 @@ tam_postPCA_table <- tam_results_combined %>%
     columns = everything()) %>%
   cols_label(
     Dimension = " ",
-    Amazon_mean = md("**Amazon**<br>EM Mean (&plusmn;SE)"),
-    Atlantic_mean = md("**Atlantic**<br>EM Mean (&plusmn;SE)"),
-    Sailfin_mean = md("**Sailfin**<br>EM Mean (&plusmn;SE)"),
+    Amazon_mean = md("**Amazon**"),
+    Atlantic_mean = md("**Atlantic**"),
+    Sailfin_mean = md("**Sailfin**"),
     Mean_test = html("Mean comparison<br>(Wald &chi;<sup>2</sup>)"),
-    Amazon_var = md("**Amazon**<br>Est. Variance"),
-    Atlantic_var = md("**Atlantic**<br>Est. Variance"),
-    Sailfin_var = md("**Sailfin**<br>Est. Variance"),
+    Amazon_var = md("**Amazon**"),
+    Atlantic_var = md("**Atlantic**"),
+    Sailfin_var = md("**Sailfin**"),
     Variance_test = html("Variance comparison<br>(Wald &chi;<sup>2</sup>)")) %>%
+  tab_spanner(
+    label = html("Est. Marginal Mean (&plusmn;SE)"),
+    columns = c(Amazon_mean, Atlantic_mean, Sailfin_mean)) %>%
+  tab_spanner(
+    label = "Est. Variance",
+    columns = c(Amazon_var, Atlantic_var, Sailfin_var)) %>%
   tab_options(row_group.font.weight = "bold") %>%
   tab_style(
     style = cell_borders(sides = "right", color = "lightgray", weight = px(1.5)), 
@@ -3241,20 +3285,7 @@ tam.pca.var.table <- tibble(
   AA_ratio     = AA_ratio,
   SAm_p        = SAm_p_raw,
   SAt_p        = SAt_p_raw,
-  AA_p         = AA_p_raw) %>%
-  mutate(
-    Variance_test = case_when(
-      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
-      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))),
-    
-    Pairwise_tests = paste0(
-      "Amazon/Sailfin: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
-      "<br>",
-      "Atlantic/Sailfin: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
-      "<br>",
-      "Amazon/Atlantic: ", case_when(AA_p < 0.001  ~ "*p* < 0.001*", AA_p < 0.05  ~ paste0("*p* = ", sprintf("%.3f", AA_p), "*"),  TRUE ~ paste0("*p* = ", sprintf("%.3f", AA_p)))))
-
+  AA_p         = AA_p_raw) 
 
 
 ### Meristic data
@@ -3285,25 +3316,35 @@ tam.cpca.var.table <- tibble(
   AA_ratio     = AA_ratio,
   SAm_p        = SAm_p_raw,
   SAt_p        = SAt_p_raw,
-  AA_p         = AA_p_raw) %>%
-  mutate(
-    Variance_test = case_when(
-      p_var < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
-      p_var < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var), "*"),
-      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var))),
-    
-    Pairwise_tests = paste0(
-      "Amazon/Sailfin: ", case_when(SAm_p < 0.001 ~ "*p* < 0.001*", SAm_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p))),
-      "<br>",
-      "Atlantic/Sailfin: ", case_when(SAt_p < 0.001 ~ "*p* < 0.001*", SAt_p < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p))),
-      "<br>",
-      "Amazon/Atlantic: ", case_when(AA_p < 0.001  ~ "*p* < 0.001*", AA_p < 0.05  ~ paste0("*p* = ", sprintf("%.3f", AA_p), "*"),  TRUE ~ paste0("*p* = ", sprintf("%.3f", AA_p)))))
-
+  AA_p         = AA_p_raw) 
 
 
 ### Combine & form table
 
-var_results_combined_tam <- bind_rows(tam.pca.var.table, tam.cpca.var.table) 
+var_results_combined_tam <- bind_rows(tam.pca.var.table, tam.cpca.var.table) %>%
+group_by(Classifier) %>%
+  mutate(
+  SAm_p_adj = p.adjust(SAm_p, method = "holm"),
+  SAt_p_adj = p.adjust(SAt_p, method = "holm"),
+  AA_p_adj = p.adjust(AA_p, method = "holm"),
+  p_var_adj = p.adjust(p_var, method = "holm")) %>%
+  mutate(
+    Variance_test = case_when(
+      p_var_adj < 0.001 ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* < 0.001*"),
+      p_var_adj < 0.05  ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var_adj), "*"),
+      TRUE          ~ paste0("&chi;<sup>2</sup> = ", sprintf("%.2f", Chisq_var), "<br>*p* = ", sprintf("%.3f", p_var_adj))),
+    
+    Pairwise_tests = if_else(
+      p_var_adj >= 0.05, 
+      "&mdash;", 
+      paste0(
+        "Amazon/Sailfin: ", case_when(SAm_p_adj < 0.001 ~ "*p* < 0.001*", SAm_p_adj < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAm_p_adj), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAm_p_adj))),
+        "<br>",
+        "Atlantic/Sailfin: ", case_when(SAt_p_adj < 0.001 ~ "*p* < 0.001*", SAt_p_adj < 0.05 ~ paste0("*p* = ", sprintf("%.3f", SAt_p_adj), "*"), TRUE ~ paste0("*p* = ", sprintf("%.3f", SAt_p_adj))),
+        "<br>",
+        "Amazon/Atlantic: ", case_when(AA_p_adj < 0.001  ~ "*p* < 0.001*", AA_p_adj < 0.05  ~ paste0("*p* = ", sprintf("%.3f", AA_p_adj), "*"),  TRUE ~ paste0("*p* = ", sprintf("%.3f", AA_p_adj)))))) %>%
+  ungroup()
+
 
 
 
